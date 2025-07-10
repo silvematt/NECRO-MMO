@@ -1,0 +1,41 @@
+prefabName = coll_half_center;
+prefabImg = NULL;
+toRender = 0; # 0 for invisible objects
+static = 0;
+posOffsetX = 0;
+posOffsetY = 0;
+
+hasCollider = 1;
+colliderRectX = 0;
+colliderRectY = 0;
+colliderRectW = 64;
+colliderRectH = 16;
+collOffsetX = 0;
+collOffsetY = 0;
+
+occlCheck = 0;
+occlModX = 0;
+occlModY = 0;
+
+blocksLight = 0;
+blocksLightValue = 0;
+
+emitsLight = 0
+lightPropagationType = 0; // flat
+lightRadius = 14;
+lightIntensity = 3;
+lightDropoffMultiplier = 5;
+lightFarDropoffThreshold = 15; // should always be less than radius
+lightFarDropoffMultiplier = 2.5; // how much to multiply the dropoff after the threshold is reached
+lightR = 4;
+lightG = 4;
+lightB = 4;
+lightAnimated = 0;
+lightMinIntensityDivider = 1.25f;
+lightAnimSpeed = 3.5f;
+
+hasAnimator = 0;
+animFile = NULL;
+
+interactable = 0;
+;

@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Authentication">
+      <UniqueIdentifier>{60704106-003c-42e4-94e5-e0958da27e4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Database">
+      <UniqueIdentifier>{87af1eb2-5bd8-4f31-877a-68b67ce8c996}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Encryption">
+      <UniqueIdentifier>{e6497305-e2ab-4555-b328-daa0af75bed5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Logger">
+      <UniqueIdentifier>{120b7402-9886-4300-a357-7fbce35c18a4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Packets">
+      <UniqueIdentifier>{288261d4-e4c3-47f4-ba40-170e26aaf664}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sockets">
+      <UniqueIdentifier>{0b9dd171-39cf-4cf8-b242-7d2d3932eb5d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{e7d6af18-cc02-430e-a1ba-32af4bad549c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenSSL">
+      <UniqueIdentifier>{b8a6d95e-5c33-41e2-8701-9b2c0ad54d25}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Authentication\AuthCodes.h">
+      <Filter>Authentication</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\Database.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\DatabaseWorker.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\DBConnection.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Database\LoginDatabase.h">
+      <Filter>Database</Filter>
+    </ClInclude>
+    <ClInclude Include="Encryption\AES.h">
+      <Filter>Encryption</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\ConsoleLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\FileLogger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger\Logger.h">
+      <Filter>Logger</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\NetworkMessage.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Packets\Packet.h">
+      <Filter>Packets</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\TCPSocket.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\SocketAddress.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\SocketUtility.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\Utility.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="OpenSSL\OpenSSLManager.h">
+      <Filter>OpenSSL</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Logger\Logger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\FileLogger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Logger\ConsoleLogger.cpp">
+      <Filter>Logger</Filter>
+    </ClCompile>
+    <ClCompile Include="Packets\Packet.cpp">
+      <Filter>Packets</Filter>
+    </ClCompile>
+    <ClCompile Include="Sockets\TCPSocket.cpp">
+      <Filter>Sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="OpenSSL\OpenSSLManager.cpp">
+      <Filter>OpenSSL</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

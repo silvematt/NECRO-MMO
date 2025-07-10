@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="NECROClient">
+      <UniqueIdentifier>{46a71ce1-87ed-4eb8-ad14-d19d7ebf65f6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Client">
+      <UniqueIdentifier>{52c1f7d6-401c-4348-9227-19d5cddf5888}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Client\Online">
+      <UniqueIdentifier>{a59d1977-6e14-4176-82ae-a64c8ed9b72a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine">
+      <UniqueIdentifier>{744bc419-f9c7-40f2-a6de-6d26d51b3543}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Animation">
+      <UniqueIdentifier>{41b73d9f-2a20-4bda-8ab0-4fb14e40a4c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Assets">
+      <UniqueIdentifier>{564a9d7b-6e18-4458-bb08-079ff7b3923d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Console">
+      <UniqueIdentifier>{ce34acd2-53a9-4b5f-ac45-b58861da00ea}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Entity">
+      <UniqueIdentifier>{6eae38d0-bf24-42d7-a167-e7d12a5b38ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Entity\AI">
+      <UniqueIdentifier>{df86369a-77d7-40f6-aee5-39cf5a5590a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Input">
+      <UniqueIdentifier>{ba1e635e-c2ca-44cf-85d1-591f9071a27a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Physics">
+      <UniqueIdentifier>{5451f2d9-be4b-47c3-88ff-722811893021}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Renderer">
+      <UniqueIdentifier>{3765a823-cfeb-489a-8e0d-32fe82e83393}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\UI">
+      <UniqueIdentifier>{14d2e1e7-4a8e-43bd-92a4-9168f7be8550}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\Utility">
+      <UniqueIdentifier>{0a6ce95e-88b8-4419-aaab-529fde96388d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Engine\World">
+      <UniqueIdentifier>{9567f622-c55f-4008-bbe2-12936b23c485}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>NECROClient</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\NECROClient.cpp">
+      <Filter>NECROClient\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Online\AuthManager.cpp">
+      <Filter>NECROClient\Client\Online</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Online\AuthSession.cpp">
+      <Filter>NECROClient\Client\Online</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\Animator.cpp">
+      <Filter>NECROClient\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Animation\AnimState.cpp">
+      <Filter>NECROClient\Engine\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\AssetsManager.cpp">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\Mapfile.cpp">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\Prefab.cpp">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Assets\TilesetDef.cpp">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Console\Cmd.cpp">
+      <Filter>NECROClient\Engine\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Console\Console.cpp">
+      <Filter>NECROClient\Engine\Console</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\AI\AI.cpp">
+      <Filter>NECROClient\Engine\Entity\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\AI\AIBehavior.cpp">
+      <Filter>NECROClient\Engine\Entity\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\Entity.cpp">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\Interactable.cpp">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Entity\Player.cpp">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Input\Input.cpp">
+      <Filter>NECROClient\Engine\Input</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Physics\Collider.cpp">
+      <Filter>NECROClient\Engine\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\Camera.cpp">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\Light.cpp">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\Renderer.cpp">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Renderer\RenderTarget.cpp">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\UI\InputField.cpp">
+      <Filter>NECROClient\Engine\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\Cell.cpp">
+      <Filter>NECROClient\Engine\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\World\World.cpp">
+      <Filter>NECROClient\Engine\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Engine\Game.cpp">
+      <Filter>NECROClient\Engine</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client\NECROClient.h">
+      <Filter>NECROClient\Client</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\Online\AuthManager.h">
+      <Filter>NECROClient\Client\Online</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\Online\AuthSession.h">
+      <Filter>NECROClient\Client\Online</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\Animator.h">
+      <Filter>NECROClient\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Animation\AnimState.h">
+      <Filter>NECROClient\Engine\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\AssetsManager.h">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\Image.h">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\Mapfile.h">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\Prefab.h">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Assets\TilesetDef.h">
+      <Filter>NECROClient\Engine\Assets</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Console\Cmd.h">
+      <Filter>NECROClient\Engine\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Console\Console.h">
+      <Filter>NECROClient\Engine\Console</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\AI\AI.h">
+      <Filter>NECROClient\Engine\Entity\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\AI\AIBehavior.h">
+      <Filter>NECROClient\Engine\Entity\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\Entity.h">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\Interactable.h">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Entity\Player.h">
+      <Filter>NECROClient\Engine\Entity</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Input\Input.h">
+      <Filter>NECROClient\Engine\Input</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Physics\Collider.h">
+      <Filter>NECROClient\Engine\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Camera.h">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Light.h">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\Renderer.h">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Renderer\RenderTarget.h">
+      <Filter>NECROClient\Engine\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\UI\InputField.h">
+      <Filter>NECROClient\Engine\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Utility\ClientUtility.h">
+      <Filter>NECROClient\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Utility\NMath.h">
+      <Filter>NECROClient\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Utility\Vector2.h">
+      <Filter>NECROClient\Engine\Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\World.h">
+      <Filter>NECROClient\Engine\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Cell.h">
+      <Filter>NECROClient\Engine\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\Game.h">
+      <Filter>NECROClient\Engine</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

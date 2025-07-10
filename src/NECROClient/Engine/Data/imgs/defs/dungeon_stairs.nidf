@@ -1,0 +1,8 @@
+isTileset = 1;
+xOffset = -32;
+yOffset = 16;
+tWidth = 128;
+tHeight = 128;
+tNumX = 6;
+tNumY = 1;
+;

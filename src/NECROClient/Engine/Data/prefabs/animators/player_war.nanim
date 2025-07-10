@@ -1,0 +1,9 @@
+animatorName = player_war_anim;
+default = idle; // anim.Play(default) is called if not empty
+STATE:("idle", "player_war_idle.png", 75);
+STATE:("run", "player_war_run.png", 75);
+STATE:("aim_stand", "player_war_aim_stand.png", 75);
+STATE:("aim_walk", "player_war_aim_walk.png", 100);
+STATE:("aim_strafe", "player_war_aim_strafe.png", 100);
+ENDSTATES
+;

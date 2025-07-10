@@ -1,0 +1,41 @@
+prefabName = tree01;
+prefabImg = tree.png;
+toRender = 1; # 0 for invisible objects
+static = 0;
+posOffsetX = 0;
+posOffsetY = 0;
+
+hasCollider = 1;
+colliderRectX = 0;
+colliderRectY = 0;
+colliderRectW = 64;
+colliderRectH = 32;
+collOffsetX = 0;
+collOffsetY = 0;
+
+occlCheck = 1;
+occlModX = 50;
+occlModY = 64;
+
+blocksLight = 1;
+blocksLightValue = 15;
+
+emitsLight = 0
+lightPropagationType = 0; // flat
+lightRadius = 14;
+lightIntensity = 3;
+lightDropoffMultiplier = 5;
+lightFarDropoffThreshold = 15; // should always be less than radius
+lightFarDropoffMultiplier = 2.5; // how much to multiply the dropoff after the threshold is reached
+lightR = 4;
+lightG = 4;
+lightB = 4;
+lightAnimated = 0;
+lightMinIntensityDivider = 1.25f;
+lightAnimSpeed = 3.5f;
+
+hasAnimator = 0;
+animFile = tree01.nanim;
+
+interactable = 0;
+;

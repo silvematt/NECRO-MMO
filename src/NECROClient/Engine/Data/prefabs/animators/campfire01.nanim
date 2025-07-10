@@ -1,0 +1,5 @@
+animatorName = campfire01_anim;
+default = idle; // anim.Play(default) is called if not empty
+STATE:("idle", "campfire01.png", 100);
+ENDSTATES
+;

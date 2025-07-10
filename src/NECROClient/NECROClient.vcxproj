@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{d380c53d-7a14-4b09-a5ca-c697535e5302}</ProjectGuid>
+    <RootNamespace>NECROClient</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\NECROClient</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\World;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\UI;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Renderer;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Physics;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Input;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Entity\AI;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Entity;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Console;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Assets;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Engine\Animation;C:\Lib\SDL2_image-2.8.2\include;C:\Lib\SDL2_ttf-2.22.0\include;C:\Lib\SDL2-2.30.1\include;C:\Program Files\OpenSSL-Win64\include;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Client\Online;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROClient\Client;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Lib\SDL2_image-2.8.2\lib\x64;C:\Lib\SDL2_ttf-2.22.0\lib\x64;C:\Lib\SDL2-2.30.1\lib\x64;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\x64\Release\shared.lib;SDL2.lib;SDL2main.lib;SDL2_image.lib;SDL2_ttf.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="Client\NECROClient.cpp" />
+    <ClCompile Include="Client\Online\AuthManager.cpp" />
+    <ClCompile Include="Client\Online\AuthSession.cpp" />
+    <ClCompile Include="Engine\Animation\Animator.cpp" />
+    <ClCompile Include="Engine\Animation\AnimState.cpp" />
+    <ClCompile Include="Engine\Assets\AssetsManager.cpp" />
+    <ClCompile Include="Engine\Assets\Mapfile.cpp" />
+    <ClCompile Include="Engine\Assets\Prefab.cpp" />
+    <ClCompile Include="Engine\Assets\TilesetDef.cpp" />
+    <ClCompile Include="Engine\Console\Cmd.cpp" />
+    <ClCompile Include="Engine\Console\Console.cpp" />
+    <ClCompile Include="Engine\Entity\AI\AI.cpp" />
+    <ClCompile Include="Engine\Entity\AI\AIBehavior.cpp" />
+    <ClCompile Include="Engine\Entity\Entity.cpp" />
+    <ClCompile Include="Engine\Entity\Interactable.cpp" />
+    <ClCompile Include="Engine\Entity\Player.cpp" />
+    <ClCompile Include="Engine\Game.cpp" />
+    <ClCompile Include="Engine\Input\Input.cpp" />
+    <ClCompile Include="Engine\Physics\Collider.cpp" />
+    <ClCompile Include="Engine\Renderer\Camera.cpp" />
+    <ClCompile Include="Engine\Renderer\Light.cpp" />
+    <ClCompile Include="Engine\Renderer\Renderer.cpp" />
+    <ClCompile Include="Engine\Renderer\RenderTarget.cpp" />
+    <ClCompile Include="Engine\UI\InputField.cpp" />
+    <ClCompile Include="Engine\World\Cell.cpp" />
+    <ClCompile Include="Engine\World\World.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Client\NECROClient.h" />
+    <ClInclude Include="Client\Online\AuthManager.h" />
+    <ClInclude Include="Client\Online\AuthSession.h" />
+    <ClInclude Include="Engine\Animation\Animator.h" />
+    <ClInclude Include="Engine\Animation\AnimState.h" />
+    <ClInclude Include="Engine\Assets\AssetsManager.h" />
+    <ClInclude Include="Engine\Assets\Image.h" />
+    <ClInclude Include="Engine\Assets\Mapfile.h" />
+    <ClInclude Include="Engine\Assets\Prefab.h" />
+    <ClInclude Include="Engine\Assets\TilesetDef.h" />
+    <ClInclude Include="Engine\Console\Cmd.h" />
+    <ClInclude Include="Engine\Console\Console.h" />
+    <ClInclude Include="Engine\Entity\AI\AI.h" />
+    <ClInclude Include="Engine\Entity\AI\AIBehavior.h" />
+    <ClInclude Include="Engine\Entity\Entity.h" />
+    <ClInclude Include="Engine\Entity\Interactable.h" />
+    <ClInclude Include="Engine\Entity\Player.h" />
+    <ClInclude Include="Engine\Game.h" />
+    <ClInclude Include="Engine\Input\Input.h" />
+    <ClInclude Include="Engine\Physics\Collider.h" />
+    <ClInclude Include="Engine\Renderer\Camera.h" />
+    <ClInclude Include="Engine\Renderer\Light.h" />
+    <ClInclude Include="Engine\Renderer\Renderer.h" />
+    <ClInclude Include="Engine\Renderer\RenderTarget.h" />
+    <ClInclude Include="Engine\UI\InputField.h" />
+    <ClInclude Include="Engine\Utility\NMath.h" />
+    <ClInclude Include="Engine\Utility\ClientUtility.h" />
+    <ClInclude Include="Engine\Utility\Vector2.h" />
+    <ClInclude Include="Engine\World\Cell.h" />
+    <ClInclude Include="Engine\World\World.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

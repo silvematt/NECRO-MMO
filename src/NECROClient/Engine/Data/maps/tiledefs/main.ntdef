@@ -1,0 +1,26 @@
+name = tdefMain;
+src = 64_32_desert.png;
+# Per-Tile data: ID, ZOffset, CollEnabled, CollOffsetX, ColOffsetY, CollWidth, CollHeight, OcclusionEnabled, OcclOffX, OcclOffY, zCellModifier
+67,  -1, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,  		#portal1
+68,  -1, 0, 0, 0, 0, 0, 0, 0, 0, 0.0, 		#portal2
+83,  -1, 0, 0, 0, 0, 0,	0, 0, 0, 0.0,  		#portal3
+84,  -1, 0, 0, 0, 0, 0, 0, 0, 0, 0.0,   	#portal4
+166, -2, 1, 0, 0, 64, 32, 0, 0, 0, 0.0		#bridge_1
+211, -2, 1, 0, 0, 64, 32, 0, 0, 0, 0.0,  	#bridge_2
+51,	  0, 1, 0, 0, 64, 32, 0, 0, 0, 0.0, 	#water_1
+241,  0, 1, 0, 0, 64, 32, 1, 50, 64, 0.0,	#tree_7
+104,  0, 1, 0, 0, 64, 32, 0, 0, 0, 0.0,		#log_with_anvil
+242,  0, 1, 0, 0, 64, 32, 1, 0, 0, 0.0,		#wall_1
+300,  0, 0, 0, 0, 0, 0, 0, 0, 0, 300.0,		#stair_left, allows to get the entity that goes on on layer 3
+301,  0, 0, 0, 0, 0, 0, 0, 0, 0, 100.0,		#stair_left_DOWN, puts the entity that goes on on layer 1, needs to be put right before the stairs
+END
+src = 64_64_desert.png;
+END
+src = Tree_7.png;
+END
+src = TileObjectsRubbleWalls.png;
+END
+src = dungeon_stairs.png;
+END
+ENDTILESETS
+;

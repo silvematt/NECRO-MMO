@@ -1,0 +1,44 @@
+prefabName = campfire01;
+prefabImg = campfire01.png;
+toRender = 1; # 0 for invisible objects
+static = 0;
+posOffsetX = 16;
+posOffsetY = 0;
+
+hasCollider = 1;
+colliderRectX = 0;
+colliderRectY = 0;
+colliderRectW = 40;
+colliderRectH = 24;
+collOffsetX = 5;
+collOffsetY = 0;
+
+occlCheck = 0;
+occlModX = 0;
+occlModY = 0;
+
+blocksLight = 0;
+blocksLightValue = 0;
+
+emitsLight = 1;
+lightPropagationType = 1; // raycast
+lightRadius = 16;
+lightIntensity = 10;
+lightDropoffMultiplier = 10; // how much reduction of light there is for cells that are far from the source
+lightFarDropoffThreshold = 10; // the dropoff distance (in cells) from which the lightFarDropoffMultiplier is applied on top of the base dropoff
+lightFarDropoffMultiplier = 1.25;
+lightR = 255;
+lightG = 50;
+lightB = 50;
+lightAnimated = 1;
+lightMinIntensityDivider = 1.25;
+lightAnimSpeed = 3.5;
+
+hasAnimator = 1;
+animFile = campfire01.nanim;
+
+interactable = 1;
+interactableGridDistance = 1;
+INTERACT_ACTION:(1, "NULL", 0.0, 0.0); // Type, parStr, parFloat1, parFloat2
+ENDINTERACTABLES
+;
