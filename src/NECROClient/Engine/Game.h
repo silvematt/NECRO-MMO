@@ -15,14 +15,14 @@ namespace Client
 	// For now GameMode refers to the modes in which we can place objects (edit) or 
 	// interact with things (play) 
 	//-------------------------------------------------------------------------------------
-	enum GameMode
+	enum class GameMode
 	{
 		EDIT_MODE = 0,
 		PLAY_MODE
 	};
 	extern std::string GameModeMap[];
 
-	enum IsoDirection
+	enum class IsoDirection
 	{
 		WEST = 0,
 		NORTH_WEST,

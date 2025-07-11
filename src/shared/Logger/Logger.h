@@ -15,7 +15,7 @@ namespace NECRO
     class Logger
     {
     public:
-        enum LogLevel
+        enum class LogLevel
         {
             LOG_LEVEL_INFO = 0,
             LOG_LEVEL_DEBUG,

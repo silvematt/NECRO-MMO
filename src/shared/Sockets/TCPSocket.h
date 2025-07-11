@@ -31,7 +31,7 @@ namespace NECRO
 
 	const int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
 
-	enum SocketAddressesFamily
+	enum class SocketAddressesFamily
 	{
 		INET = AF_INET,
 		INET6 = AF_INET6

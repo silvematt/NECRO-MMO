@@ -15,7 +15,7 @@ namespace Client
 	class AI : public Entity
 	{
 	public:
-		enum AIStates
+		enum class AIStates
 		{
 			IDLE = 0,
 			ROAMING,
@@ -31,7 +31,7 @@ namespace Client
 	private:
 		std::string name;
 
-		AIStates state = IDLE;
+		AIStates state = AIStates::IDLE;
 		std::vector<void (*)(AI* owner)> behaviorsPtrs;	// Behavior routines of the AI for each state
 
 		float baseSpeed = 2.5f;

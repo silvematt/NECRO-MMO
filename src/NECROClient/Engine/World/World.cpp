@@ -27,7 +27,7 @@ namespace Client
 		p->zPos = 100.01f; // Player Z placement is controlled by zPos, while for static entities (map-defined) we use layers
 		p->SetLayer(0);
 		p->Init();
-		p->SetFlag(Entity::Flags::Dynamic);
+		p->SetFlag(Entity::Flags::FDynamic);
 		Player::ENT_ID = p->GetID();
 		engine.GetGame().SetCurPlayer(p.get());
 		AddEntity(std::move(p));
@@ -41,7 +41,7 @@ namespace Client
 		ai->zPos = 100.01f;
 		ai->SetLayer(0);
 		ai->Init();
-		ai->SetFlag(Entity::Flags::Dynamic);
+		ai->SetFlag(Entity::Flags::FDynamic);
 		AddEntity(std::move(ai));
 
 		for (int x = 0; x < WORLD_WIDTH; x++)
@@ -117,7 +117,7 @@ namespace Client
 	void World::Draw()
 	{
 		// Draw the debug-related world sprites and add all the entities that needs to be drawn to the camera list
-		engine.GetRenderer().SetRenderTarget(Renderer::DEBUG_TARGET);
+		engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
 		engine.GetRenderer().SetScale(curCamera->GetZoom(), curCamera->GetZoom()); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 
 		// Draw interact cursor before the actual entity
@@ -232,7 +232,7 @@ namespace Client
 	{
 		Renderer& renderer = engine.GetRenderer();
 		// Draw the UI on the overlay target
-		renderer.SetRenderTarget(Renderer::ERenderTargets::OVERLAY_TARGET);
+		renderer.SetRenderTarget(Renderer::ETargets::OVERLAY_TARGET);
 
 		// Draw text
 
@@ -247,7 +247,7 @@ namespace Client
 		renderer.DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), textSelCell.c_str(), 10, 50, colorRed);
 
 		// Draw current mode
-		std::string textCurrentMode = "Mode: " + GameModeMap[engine.GetGame().GetCurMode()];
+		std::string textCurrentMode = "Mode: " + GameModeMap[static_cast<int>(engine.GetGame().GetCurMode())];
 		renderer.DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), textCurrentMode.c_str(), SCREEN_WIDTH - 300, 10, colorRed);
 
 		// Draw player Z layer

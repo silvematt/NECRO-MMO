@@ -26,9 +26,9 @@ namespace Client
 	class Renderer
 	{
 	public:
-		enum ERenderTargets
+		enum class ETargets
 		{
-			MAIN_TARGET,
+			MAIN_TARGET = 0,
 			OVERLAY_TARGET,
 			DEBUG_TARGET
 		};
@@ -44,7 +44,7 @@ namespace Client
 		RenderTarget	debugTarget;
 
 		RenderTarget* curTarget;
-		ERenderTargets	curERenTarget; // current enum value
+		ETargets	curERenTarget; // current enum value
 
 		bool			exportThisFrame = false; // if true, in the next renderer.Update render targets and final image will be exported as .png
 		void			SaveTexture(const char* file_name, SDL_Renderer* renderer, SDL_Texture* texture);
@@ -55,7 +55,7 @@ namespace Client
 		SDL_Renderer* const	GetInnerRenderer() const;
 		int						GetWidth();
 		int						GetHeight();
-		ERenderTargets			GetCurrentERenderTargetVal();
+		ETargets			GetCurrentERenderTargetVal();
 
 		int						Init();
 		int						Shutdown();
@@ -63,7 +63,7 @@ namespace Client
 		void					Update();
 		void					Clear();
 
-		void					SetRenderTarget(ERenderTargets trg);
+		void					SetRenderTarget(ETargets trg);
 
 		void					DrawImageDirectly(SDL_Texture* toDraw, const SDL_Rect* srcRect, const SDL_Rect* dstRect);
 		void					DrawTextDirectly(TTF_Font* font, const char* str, int screenX, int screenY, const SDL_Color& color);
@@ -107,7 +107,7 @@ namespace Client
 		return SCREEN_HEIGHT;
 	}
 
-	inline Renderer::ERenderTargets Renderer::GetCurrentERenderTargetVal()
+	inline Renderer::ETargets Renderer::GetCurrentERenderTargetVal()
 	{
 		return curERenTarget;
 	}

@@ -116,7 +116,7 @@ namespace Client
 			CalculateIsoDirectionWhileAiming();
 
 		// Select tile from tileset (used for rendering)
-		tilesetYOff = isoDirection;		// pick y offset in base of direction
+		tilesetYOff = static_cast<int>(isoDirection);		// pick y offset in base of direction
 
 		/*
 		* WASD NON-ISOMETRIC ALLIGNED MOVEMENT

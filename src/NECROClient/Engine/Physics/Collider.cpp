@@ -41,7 +41,7 @@ namespace Client
 		auto previousTarget = engine.GetRenderer().GetCurrentERenderTargetVal();
 
 		// Set debug target, update scale in base of the main camera zoom
-		engine.GetRenderer().SetRenderTarget(Renderer::ERenderTargets::DEBUG_TARGET);
+		engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
 		float zoomLevel = engine.GetGame().GetMainCamera()->GetZoom();
 		engine.GetRenderer().SetScale(zoomLevel, zoomLevel); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 

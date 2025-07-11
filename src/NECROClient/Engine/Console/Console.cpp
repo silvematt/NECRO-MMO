@@ -159,7 +159,7 @@ namespace Client
 	//-------------------------------------------------------
 	void Console::Draw()
 	{
-		engine.GetRenderer().SetRenderTarget(Renderer::DEBUG_TARGET);
+		engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
 		inputField.Draw();
 
 		int count = 1;

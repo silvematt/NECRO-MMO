@@ -23,7 +23,7 @@ namespace Client
 	class Light
 	{
 	public:
-		enum PropagationSetting
+		enum class PropagationSetting
 		{
 			Flat = 0,
 			Raycast = 1

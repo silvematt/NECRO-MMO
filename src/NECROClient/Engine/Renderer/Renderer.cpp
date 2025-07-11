@@ -46,7 +46,7 @@ namespace Client
 		overlayTarget.Create(innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 		debugTarget.Create(innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-		SetRenderTarget(ERenderTargets::MAIN_TARGET);
+		SetRenderTarget(ETargets::MAIN_TARGET);
 
 		exportThisFrame = false;
 
@@ -85,7 +85,7 @@ namespace Client
 			ExportTargetsSeparate();
 
 		// Actual Renderer::Update
-		SetRenderTarget(MAIN_TARGET);
+		SetRenderTarget(ETargets::MAIN_TARGET);
 
 		// Copy the other targets on the (default) mainTarget
 		SDL_RenderCopy(innerRenderer, overlayTarget.GetTargetTexture(), NULL, NULL);
@@ -212,21 +212,21 @@ namespace Client
 	//------------------------------------------------
 	// Sets the Render target of the innerRenderer
 	//------------------------------------------------
-	void Renderer::SetRenderTarget(ERenderTargets trg)
+	void Renderer::SetRenderTarget(ETargets trg)
 	{
 		switch (trg)
 		{
-		case ERenderTargets::MAIN_TARGET:
+		case ETargets::MAIN_TARGET:
 			curTarget = &mainTarget;
 			SDL_SetRenderTarget(innerRenderer, mainTarget.GetTargetTexture());
 			break;
 
-		case ERenderTargets::OVERLAY_TARGET:
+		case ETargets::OVERLAY_TARGET:
 			curTarget = &overlayTarget;
 			SDL_SetRenderTarget(innerRenderer, overlayTarget.GetTargetTexture());
 			break;
 
-		case ERenderTargets::DEBUG_TARGET:
+		case ETargets::DEBUG_TARGET:
 			curTarget = &debugTarget;
 			SDL_SetRenderTarget(innerRenderer, debugTarget.GetTargetTexture());
 			break;

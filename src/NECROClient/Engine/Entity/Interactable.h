@@ -17,7 +17,7 @@ namespace Client
 	{
 	public:
 		// All types of actions that can be performed when an Entity is being interacted with
-		enum InteractType
+		enum class InteractType
 		{
 			DESTROY = 0,
 			TOGGLE_LIGHT,

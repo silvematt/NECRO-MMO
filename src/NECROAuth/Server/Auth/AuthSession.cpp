@@ -118,7 +118,7 @@ namespace Auth
 
         // Check the DB, see if user exists
         LoginDatabase& db = server.GetDirectDB();
-        mysqlx::SqlStatement s = db.Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
+        mysqlx::SqlStatement s = db.Prepare(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME));
         s.bind(login);
 
         /*
@@ -194,7 +194,7 @@ namespace Auth
 
         // Check the DB, see if password is correct
         LoginDatabase& db = server.GetDirectDB();
-        mysqlx::SqlStatement dStmt1 = db.Prepare(LoginDatabaseStatements::LOGIN_CHECK_PASSWORD);
+        mysqlx::SqlStatement dStmt1 = db.Prepare(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD));
         dStmt1.bind(data.accountID);
         mysqlx::SqlResult res = db.Execute(dStmt1);
 
@@ -211,7 +211,7 @@ namespace Auth
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
-                mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_LOG_WRONG_PASSWORD);
+                mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD));
                 s.bind(this->GetRemoteAddressAndPort());
                 s.bind(data.username);
                 s.bind("WRONG_PASSWORD");
@@ -261,14 +261,14 @@ namespace Auth
             // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
             // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
             {
-                mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_DEL_PREV_SESSIONS);
+                mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS));
                 s.bind(data.accountID);
                 dbWorker.Enqueue(std::move(s));
             }
 
             // Do an async insert on the DB worker to create a new active_session
             {
-                mysqlx::SqlStatement s = dbWorker.Prepare(LoginDatabaseStatements::LOGIN_INS_NEW_SESSION);
+                mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION));
                 s.bind(data.accountID);
                 s.bind(mysqlx::bytes(data.sessionKey.data(), data.sessionKey.size()));
                 s.bind(this->GetRemoteAddress());

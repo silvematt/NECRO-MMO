@@ -11,7 +11,7 @@ namespace NECRO
 	class Database
 	{
 	public:
-		enum DBType
+		enum class DBType
 		{
 			LOGIN_DATABASE = 0
 		};

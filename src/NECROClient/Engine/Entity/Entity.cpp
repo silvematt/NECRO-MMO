@@ -226,7 +226,7 @@ namespace Client
 				{
 					// Set debug target
 					auto previousTarget = engine.GetRenderer().GetCurrentERenderTargetVal();
-					engine.GetRenderer().SetRenderTarget(Renderer::ERenderTargets::DEBUG_TARGET);
+					engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
 
 					// Adjust for zoom
 					float zoomLevel = engine.GetGame().GetMainCamera()->GetZoom();
@@ -258,7 +258,7 @@ namespace Client
 				{
 					// Set debug target
 					auto previousTarget = engine.GetRenderer().GetCurrentERenderTargetVal();
-					engine.GetRenderer().SetRenderTarget(Renderer::ERenderTargets::DEBUG_TARGET);
+					engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
 
 					// Adjust for zoom
 					float zoomLevel = engine.GetGame().GetMainCamera()->GetZoom();

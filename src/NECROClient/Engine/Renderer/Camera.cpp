@@ -180,7 +180,7 @@ namespace Client
 
 	void Camera::RenderVisibleEntities()
 	{
-		engine.GetRenderer().SetRenderTarget(Renderer::MAIN_TARGET);
+		engine.GetRenderer().SetRenderTarget(Renderer::ETargets::MAIN_TARGET);
 
 		// Render the static entities
 		RenderVisibleStaticEntities();

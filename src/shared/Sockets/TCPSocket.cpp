@@ -22,7 +22,7 @@ namespace NECRO
 		usesTLS = false;
 		closed = false;
 
-		m_socket = socket(family, SOCK_STREAM, IPPROTO_TCP);
+		m_socket = socket(static_cast<int>(family), SOCK_STREAM, IPPROTO_TCP);
 
 		if (m_socket == INVALID_SOCKET)
 		{
