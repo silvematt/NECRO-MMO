@@ -19,8 +19,8 @@ namespace Client
         std::unordered_map<uint8_t, AuthHandler> handlers;
 
         // fill
-        handlers[NECRO::Auth::PCKTID_AUTH_LOGIN_GATHER_INFO] = { AuthStatus::STATUS_GATHER_INFO, sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo) , &HandlePacketAuthLoginGatherInfoResponse };
-        handlers[NECRO::Auth::PCKTID_AUTH_LOGIN_ATTEMPT] = { AuthStatus::STATUS_LOGIN_ATTEMPT, C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse };
+        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO)] = { NECRO::Auth::SocketStatus::GATHER_INFO, sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo) , &HandlePacketAuthLoginGatherInfoResponse };
+        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT)] = {NECRO::Auth::SocketStatus::LOGIN_ATTEMPT, C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse};
 
         return handlers;
     }
@@ -49,8 +49,8 @@ namespace Client
         Packet greetPacket;
         uint8_t usernameLenght = static_cast<uint8_t>(netManager.GetData().username.size());;
 
-        greetPacket << uint8_t(NECRO::Auth::AuthPacketIDs::PCKTID_AUTH_LOGIN_GATHER_INFO);
-        greetPacket << uint8_t(NECRO::Auth::AuthResults::AUTH_SUCCESS);
+        greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
+        greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
         greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
 
         greetPacket << CLIENT_VERSION_MAJOR;
@@ -88,7 +88,7 @@ namespace Client
             // Check if the current cmd matches our state
             if (status != it->second.status)
             {
-                LOG_WARNING("Status mismatch. Status is: '" + std::to_string(status) + "' but should have been '" + std::to_string(it->second.status) + "'. Closing the connection.");
+                LOG_WARNING("Status mismatch. Status is: '" + std::to_string(static_cast<int>(status)) + "' but should have been '" + std::to_string(static_cast<int>(it->second.status)) + "'. Closing the connection.");
 
                 Shutdown();
                 Close();
@@ -101,7 +101,7 @@ namespace Client
                 break;
 
             // If it's a variable-sized packet, we need to ensure size
-            if (cmd == NECRO::Auth::PCKTID_AUTH_LOGIN_ATTEMPT)
+            if (cmd == static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT))
             {
                 NECRO::Auth::CPacketAuthLoginProof* pcktData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginProof*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
@@ -137,11 +137,11 @@ namespace Client
         NECRO::Auth::CPacketAuthLoginGatherInfo* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginGatherInfo*>(inBuffer.GetBasePointer());
         AuthManager& net = engine.GetAuthManager();
 
-        if (pckData->error == NECRO::Auth::AuthResults::AUTH_SUCCESS)
+        if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::SUCCESS))
         {
             // Continue authentication
             c.Log("Gather info succeded...");
-            status = STATUS_LOGIN_ATTEMPT;
+            status = NECRO::Auth::SocketStatus::LOGIN_ATTEMPT;
 
             uint8_t passwordLength = static_cast<uint8_t>(net.GetData().password.size());;
 
@@ -149,8 +149,8 @@ namespace Client
             // Send the random IV prefix so the server can make sure it's not the same as the client
             Packet packet;
 
-            packet << uint8_t(NECRO::Auth::AuthPacketIDs::PCKTID_AUTH_LOGIN_ATTEMPT);
-            packet << uint8_t(NECRO::Auth::LoginProofResults::LOGIN_SUCCESS);
+            packet << uint8_t(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
+            packet << uint8_t(NECRO::Auth::LoginProofResults::SUCCESS);
             packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof) - S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength - 1); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength-1 bytes in order to correctly read this packet
 
             // Randomize and send the prefix
@@ -171,19 +171,19 @@ namespace Client
             //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
 
         }
-        else if (pckData->error == NECRO::Auth::AuthResults::AUTH_FAILED_USERNAME_IN_USE)
+        else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_USERNAME_IN_USE))
         {
             LOG_ERROR("Authentication failed, username is already in use.");
             c.Log("Authentication failed. Username is already in use.");
             return false;
         }
-        else if (pckData->error == NECRO::Auth::AuthResults::AUTH_FAILED_UNKNOWN_ACCOUNT)
+        else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))
         {
             LOG_ERROR("Authentication failed, username does not exist.");
             c.Log("Authentication failed, username does not exist.");
             return false;
         }
-        else if (pckData->error == NECRO::Auth::AuthResults::AUTH_FAILED_WRONG_CLIENT_VERSION)
+        else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_WRONG_CLIENT_VERSION))
         {
             LOG_ERROR("Authentication failed, invalid client version.");
             c.Log("Authentication failed, invalid client version.");
@@ -206,11 +206,11 @@ namespace Client
         Console& c = engine.GetConsole();
         NECRO::Auth::CPacketAuthLoginProof* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginProof*>(inBuffer.GetBasePointer());
 
-        if (pckData->error == NECRO::Auth::LoginProofResults::LOGIN_SUCCESS)
+        if (pckData->error == static_cast<int>(NECRO::Auth::LoginProofResults::SUCCESS))
         {
             // Continue authentication
             c.Log("Authentication succeeded.");
-            status = STATUS_AUTHED;
+            status = NECRO::Auth::SocketStatus::AUTHED;
 
             // Save the session key in the netManager data
             std::copy(std::begin(pckData->sessionKey), std::end(pckData->sessionKey), std::begin(netManager.GetData().sessionKey));

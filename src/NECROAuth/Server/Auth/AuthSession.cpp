@@ -15,8 +15,8 @@ namespace Auth
     {
         std::unordered_map<uint8_t, AuthHandler> handlers;
 
-        handlers[PCKTID_AUTH_LOGIN_GATHER_INFO] = { AuthStatus::STATUS_GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket };
-        handlers[PCKTID_AUTH_LOGIN_ATTEMPT] = { AuthStatus::STATUS_LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket };
+        handlers[static_cast<int>(PacketIDs::LOGIN_GATHER_INFO)] = { SocketStatus::GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket };
+        handlers[static_cast<int>(PacketIDs::LOGIN_ATTEMPT)] = { SocketStatus::LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket };
 
         return handlers;
     }
@@ -44,7 +44,7 @@ namespace Auth
             // Check if the current cmd matches our state
             if (status != it->second.status)
             {
-                LOG_WARNING("Status mismatch for user: " + data.username + ". Status is: '" + std::to_string(status) + "' but should have been '" + std::to_string(it->second.status) + "'. Closing the connection.");
+                LOG_WARNING("Status mismatch for user: " + data.username + ". Status is: '" + std::to_string(static_cast<int>(status)) + "' but should have been '" + std::to_string(static_cast<int>(it->second.status)) + "'. Closing the connection.");
 
                 Shutdown();
                 Close();
@@ -57,7 +57,7 @@ namespace Auth
                 break;
 
             // If it's a variable-sized packet, we need to ensure size
-            if (cmd == PCKTID_AUTH_LOGIN_GATHER_INFO)
+            if (cmd == static_cast<int>(PacketIDs::LOGIN_GATHER_INFO))
             {
                 SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
@@ -70,7 +70,7 @@ namespace Auth
                     return;
                 }
             }
-            else if (cmd == PCKTID_AUTH_LOGIN_ATTEMPT)
+            else if (cmd == static_cast<int>(PacketIDs::LOGIN_ATTEMPT))
             {
                 SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
@@ -114,7 +114,7 @@ namespace Auth
         // Reply to the client
         Packet packet;
 
-        packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_GATHER_INFO);
+        packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
 
         // Check the DB, see if user exists
         LoginDatabase& db = server.GetDirectDB();
@@ -142,27 +142,27 @@ namespace Auth
         if (!row)
         {
             LOG_INFO("User tried to login with an username that doesn't exist.");
-            packet << uint8_t(AuthResults::AUTH_FAILED_UNKNOWN_ACCOUNT);
+            packet << uint8_t(AuthResults::FAILED_UNKNOWN_ACCOUNT);
         }
         else
         {
             // Check client version with server's client version
             if (pcktData->versionMajor == CLIENT_VERSION_MAJOR && pcktData->versionMinor == CLIENT_VERSION_MINOR && pcktData->versionRevision == CLIENT_VERSION_REVISION)
             {
-                packet << uint8_t(AuthResults::AUTH_SUCCESS);
+                packet << uint8_t(AuthResults::SUCCESS);
 
                 TCPSocketManager::RegisterUsername(login, this);
                 data.username = login;
                 data.accountID = row[0];
                 LOG_INFO("Account " + login + " has DB accountID: " + std::to_string(data.accountID));
-                status = STATUS_LOGIN_ATTEMPT;
+                status = SocketStatus::LOGIN_ATTEMPT;
 
                 // Done, will wait for client's proof packet
             }
             else
             {
                 LOG_INFO("User tried to login with an invalid client version.");
-                packet << uint8_t(AuthResults::AUTH_FAILED_WRONG_CLIENT_VERSION);
+                packet << uint8_t(AuthResults::FAILED_WRONG_CLIENT_VERSION);
             }
         }
 
@@ -190,7 +190,7 @@ namespace Auth
         // Reply to the client
         Packet packet;
 
-        packet << uint8_t(AuthPacketIDs::PCKTID_AUTH_LOGIN_ATTEMPT);
+        packet << uint8_t(PacketIDs::LOGIN_ATTEMPT);
 
         // Check the DB, see if password is correct
         LoginDatabase& db = server.GetDirectDB();
@@ -218,13 +218,13 @@ namespace Auth
                 dbWorker.Enqueue(std::move(s));
             }
 
-            packet << uint8_t(LoginProofResults::LOGIN_FAILED);
+            packet << uint8_t(LoginProofResults::FAILED);
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
         }
         else
         {
             // Continue login
-            packet << uint8_t(LoginProofResults::LOGIN_SUCCESS);
+            packet << uint8_t(LoginProofResults::SUCCESS);
 
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 

@@ -5,34 +5,43 @@ namespace NECRO
 {
 namespace Auth
 {
+    // Status of the sockets during communication
+    enum class SocketStatus
+    {
+        GATHER_INFO = 0,
+        LOGIN_ATTEMPT,
+        AUTHED,
+        CLOSED
+    };
+
     //----------------------------------------------------------------------------------------------------
     // Define packets structures
     //----------------------------------------------------------------------------------------------------
-    enum AuthPacketIDs
+    enum class PacketIDs
     {
-        PCKTID_AUTH_LOGIN_GATHER_INFO = 0x00,
-        PCKTID_AUTH_LOGIN_ATTEMPT = 0x01,
-        PCKTID_AUTH_CONFIRM = 0x02
+        LOGIN_GATHER_INFO = 0x00,
+        LOGIN_ATTEMPT = 0x01,
+        CONFIRM = 0x02
     };
 
     //--------------------------------------------------------------------------------------------
     // Results to send as payload to tell the client what happened as a result of the command 
     //--------------------------------------------------------------------------------------------
-    enum AuthResults
+    enum class AuthResults
     {
-        AUTH_SUCCESS = 0x00,
-        AUTH_FAILED_UNKNOWN_ACCOUNT = 0x01,
-        AUTH_FAILED_ACCOUNT_BANNED = 0x02,
-        AUTH_FAILED_WRONG_PASSWORD = 0x03,
-        AUTH_FAILED_WRONG_CLIENT_VERSION = 0x04,
-        AUTH_FAILED_USERNAME_IN_USE = 0x05		// before we implement database and we'll just have username uniqueness per session
+        SUCCESS = 0x00,
+        FAILED_UNKNOWN_ACCOUNT = 0x01,
+        FAILED_ACCOUNT_BANNED = 0x02,
+        FAILED_WRONG_PASSWORD = 0x03,
+        FAILED_WRONG_CLIENT_VERSION = 0x04,
+        FAILED_USERNAME_IN_USE = 0x05		// before we implement database and we'll just have username uniqueness per session
     };
 
 
-    enum LoginProofResults
+    enum class LoginProofResults
     {
-        LOGIN_SUCCESS = 0x00,
-        LOGIN_FAILED = 0X01
+        SUCCESS = 0x00,
+        FAILED = 0X01
     };
 
 

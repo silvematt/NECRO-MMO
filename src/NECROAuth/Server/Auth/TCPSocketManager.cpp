@@ -118,7 +118,7 @@ namespace Auth
 						LOG_OK("TLSPerformHandshake succeeded!");
 
 						// Initialize status
-						inSock->status = AuthStatus::STATUS_GATHER_INFO;
+						inSock->status = SocketStatus::GATHER_INFO;
 						list.push_back(inSock); // save it in the active list
 
 						// Add the new connection to the pfds
