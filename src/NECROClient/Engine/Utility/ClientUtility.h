@@ -13,118 +13,117 @@ namespace Client
 {
 	#define NECRO_MAX(a,b)            (((a) > (b)) ? (a) : (b))
 
-	class ClientUtility
+namespace ClientUtility
+{
+	template <typename T>
+	inline void RemoveFromVector(std::vector<T>& vec, size_t pos)
 	{
-	public:
-		template <typename T>
-		inline static void RemoveFromVector(std::vector<T>& vec, size_t pos)
+		vec.erase(vec.begin() + pos);
+	}
+
+	inline float Clampf(float d, float min, float max)
+	{
+		const float t = d < min ? min : d;
+		return t > max ? max : t;
+	}
+
+	inline float RandomFloat(float min, float max)
+	{
+		return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min)));
+	}
+
+	inline int TryParseInt(const std::string& str)
+	{
+		int i = 0;
+
+		try
 		{
-			vec.erase(vec.begin() + pos);
+			i = std::stoi(str);
+		}
+		catch (...)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Tried to parse '%s' as INT, but the conversion failed.\n", str.c_str());
+			return 0;
 		}
 
-		inline static float Clampf(float d, float min, float max)
+		return i;
+	}
+
+	inline float TryParseFloat(const std::string& str)
+	{
+		float f = 0.0f;
+
+		try
 		{
-			const float t = d < min ? min : d;
-			return t > max ? max : t;
+			f = std::stof(str);
+		}
+		catch (...)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Tried to parse '%s' as FLOAT, but the conversion failed.\n", str.c_str());
+			return 0;
 		}
 
-		inline static float RandomFloat(float min, float max)
+		return f;
+	}
+
+	inline void RemoveSpacesAndTabsFromString(std::string& str)
+	{
+		str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
+		str.erase(std::remove(str.begin(), str.end(), '\t'), str.end());
+	}
+
+	inline bool IsWhitespaceString(const std::string& str)
+	{
+		for (char c : str)
 		{
-			return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min)));
+			if (!std::isspace(c))
+				return false;
 		}
 
-		inline static int TryParseInt(const std::string& str)
-		{
-			int i = 0;
+		return true;
+	}
 
-			try
+	inline bool IsCommentLine(const std::string& str)
+	{
+		bool firstCharacterFound = false;
+		for (char c : str)
+		{
+			if (!std::isspace(c))
 			{
-				i = std::stoi(str);
-			}
-			catch (...)
-			{
-				SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Tried to parse '%s' as INT, but the conversion failed.\n", str.c_str());
-				return 0;
-			}
-
-			return i;
-		}
-
-		inline static float TryParseFloat(const std::string& str)
-		{
-			float f = 0.0f;
-
-			try
-			{
-				f = std::stof(str);
-			}
-			catch (...)
-			{
-				SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Tried to parse '%s' as FLOAT, but the conversion failed.\n", str.c_str());
-				return 0;
-			}
-
-			return f;
-		}
-
-		inline static void RemoveSpacesAndTabsFromString(std::string& str)
-		{
-			str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
-			str.erase(std::remove(str.begin(), str.end(), '\t'), str.end());
-		}
-
-		inline static bool IsWhitespaceString(const std::string& str)
-		{
-			for (char c : str)
-			{
-				if (!std::isspace(c))
+				if (c == '#')
+					return true;
+				else
 					return false;
 			}
-
-			return true;
 		}
 
-		inline static bool IsCommentLine(const std::string& str)
-		{
-			bool firstCharacterFound = false;
-			for (char c : str)
-			{
-				if (!std::isspace(c))
-				{
-					if (c == '#')
-						return true;
-					else
-						return false;
-				}
-			}
+		return false;
+	}
 
-			return false;
-		}
+	inline std::tm localtime_xp(std::time_t timer)
+	{
+		std::tm bt{};
+		#if defined(__unix__)
+		localtime_r(&timer, &bt);
+		#elif defined(_MSC_VER)
+		localtime_s(&bt, &timer);
+		#else
+		static std::mutex mtx;
+		std::lock_guard<std::mutex> lock(mtx);
+		bt = *std::localtime(&timer);
+		#endif
+		return bt;
+	}
 
-		inline static std::tm localtime_xp(std::time_t timer)
-		{
-			std::tm bt{};
-			#if defined(__unix__)
-			localtime_r(&timer, &bt);
-			#elif defined(_MSC_VER)
-			localtime_s(&bt, &timer);
-			#else
-			static std::mutex mtx;
-			std::lock_guard<std::mutex> lock(mtx);
-			bt = *std::localtime(&timer);
-			#endif
-			return bt;
-		}
+	// "YYYY-MM-DD HH:MM:SS"
+	inline std::string time_stamp(const std::string& fmt = "%F %T")
+	{
+		auto bt = localtime_xp(std::time(0));
+		char buf[64];
+		return { buf, std::strftime(buf, sizeof(buf), fmt.c_str(), &bt) };
+	}
 
-		// "YYYY-MM-DD HH:MM:SS"
-		inline static std::string time_stamp(const std::string& fmt = "%F %T")
-		{
-			auto bt = localtime_xp(std::time(0));
-			char buf[64];
-			return { buf, std::strftime(buf, sizeof(buf), fmt.c_str(), &bt) };
-		}
-	};
-
+}
 }
 }
 
