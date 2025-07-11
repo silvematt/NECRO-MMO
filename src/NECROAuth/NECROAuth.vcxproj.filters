@@ -15,7 +15,7 @@
     <ClCompile Include="main.cpp">
       <Filter>NECROAuth</Filter>
     </ClCompile>
-    <ClCompile Include="Server\NECROAuth.cpp">
+    <ClCompile Include="Server\NECROServer.cpp">
       <Filter>NECROAuth\Server</Filter>
     </ClCompile>
     <ClCompile Include="Server\Auth\AuthSession.cpp">
@@ -26,7 +26,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Server\NECROAuth.h">
+    <ClInclude Include="Server\NECROServer.h">
       <Filter>NECROAuth\Server</Filter>
     </ClInclude>
     <ClInclude Include="Server\Auth\AuthSession.h">

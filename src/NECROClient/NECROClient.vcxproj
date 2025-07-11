@@ -133,7 +133,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Client\NECROClient.cpp" />
     <ClCompile Include="Client\Online\AuthManager.cpp" />
     <ClCompile Include="Client\Online\AuthSession.cpp" />
     <ClCompile Include="Engine\Animation\Animator.cpp" />
@@ -151,6 +150,7 @@
     <ClCompile Include="Engine\Entity\Player.cpp" />
     <ClCompile Include="Engine\Game.cpp" />
     <ClCompile Include="Engine\Input\Input.cpp" />
+    <ClCompile Include="Engine\NECROEngine.cpp" />
     <ClCompile Include="Engine\Physics\Collider.cpp" />
     <ClCompile Include="Engine\Renderer\Camera.cpp" />
     <ClCompile Include="Engine\Renderer\Light.cpp" />
@@ -162,7 +162,6 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Client\NECROClient.h" />
     <ClInclude Include="Client\Online\AuthManager.h" />
     <ClInclude Include="Client\Online\AuthSession.h" />
     <ClInclude Include="Engine\Animation\Animator.h" />
@@ -181,6 +180,7 @@
     <ClInclude Include="Engine\Entity\Player.h" />
     <ClInclude Include="Engine\Game.h" />
     <ClInclude Include="Engine\Input\Input.h" />
+    <ClInclude Include="Engine\NECROEngine.h" />
     <ClInclude Include="Engine\Physics\Collider.h" />
     <ClInclude Include="Engine\Renderer\Camera.h" />
     <ClInclude Include="Engine\Renderer\Light.h" />

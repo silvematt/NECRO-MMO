@@ -7,77 +7,85 @@
 #include "SDL.h"
 #include "Entity.h"
 
-// Structs to group array-based Prefabs data, like Interactables
-struct InteractableData
+
+namespace NECRO
 {
-	int interactType;
-	std::string parStr;
-	float parFloat1;
-	float parFloat2;
-};
-
-class Prefab
+namespace Client
 {
-private:
-	std::string pName;
-	std::string pImgFile;
-	bool toRender;
-	bool isStatic;
-	Vector2 posOffset; // position offset when instantiated in a cell
+	// Structs to group array-based Prefabs data, like Interactables
+	struct InteractableData
+	{
+		int interactType;
+		std::string parStr;
+		float parFloat1;
+		float parFloat2;
+	};
 
-	bool hasCollider;
-	SDL_Rect collRect;
-	int collOffsetX;
-	int collOffsetY;
+	class Prefab
+	{
+	private:
+		std::string pName;
+		std::string pImgFile;
+		bool toRender;
+		bool isStatic;
+		Vector2 posOffset; // position offset when instantiated in a cell
 
-	bool occlCheck;
-	int occlModX;
-	int occlModY;
+		bool hasCollider;
+		SDL_Rect collRect;
+		int collOffsetX;
+		int collOffsetY;
 
-	bool blocksLight;
-	float blocksLightValue;
+		bool occlCheck;
+		int occlModX;
+		int occlModY;
 
-	bool emitsLight;
-	int lightPropagationType; // flat, raycast, etc
-	float lightRadius;
-	float lightIntensity;
-	float lightDropoffMultiplier; // how much reduction of light there is for cells that are far from the source
-	float lightFarDropoffThreshold; // the dropoff distance (in cells) from which the lightFarDropoffMultiplier is applied on top of the base dropoff
-	float lightFarDropoffMultiplier;
-	int lightR;
-	int lightG;
-	int lightB;
-	bool lightAnimated;
-	float lightMinIntensityDivider;
-	float lightAnimSpeed;
+		bool blocksLight;
+		float blocksLightValue;
 
-	bool hasAnimator;
-	std::string animFile;
+		bool emitsLight;
+		int lightPropagationType; // flat, raycast, etc
+		float lightRadius;
+		float lightIntensity;
+		float lightDropoffMultiplier; // how much reduction of light there is for cells that are far from the source
+		float lightFarDropoffThreshold; // the dropoff distance (in cells) from which the lightFarDropoffMultiplier is applied on top of the base dropoff
+		float lightFarDropoffMultiplier;
+		int lightR;
+		int lightG;
+		int lightB;
+		bool lightAnimated;
+		float lightMinIntensityDivider;
+		float lightAnimSpeed;
 
-	bool interactable;
-	int gridDistanceInteraction;
-	std::vector<InteractableData> interactablesData;
+		bool hasAnimator;
+		std::string animFile;
 
-private:
-	// Methods to read lines from Prefab file
-	void		GetIntFromFile(int* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
-	void		GetBoolFromFile(bool* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
-	void		GetFloatFromFile(float* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
-	void		GetStringFromFile(std::string* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
+		bool interactable;
+		int gridDistanceInteraction;
+		std::vector<InteractableData> interactablesData;
 
-public:
-	bool		LoadFromFile(const std::string& filename);
-	void		Log();
+	private:
+		// Methods to read lines from Prefab file
+		void		GetIntFromFile(int* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
+		void		GetBoolFromFile(bool* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
+		void		GetFloatFromFile(float* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
+		void		GetStringFromFile(std::string* v, std::ifstream* stream, std::string* curLine, std::string* curValStr);
+
+	public:
+		bool		LoadFromFile(const std::string& filename);
+		void		Log();
 
 
-	std::string GetName();
+		std::string GetName();
 
-	static std::unique_ptr<Entity> InstantiatePrefab(const std::string& prefabName, Vector2 pos);
-};
+		static std::unique_ptr<Entity> InstantiatePrefab(const std::string& prefabName, Vector2 pos);
+	};
 
-inline std::string Prefab::GetName()
-{
-	return pName;
+	inline std::string Prefab::GetName()
+	{
+		return pName;
+	}
+
+}
 }
 
 #endif

@@ -4,33 +4,40 @@
 #include <string>
 #include "Image.h"
 
-//-------------------------------------------------
-// A single state inside an Animator
-//-------------------------------------------------
-class AnimState
+namespace NECRO
 {
-public:
-	AnimState(std::string pName, Image* pImg, float pSpeed);
-
-private:
-	std::string name;
-	Image* img;
-
-	float speed = 75;
-
-public:
-	Image* GetImg() const;
-	float	GetSpeed() const;
-};
-
-inline Image* AnimState::GetImg() const
+namespace Client
 {
-	return img;
+	//-------------------------------------------------
+	// A single state inside an Animator
+	//-------------------------------------------------
+	class AnimState
+	{
+	public:
+		AnimState(std::string pName, Image* pImg, float pSpeed);
+
+	private:
+		std::string name;
+		Image* img;
+
+		float speed = 75;
+
+	public:
+		Image* GetImg() const;
+		float	GetSpeed() const;
+	};
+
+	inline Image* AnimState::GetImg() const
+	{
+		return img;
+	}
+
+	inline float AnimState::GetSpeed() const
+	{
+		return speed;
+	}
+
 }
-
-inline float AnimState::GetSpeed() const
-{
-	return speed;
 }
 
 #endif

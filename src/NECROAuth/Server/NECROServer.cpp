@@ -1,4 +1,4 @@
-#include "NECROAuth.h"
+#include "NECROServer.h"
 
 #include "SocketUtility.h"
 #include "OpenSSLManager.h"
@@ -24,82 +24,88 @@
 // packets that are destinated to them.
 // -------------------------------------------------------------------------------------------------------------------------------------------------
 
-NECROAuth server;
-
-int NECROAuth::Init()
+namespace NECRO
 {
-	isRunning = false;
+namespace Auth
+{
+	Server server;
 
-	LOG_OK("Booting up NECROAuth...");
-
-	SocketUtility::Initialize();
-	
-	if (OpenSSLManager::ServerInit() != 0)
-		return -1;
-
-	if (directdb.Init() != 0)
+	int Server::Init()
 	{
-		LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
-		return -2;
+		isRunning = false;
+
+		LOG_OK("Booting up NECROAuth...");
+
+		SocketUtility::Initialize();
+
+		if (OpenSSLManager::ServerInit() != 0)
+			return -1;
+
+		if (directdb.Init() != 0)
+		{
+			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
+			return -2;
+		}
+
+		if (dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
+		{
+			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
+			return -3;
+		}
+
+		if (dbworker.Start() != 0)
+		{
+			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+			return -4;
+		}
+
+		// Make TCPSocketManager
+		sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
+
+		return 0;
 	}
 
-	if (dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
+	void Server::Start()
 	{
-		LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
-		return -3;
+		isRunning = true;
+
+		LOG_OK("NECROAuth is running...");
 	}
 
-	if (dbworker.Start() != 0)
+	void Server::Update()
 	{
-		LOG_ERROR("Could not start dbworker, MySQL may be not running.");
-		return -4;
+		// Server Loop
+		while (isRunning)
+		{
+			int pollVal = sockManager->Poll();
+
+			if (pollVal == -1)
+				Stop();
+		}
+
+		Shutdown();
 	}
 
-	// Make TCPSocketManager
-	sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
-
-	return 0;
-}
-
-void NECROAuth::Start()
-{
-	isRunning = true;
-
-	LOG_OK("NECROAuth is running...");
-}
-
-void NECROAuth::Update()
-{
-	// Server Loop
-	while (isRunning)
+	void Server::Stop()
 	{
-		int pollVal = sockManager->Poll();
+		LOG_OK("Stopping NECROAuth...");
 
-		if (pollVal == -1)
-			Stop();
+		isRunning = false;
 	}
 
-	Shutdown();
+	int Server::Shutdown()
+	{
+		// Shutdown
+		LOG_OK("Shutting down NECROAuth...");
+
+		directdb.Close();
+
+		dbworker.Stop();
+		dbworker.Join();
+		dbworker.CloseDB();
+
+		LOG_OK("Shut down of the NECROAuth completed.");
+		return 0;
+	}
 }
-
-void NECROAuth::Stop()
-{
-	LOG_OK("Stopping NECROAuth...");
-
-	isRunning = false;
-}
-
-int NECROAuth::Shutdown()
-{
-	// Shutdown
-	LOG_OK("Shutting down NECROAuth...");
-
-	directdb.Close();
-
-	dbworker.Stop();
-	dbworker.Join();
-	dbworker.CloseDB();
-
-	LOG_OK("Shut down of the NECROAuth completed.");
-	return 0;
 }

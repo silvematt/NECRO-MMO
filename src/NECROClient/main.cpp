@@ -2,7 +2,7 @@
 #include <iostream>
 
 // Include NECRO
-#include "NECROClient.h"
+#include "NECROEngine.h"
 
 // Undefine SDL_main
 #undef main
@@ -11,11 +11,10 @@ int main()
 {
     SDL_Log("Booting up NECROClient...");
 
-    if (engine.Init() == 0)
+    if (NECRO::Client::engine.Init() == 0)
     {
-        engine.Start();
-
-        engine.Update();
+        NECRO::Client::engine.Start();
+        NECRO::Client::engine.Update();
     }
 
     SDL_Log("Exting application.");

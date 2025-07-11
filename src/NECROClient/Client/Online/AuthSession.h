@@ -4,46 +4,52 @@
 #include "TCPSocket.h"
 #include <unordered_map>
 
-// Status of the current socket
-enum AuthStatus
+namespace NECRO
 {
-    STATUS_GATHER_INFO = 0,
-    STATUS_LOGIN_ATTEMPT,
-    STATUS_AUTHED,
-    STATUS_CLOSED
-};
-
-class AuthSession;
-#pragma pack(push, 1)
-
-struct AuthHandler
+namespace Client
 {
-    AuthStatus status;
-    size_t packetSize;
-    bool (AuthSession::* handler)();
-};
+    // Status of the current socket
+    enum AuthStatus
+    {
+        STATUS_GATHER_INFO = 0,
+        STATUS_LOGIN_ATTEMPT,
+        STATUS_AUTHED,
+        STATUS_CLOSED
+    };
 
-#pragma pack(pop)
+    class AuthSession;
 
-//----------------------------------------------------------------------------------------------------
-// AuthSession is the extension of the base TCPSocket class, that defines the methods and
-// functionality that defines the exchange of messages with the connected server
-//----------------------------------------------------------------------------------------------------
-class AuthSession : public TCPSocket
-{
-public:
-    AuthSession(SocketAddressesFamily fam) : TCPSocket(fam), status(STATUS_GATHER_INFO) {}
-    AuthSession(sock_t socket) : TCPSocket(socket), status(STATUS_GATHER_INFO) {}
-    AuthStatus status;
+    #pragma pack(push, 1)
+    struct AuthHandler
+    {
+        AuthStatus status;
+        size_t packetSize;
+        bool (AuthSession::* handler)();
+    };
+    #pragma pack(pop)
 
-    static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
+    //----------------------------------------------------------------------------------------------------
+    // AuthSession is the extension of the base TCPSocket class, that defines the methods and
+    // functionality that defines the exchange of messages with the connected server
+    //----------------------------------------------------------------------------------------------------
+    class AuthSession : public TCPSocket
+    {
+    public:
+        AuthSession(SocketAddressesFamily fam) : TCPSocket(fam), status(STATUS_GATHER_INFO) {}
+        AuthSession(sock_t socket) : TCPSocket(socket), status(STATUS_GATHER_INFO) {}
+        AuthStatus status;
 
-    void OnConnectedCallback() override;
-    void ReadCallback() override;
+        static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 
-    // Handlers functions
-    bool HandlePacketAuthLoginGatherInfoResponse();
-    bool HandlePacketAuthLoginProofResponse();
-};
+        void OnConnectedCallback() override;
+        void ReadCallback() override;
+
+        // Handlers functions
+        bool HandlePacketAuthLoginGatherInfoResponse();
+        bool HandlePacketAuthLoginProofResponse();
+    };
+
+}
+}
 
 #endif

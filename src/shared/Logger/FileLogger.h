@@ -5,22 +5,24 @@
 
 #include "Logger.h"
 
-class FileLogger : public Logger
+namespace NECRO
 {
-private:
-	const std::string DEFAULT_LOG_FILE_NAME = "ServerLog.txt";
+	class FileLogger : public Logger
+	{
+	private:
+		const std::string DEFAULT_LOG_FILE_NAME = "ServerLog.txt";
 
-	std::ofstream logFile;
+		std::ofstream logFile;
 
-public:
-	static FileLogger* Instance();
+	public:
+		static FileLogger* Instance();
 
-	FileLogger();
-	FileLogger(const std::string& filePath);
+		FileLogger();
+		FileLogger(const std::string& filePath);
 
-	~FileLogger();
+		~FileLogger();
 
-	virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
-};
-
+		virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
+	};
+}
 #endif

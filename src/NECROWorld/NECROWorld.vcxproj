@@ -18,11 +18,18 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server\NECROWorld.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Server\NECROWorld.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{90b5d6b6-f1ec-408a-aa9a-e7f5cd22b644}</ProjectGuid>
-    <RootNamespace>NECROServer</RootNamespace>
+    <RootNamespace>NECROWorld</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -71,7 +78,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\NECROServer</OutDir>
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\NECROWorld</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -121,7 +128,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\NECROServer\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\NECROWorld\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -132,13 +139,6 @@
       <AdditionalDependencies>..\..\x64\Release\shared.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Server\NECROServer.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Server\NECROServer.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

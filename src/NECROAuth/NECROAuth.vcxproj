@@ -136,12 +136,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server\Auth\AuthSession.cpp" />
     <ClCompile Include="Server\Auth\TCPSocketManager.cpp" />
-    <ClCompile Include="Server\NECROAuth.cpp" />
+    <ClCompile Include="Server\NECROServer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\Auth\AuthSession.h" />
     <ClInclude Include="Server\Auth\TCPSocketManager.h" />
-    <ClInclude Include="Server\NECROAuth.h" />
+    <ClInclude Include="Server\NECROServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

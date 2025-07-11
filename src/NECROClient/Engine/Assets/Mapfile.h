@@ -3,21 +3,28 @@
 
 #include <string>
 
-#define MAPFILES_DIRECTORY "Data/maps/"
-
-//------------------------------------------------------------------------------
-// Contains the Map definition that specifies the World structure and content.
-//------------------------------------------------------------------------------
-class Mapfile
+namespace NECRO
 {
-public:
-	std::string name;
-	std::string tilesetDefName;	// A Mapfile uses a TilesetDef to specify the tiles used in the layers matrices
-	int width;
-	int height;
-	int nLayers; // number of layers of this map
+namespace Client
+{
+	#define MAPFILES_DIRECTORY "Data/maps/"
 
-	bool			LoadMap(const std::string& filename);
-};
+	//------------------------------------------------------------------------------
+	// Contains the Map definition that specifies the World structure and content.
+	//------------------------------------------------------------------------------
+	class Mapfile
+	{
+	public:
+		std::string name;
+		std::string tilesetDefName;	// A Mapfile uses a TilesetDef to specify the tiles used in the layers matrices
+		int width;
+		int height;
+		int nLayers; // number of layers of this map
+
+		bool			LoadMap(const std::string& filename);
+	};
+
+}
+}
 
 #endif

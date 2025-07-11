@@ -5,88 +5,95 @@
 #include "Camera.h"
 #include <string>
 
-class Player;
-
-//-------------------------------------------------------------------------------------
-// For now GameMode refers to the modes in which we can place objects (edit) or 
-// interact with things (play) 
-//-------------------------------------------------------------------------------------
-enum GameMode
+namespace NECRO
 {
-	EDIT_MODE = 0,
-	PLAY_MODE
-};
-extern std::string GameModeMap[];
-
-enum IsoDirection
+namespace Client
 {
-	WEST = 0,
-	NORTH_WEST,
-	NORTH,
-	NORTH_EAST,
-	EAST,
-	SOUTH_EAST,
-	SOUTH,
-	SOUTH_WEST
-};
+	class Player;
 
-//-------------------------------------------------------
-// Defines the Game related things that run in the engine
-//-------------------------------------------------------
-class NECROGame
-{
-private:
-	GameMode curMode = GameMode::EDIT_MODE;
+	//-------------------------------------------------------------------------------------
+	// For now GameMode refers to the modes in which we can place objects (edit) or 
+	// interact with things (play) 
+	//-------------------------------------------------------------------------------------
+	enum GameMode
+	{
+		EDIT_MODE = 0,
+		PLAY_MODE
+	};
+	extern std::string GameModeMap[];
 
-	World currentWorld;
-	Camera mainCamera;
-	Player* curPlayer;
+	enum IsoDirection
+	{
+		WEST = 0,
+		NORTH_WEST,
+		NORTH,
+		NORTH_EAST,
+		EAST,
+		SOUTH_EAST,
+		SOUTH,
+		SOUTH_WEST
+	};
 
-private:
-	void		HandleInput();
+	//-------------------------------------------------------
+	// Defines the Game related things that run in the engine
+	//-------------------------------------------------------
+	class Game
+	{
+	private:
+		GameMode curMode = GameMode::EDIT_MODE;
 
-public:
-	void		Init();
-	void		Update();
-	void		Shutdown();
+		World currentWorld;
+		Camera mainCamera;
+		Player* curPlayer;
 
-	void		SetCurMode(GameMode m);
-	void		SetCurPlayer(Player* p);
+	private:
+		void		HandleInput();
 
-	GameMode	GetCurMode() const;
-	Camera*		GetMainCamera();
-	World*		GetCurrentWorld();
-	Player*		GetCurPlayer();
-};
+	public:
+		void		Init();
+		void		Update();
+		void		Shutdown();
 
-inline void NECROGame::SetCurMode(GameMode m)
-{
-	curMode = m;
+		void		SetCurMode(GameMode m);
+		void		SetCurPlayer(Player* p);
+
+		GameMode	GetCurMode() const;
+		Camera* GetMainCamera();
+		World* GetCurrentWorld();
+		Player* GetCurPlayer();
+	};
+
+	inline void Game::SetCurMode(GameMode m)
+	{
+		curMode = m;
+	}
+
+	inline GameMode Game::GetCurMode() const
+	{
+		return curMode;
+	}
+
+	inline void Game::SetCurPlayer(Player* p)
+	{
+		curPlayer = p;
+	}
+
+	inline Camera* Game::GetMainCamera()
+	{
+		return &mainCamera;
+	}
+
+	inline World* Game::GetCurrentWorld()
+	{
+		return &currentWorld;
+	}
+
+	inline Player* Game::GetCurPlayer()
+	{
+		return curPlayer;
+	}
+
 }
-
-inline GameMode NECROGame::GetCurMode() const
-{
-	return curMode;
-}
-
-inline void NECROGame::SetCurPlayer(Player* p)
-{
-	curPlayer = p;
-}
-
-inline Camera* NECROGame::GetMainCamera()
-{
-	return &mainCamera;
-}
-
-inline World* NECROGame::GetCurrentWorld()
-{
-	return &currentWorld;
-}
-
-inline Player* NECROGame::GetCurPlayer()
-{
-	return curPlayer;
 }
 
 #endif

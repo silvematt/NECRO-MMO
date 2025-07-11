@@ -1,24 +1,22 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="NECROServer">
+    <Filter Include="NECROWorld">
       <UniqueIdentifier>{77cf132f-50b7-4c96-9e24-98231daabbfc}</UniqueIdentifier>
     </Filter>
-    <Filter Include="NECROServer\Server">
+    <Filter Include="NECROWorld\Server">
       <UniqueIdentifier>{74e2c4c2-280d-4795-8204-aa11d46ea08b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>NECROServer</Filter>
-    </ClCompile>
-    <ClCompile Include="Server\NECROServer.cpp">
-      <Filter>NECROServer\Server</Filter>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server\NECROWorld.cpp">
+      <Filter>NECROWorld\Server</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Server\NECROServer.h">
-      <Filter>NECROServer\Server</Filter>
+    <ClInclude Include="Server\NECROWorld.h">
+      <Filter>NECROWorld\Server</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

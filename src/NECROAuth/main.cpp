@@ -1,14 +1,13 @@
-// NECROAuth
+// NECROAuth Server
 
-#include "NECROAuth.h"
+#include "NECROServer.h"
 
 int main()
 {
-	if (server.Init() == 0)
+	if (NECRO::Auth::server.Init() == 0)
 	{
-		server.Start();
-
-		server.Update();
+		NECRO::Auth::server.Start();
+		NECRO::Auth::server.Update();
 	}
 
 	return 0;

@@ -3,14 +3,19 @@
 
 #include "Logger.h"
 
-class ConsoleLogger : public Logger
+namespace NECRO
 {
-public:
-	static ConsoleLogger* Instance();
 
-	std::string GetColor(LogLevel lvl);
+	class ConsoleLogger : public Logger
+	{
+	public:
+		static ConsoleLogger* Instance();
 
-	virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
-};
+		std::string GetColor(LogLevel lvl);
+
+		virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
+	};
+
+}
 
 #endif

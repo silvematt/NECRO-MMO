@@ -51,9 +51,6 @@
     <ClCompile Include="main.cpp">
       <Filter>NECROClient</Filter>
     </ClCompile>
-    <ClCompile Include="Client\NECROClient.cpp">
-      <Filter>NECROClient\Client</Filter>
-    </ClCompile>
     <ClCompile Include="Client\Online\AuthManager.cpp">
       <Filter>NECROClient\Client\Online</Filter>
     </ClCompile>
@@ -129,11 +126,11 @@
     <ClCompile Include="Engine\Game.cpp">
       <Filter>NECROClient\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\NECROEngine.cpp">
+      <Filter>NECROClient\Engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Client\NECROClient.h">
-      <Filter>NECROClient\Client</Filter>
-    </ClInclude>
     <ClInclude Include="Client\Online\AuthManager.h">
       <Filter>NECROClient\Client\Online</Filter>
     </ClInclude>
@@ -219,6 +216,9 @@
       <Filter>NECROClient\Engine\World</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Game.h">
+      <Filter>NECROClient\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\NECROEngine.h">
       <Filter>NECROClient\Engine</Filter>
     </ClInclude>
   </ItemGroup>

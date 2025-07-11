@@ -1,53 +1,57 @@
 #include "Input.h"
-#include "NECROClient.h"
+#include "NECROEngine.h"
 
-NECROInput::~NECROInput() 
+namespace NECRO
 {
-	delete[] keys;
-	delete[] prevKeys;
-}
-
-//--------------------------------------
-// Initialize
-//--------------------------------------
-int NECROInput::Init()
+namespace Client
 {
-	oldMouseX = oldMouseY = 0;
-
-	const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-	const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
-
-	keys = new Uint8[numKeys];
-	prevKeys = new Uint8[numKeys];
-
-	// Set mouse buttons
-	for (int i = 1; i <= 3; i++) 
+	Input::~Input()
 	{
-		prevMouseButtons[i - 1] = 0;
-		mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
+		delete[] keys;
+		delete[] prevKeys;
 	}
 
-	// Initialize key state
-	memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
-	memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
-
-	return 0;
-}
-
-//--------------------------------------
-// Handles Input by polling events
-//--------------------------------------
-void NECROInput::Handle()
-{
-	mouseScroll = 0; // Mouse scroll must be reset
-
-	SDL_Event e;
-
-	//Handle events
-	while (SDL_PollEvent(&e) != 0)
+	//--------------------------------------
+	// Initialize
+	//--------------------------------------
+	int Input::Init()
 	{
-		switch (e.type)
+		oldMouseX = oldMouseY = 0;
+
+		const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+		const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
+
+		keys = new Uint8[numKeys];
+		prevKeys = new Uint8[numKeys];
+
+		// Set mouse buttons
+		for (int i = 1; i <= 3; i++)
 		{
+			prevMouseButtons[i - 1] = 0;
+			mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
+		}
+
+		// Initialize key state
+		memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
+		memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
+
+		return 0;
+	}
+
+	//--------------------------------------
+	// Handles Input by polling events
+	//--------------------------------------
+	void Input::Handle()
+	{
+		mouseScroll = 0; // Mouse scroll must be reset
+
+		SDL_Event e;
+
+		//Handle events
+		while (SDL_PollEvent(&e) != 0)
+		{
+			switch (e.type)
+			{
 			case SDL_QUIT:
 				engine.Stop();
 				break;
@@ -67,9 +71,9 @@ void NECROInput::Handle()
 				if (curInputField)
 				{
 					// Check length and append text
-					if(curInputField->GetTextLimit() == 0 ||
+					if (curInputField->GetTextLimit() == 0 ||
 						curInputField->str.size() < curInputField->GetTextLimit())
-					curInputField->str += e.text.text;
+						curInputField->str += e.text.text;
 				}
 				break;
 
@@ -101,77 +105,80 @@ void NECROInput::Handle()
 					LOG_INFO("Took a screenshot of render targets and final image, saved in the.exe location");
 				}
 				break;
+			}
+		}
+
+		oldMouseX = mouseX;
+		oldMouseY = mouseY;
+
+		const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+		const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
+
+		memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
+		memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
+
+		// Set mouse buttons
+		for (int i = 1; i <= 3; i++)
+		{
+			prevMouseButtons[i - 1] = mouseButtons[i - 1];
+			mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
 		}
 	}
 
-	oldMouseX = mouseX;
-	oldMouseY = mouseY;
-
-	const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-	const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
-
-	memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
-	memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
-
-	// Set mouse buttons
-	for (int i = 1; i <= 3; i++) 
+	int Input::GetMouseDown(SDL_Scancode button) const
 	{
-		prevMouseButtons[i - 1] = mouseButtons[i - 1];
-		mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
+		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
+			return -1;
+
+		return (mouseButtons[button - 1] & ~prevMouseButtons[button - 1]);
 	}
+
+	int Input::GetMouseUp(SDL_Scancode button) const
+	{
+		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
+			return -1;
+
+		return (~mouseButtons[button - 1] & prevMouseButtons[button - 1]);
+	}
+
+	int Input::GetKeyHeld(SDL_Scancode key) const
+	{
+		if (key < 0 || key > numKeys)
+			return -1;
+
+		return keys[key];
+	}
+
+	int Input::GetKeyDown(SDL_Scancode key) const
+	{
+		if (key < 0 || key > numKeys)
+			return -1;
+
+		return (keys[key] & ~prevKeys[key]);
+	}
+
+	int Input::GetKeyUp(SDL_Scancode key) const
+	{
+		if (key < 0 || key >= numKeys)
+			return -1;
+
+		return (!keys[key] & prevKeys[key]);
+	}
+
+	int Input::GetMouseHeld(SDL_Scancode button) const
+	{
+		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
+			return -1;
+
+		return mouseButtons[button - 1];
+	}
+
+	Vector2 Input::GetMouseMotionThisFrame()
+	{
+		Vector2 mm(mouseMotionX, mouseMotionY);
+		mouseMotionX = mouseMotionY = 0;
+		return mm;
+	}
+
 }
-
-int NECROInput::GetMouseDown(SDL_Scancode button) const
-{
-	if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
-		return -1;
-
-	return (mouseButtons[button - 1] & ~prevMouseButtons[button - 1]);
-}
-
-int NECROInput::GetMouseUp(SDL_Scancode button) const
-{
-	if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
-		return -1;
-
-	return (~mouseButtons[button - 1] & prevMouseButtons[button - 1]);
-}
-
-int NECROInput::GetKeyHeld(SDL_Scancode key) const 
-{
-	if (key < 0 || key > numKeys)
-		return -1;
-
-	return keys[key];
-}
-
-int NECROInput::GetKeyDown(SDL_Scancode key) const 
-{
-	if (key < 0 || key > numKeys)
-		return -1;
-
-	return (keys[key] & ~prevKeys[key]);
-}
-
-int NECROInput::GetKeyUp(SDL_Scancode key) const
-{
-	if (key < 0 || key >= numKeys)
-		return -1;
-
-	return (!keys[key] & prevKeys[key]);
-}
-
-int NECROInput::GetMouseHeld(SDL_Scancode button) const
-{
-	if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
-		return -1;
-
-	return mouseButtons[button - 1];
-}
-
-Vector2 NECROInput::GetMouseMotionThisFrame()
-{
-	Vector2 mm(mouseMotionX, mouseMotionY);
-	mouseMotionX = mouseMotionY = 0;
-	return mm;
 }

@@ -9,7 +9,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROAuth", "src\NECROAuth\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROClient", "src\NECROClient\NECROClient.vcxproj", "{D380C53D-7A14-4B09-A5CA-C697535E5302}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROServer", "src\NECROServer\NECROServer.vcxproj", "{90B5D6B6-F1EC-408A-AA9A-E7F5CD22B644}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROWorld", "src\NECROWorld\NECROWorld.vcxproj", "{90B5D6B6-F1EC-408A-AA9A-E7F5CD22B644}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

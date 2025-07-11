@@ -8,32 +8,39 @@
 
 #include <unordered_map>
 
-//-----------------------------------------------------------------------------------------------------
-// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
-//-----------------------------------------------------------------------------------------------------
-class TCPSocketManager
+namespace NECRO
 {
-public:
-	// Construct the socket manager
-	TCPSocketManager(SocketAddressesFamily _family);
+namespace Auth
+{
+	//-----------------------------------------------------------------------------------------------------
+	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
+	//-----------------------------------------------------------------------------------------------------
+	class TCPSocketManager
+	{
+	public:
+		// Construct the socket manager
+		TCPSocketManager(SocketAddressesFamily _family);
 
-protected:
-	// Underlying listener socket
-	TCPSocket listener;
+	protected:
+		// Underlying listener socket
+		TCPSocket listener;
 
-	// Connections container
-	std::vector<std::shared_ptr<AuthSession>> list;
+		// Connections container
+		std::vector<std::shared_ptr<AuthSession>> list;
 
-	std::vector<pollfd> poll_fds;
+		std::vector<pollfd> poll_fds;
 
-	// Map for username lookup (since we don't use databases yet)
-	static std::unordered_map<std::string, AuthSession*> usernameMap;
+		// Map for username lookup (since we don't use databases yet)
+		static std::unordered_map<std::string, AuthSession*> usernameMap;
 
-public:
-	int Poll();
+	public:
+		int Poll();
 
-	static void RegisterUsername(const std::string& user, AuthSession* session);
-	static bool UsernameIsActive(const std::string& s);
-};
+		static void RegisterUsername(const std::string& user, AuthSession* session);
+		static bool UsernameIsActive(const std::string& s);
+	};
+
+}
+}
 
 #endif

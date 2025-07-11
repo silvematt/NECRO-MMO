@@ -1,148 +1,155 @@
 #include "Cmd.h"
-#include "NECROClient.h"
+#include "NECROEngine.h"
 #include "Collider.h"
 #include "Player.h"
 
 #include "SDL.h"
 
-//----------------------------------------------------------------------------------------------
-// Executes the command bound to the routine function pointer
-//----------------------------------------------------------------------------------------------
-int Cmd::Execute(const std::vector<std::string>& args)
+namespace NECRO
 {
-	if(routine)
-		return (this->*routine)(args);
-
-	return 1; // 1 means problem
-}
-
-//----------------------------------------------------------------------------------------------
-// Logs help to the console
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_Help(const std::vector<std::string>& args)
+namespace Client
 {
-	NECROConsole& c = engine.GetConsole();
-
-	c.Log("'teleport' (x, y): teleports the player to the x,y grid coordinates.");
-	c.Log("'noclip' (): toggles collision detection for the player.");
-	c.Log("'dcoll' (): toggles collision debug for all entities.");
-	c.Log("'doccl' (): toggles occlusion debug for entities that can occlude the player.");
-	c.Log("'qqq' (): quits the game.");
-	c.Log("'authconnect' (): connects to the auth server.");
-
-	return 1; // return 1 to not close the console after this function
-}
-
-//----------------------------------------------------------------------------------------------
-// Teleports the player to a grid pos - TODO: make this cmd take an additional entity param
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_TeleportToGrid (const std::vector<std::string>& args)
-{
-	NECROConsole& c = engine.GetConsole();
-
-	if (args.size() < 3)
+	//----------------------------------------------------------------------------------------------
+	// Executes the command bound to the routine function pointer
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Execute(const std::vector<std::string>& args)
 	{
-		c.Log("CMD_TeleportToGrid: requires 2 arguments [x, y], but only " + std::to_string(args.size() - 1) + " were passed.");
-		return 1;
+		if (routine)
+			return (this->*routine)(args);
+
+		return 1; // 1 means problem
 	}
-	else
-	{
-		int x = ClientUtility::TryParseInt(args[1]);
-		int y = ClientUtility::TryParseInt(args[2]);
 
-		// Teleport player
-		engine.GetGame().GetCurPlayer()->TeleportToGrid(x, y);
+	//----------------------------------------------------------------------------------------------
+	// Logs help to the console
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_Help(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		c.Log("'teleport' (x, y): teleports the player to the x,y grid coordinates.");
+		c.Log("'noclip' (): toggles collision detection for the player.");
+		c.Log("'dcoll' (): toggles collision debug for all entities.");
+		c.Log("'doccl' (): toggles occlusion debug for entities that can occlude the player.");
+		c.Log("'qqq' (): quits the game.");
+		c.Log("'authconnect' (): connects to the auth server.");
+
+		return 1; // return 1 to not close the console after this function
+	}
+
+	//----------------------------------------------------------------------------------------------
+	// Teleports the player to a grid pos - TODO: make this cmd take an additional entity param
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_TeleportToGrid(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (args.size() < 3)
+		{
+			c.Log("CMD_TeleportToGrid: requires 2 arguments [x, y], but only " + std::to_string(args.size() - 1) + " were passed.");
+			return 1;
+		}
+		else
+		{
+			int x = ClientUtility::TryParseInt(args[1]);
+			int y = ClientUtility::TryParseInt(args[2]);
+
+			// Teleport player
+			engine.GetGame().GetCurPlayer()->TeleportToGrid(x, y);
+
+			return 0;
+		}
+	}
+
+	//----------------------------------------------------------------------------------------------
+	// Disables collision checking for the player
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_NoClip(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+		Collider* pColl = engine.GetGame().GetCurPlayer()->GetCollider();
+
+		pColl->enabled = !pColl->enabled;
+
+		std::string s = "No Clip: ";
+		s.append((!pColl->enabled ? "enabled" : "disabled"));
+		c.Log(s);
 
 		return 0;
 	}
-}
 
-//----------------------------------------------------------------------------------------------
-// Disables collision checking for the player
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_NoClip(const std::vector<std::string>& args)
-{
-	NECROConsole& c = engine.GetConsole();
-	Collider* pColl = engine.GetGame().GetCurPlayer()->GetCollider();
-
-	pColl->enabled = !pColl->enabled;
-
-	std::string s = "No Clip: ";
-	s.append((!pColl->enabled ? "enabled" : "disabled"));
-	c.Log(s);
-
-	return 0;
-}
-
-//----------------------------------------------------------------------------------------------
-// Toggles the universal collision debug for entiteis
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_ToggleCollisionDebug(const std::vector<std::string>& args)
-{
-	NECROConsole& c = engine.GetConsole();
-	
-	// If layer is provided, always enable
-	if (args.size() >= 2)
+	//----------------------------------------------------------------------------------------------
+	// Toggles the universal collision debug for entiteis
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_ToggleCollisionDebug(const std::vector<std::string>& args)
 	{
-		int layerVal = ClientUtility::TryParseInt(args[1]);
-		Entity::DEBUG_COLLIDER_LAYER = layerVal;
-		Entity::DEBUG_COLLIDER_ENABLED = true;
-	}
-	else // otherwise toggle
-		Entity::DEBUG_COLLIDER_ENABLED = !Entity::DEBUG_COLLIDER_ENABLED;
+		Console& c = engine.GetConsole();
 
-	if (Entity::DEBUG_COLLIDER_ENABLED)
-		c.Log("Debug Collision: enabled.");
-	else
-		c.Log("Debug Collision: disabled.");
+		// If layer is provided, always enable
+		if (args.size() >= 2)
+		{
+			int layerVal = ClientUtility::TryParseInt(args[1]);
+			Entity::DEBUG_COLLIDER_LAYER = layerVal;
+			Entity::DEBUG_COLLIDER_ENABLED = true;
+		}
+		else // otherwise toggle
+			Entity::DEBUG_COLLIDER_ENABLED = !Entity::DEBUG_COLLIDER_ENABLED;
 
-	return 0;
-}
+		if (Entity::DEBUG_COLLIDER_ENABLED)
+			c.Log("Debug Collision: enabled.");
+		else
+			c.Log("Debug Collision: disabled.");
 
-//----------------------------------------------------------------------------------------------
-// Toggles the universal occlusion debug for entiteis
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_ToggleOcclusionDebug(const std::vector<std::string>& args)
-{
-	NECROConsole& c = engine.GetConsole();
-
-	Entity::DEBUG_OCCLUSION_ENABLED = !Entity::DEBUG_OCCLUSION_ENABLED;
-
-	if (Entity::DEBUG_OCCLUSION_ENABLED)
-		c.Log("Debug Occlusion: enabled.");
-	else
-		c.Log("Debug Occlusion: disabled.");
-
-	return 0;
-}
-
-//----------------------------------------------------------------------------------------------
-// Quits the game
-//----------------------------------------------------------------------------------------------
-int Cmd::Cmd_QuitApplication(const std::vector<std::string>& args)
-{
-	engine.Stop();
-
-	return 0;
-}
-
-
-int Cmd::Cmd_ConnectToAuthServer(const std::vector<std::string>& args)
-{
-	NECROConsole& c = engine.GetConsole();
-
-	if (args.size() < 3)
-	{
-		c.Log("CMD_ConnectToAuthServer: requires 2 arguments [username, password] .");
-		return 1;
+		return 0;
 	}
 
-	c.Log("Attempting to connect as : '" + args[1] + "'...");
+	//----------------------------------------------------------------------------------------------
+	// Toggles the universal occlusion debug for entiteis
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_ToggleOcclusionDebug(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
 
-	engine.GetAuthManager().SetAuthDataUsername(args[1]);
-	engine.GetAuthManager().SetAuthDataPassword(args[2]);
+		Entity::DEBUG_OCCLUSION_ENABLED = !Entity::DEBUG_OCCLUSION_ENABLED;
 
-	engine.GetAuthManager().ConnectToAuthServer();
+		if (Entity::DEBUG_OCCLUSION_ENABLED)
+			c.Log("Debug Occlusion: enabled.");
+		else
+			c.Log("Debug Occlusion: disabled.");
 
-	return 0;
+		return 0;
+	}
+
+	//----------------------------------------------------------------------------------------------
+	// Quits the game
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_QuitApplication(const std::vector<std::string>& args)
+	{
+		engine.Stop();
+
+		return 0;
+	}
+
+
+	int Cmd::Cmd_ConnectToAuthServer(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (args.size() < 3)
+		{
+			c.Log("CMD_ConnectToAuthServer: requires 2 arguments [username, password] .");
+			return 1;
+		}
+
+		c.Log("Attempting to connect as : '" + args[1] + "'...");
+
+		engine.GetAuthManager().SetAuthDataUsername(args[1]);
+		engine.GetAuthManager().SetAuthDataPassword(args[2]);
+
+		engine.GetAuthManager().ConnectToAuthServer();
+
+		return 0;
+	}
+
+}
 }
