@@ -46,6 +46,14 @@ namespace NECRO
             return data.data();
         }
 
+        const uint8_t* GetContentToRead() const
+        {
+            if (data.empty())
+                throw std::out_of_range("Trying to GetContent of an empty packet!");
+
+            return data.data();
+        }
+
         size_t  Size()  const { return data.size(); }
         bool    Empty() const { return data.empty(); }
 

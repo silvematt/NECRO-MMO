@@ -100,9 +100,9 @@ namespace NECRO
 		return SOCKET_UTILITY_NO_ERROR;
 	}
 
-	void TCPSocket::QueuePacket(NetworkMessage& pckt)
+	void TCPSocket::QueuePacket(NetworkMessage&& pckt)
 	{
-		outQueue.push(pckt);
+		outQueue.push(std::move(pckt));
 
 		// Update pfd events
 		if (pfd)

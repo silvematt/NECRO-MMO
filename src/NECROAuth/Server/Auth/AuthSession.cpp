@@ -174,7 +174,7 @@ namespace Auth
             return false;
         */
 
-        QueuePacket(m);
+        QueuePacket(std::move(m));
 
         //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
 
@@ -284,7 +284,7 @@ namespace Auth
         }
 
         NetworkMessage m(packet);
-        QueuePacket(m);
+        QueuePacket(std::move(m));
 
         //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
 

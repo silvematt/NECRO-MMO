@@ -61,7 +61,7 @@ namespace Client
         greetPacket << netManager.GetData().username; // string is and should be without null terminator!
 
         NetworkMessage message(greetPacket);
-        QueuePacket(message);
+        QueuePacket(std::move(message));
         //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
     }
 
@@ -167,7 +167,7 @@ namespace Client
             std::cout << "My IV Prefix: " << net.GetData().iv.prefix << std::endl;
 
             NetworkMessage m(packet);
-            QueuePacket(m);
+            QueuePacket(std::move(m));
             //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
 
         }

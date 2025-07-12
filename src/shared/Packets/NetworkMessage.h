@@ -23,6 +23,18 @@ namespace NECRO
         unsigned char tag[GCM_TAG_SIZE];
 
     public:
+        // Move constructor
+        NetworkMessage(NetworkMessage&& other) noexcept :
+            rpos(other.rpos),
+            wpos(other.wpos),
+            data(std::move(other.data)),                // Move the vector
+            cipherData(std::move(other.cipherData)),    // Move the vector
+            tag()                                       // Initialize tag
+        {
+            // Copy the tag array
+            std::memcpy(tag, other.tag, GCM_TAG_SIZE);
+        }
+
         // NetworkMessage Constructor
         // data is resized (not reserved) because we'll need it as soon as this is created, and probably we'll need exactly the reservedSize amount
         NetworkMessage() : rpos(0), wpos(0)
@@ -36,10 +48,10 @@ namespace NECRO
         }
 
         // Wraps a packet in a NetworkMessage
-        NetworkMessage(Packet p)
+        NetworkMessage(const Packet& p)
         {
             data.resize(p.Size());
-            Write(p.GetContent(), p.Size());
+            Write(p.GetContentToRead(), p.Size());
         }
 
         //-----------------------------------------------------------------------------------------------------------

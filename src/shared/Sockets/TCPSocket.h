@@ -109,7 +109,7 @@ namespace NECRO
 
 		int							Connect(const SocketAddress& addr);
 
-		void						QueuePacket(NetworkMessage& pckt);
+		void						QueuePacket(NetworkMessage&& pckt);
 		int							Send();
 		int							Receive();
 
