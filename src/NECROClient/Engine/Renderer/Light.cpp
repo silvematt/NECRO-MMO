@@ -75,8 +75,8 @@ namespace Client
 
         // TODO: Instead of having matrix allocation every frame for every light, we can keep a global matrix "touched" that has the size of the biggest light used (dynamically resize) or a predetermined max size
         // Touched is used to know which cells have already been hit by a ray of this light, so two rays cannot add up light in the same cell
-        char touched[32][32];
-        std::fill(&touched[0][0], &touched[0][0] + sizeof(touched), 0);
+        std::vector<std::vector<char>> touched;
+        touched.resize(2 * radius + 1, std::vector<char>(2 * radius + 1, 0)); // 2 * radius + 1 so it covers the whole square area + the center cell
 
         // Propagate light through world using Raycasting
         // This is done every frame for visible every light, we can surely optimize this
