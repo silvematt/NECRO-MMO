@@ -30,18 +30,6 @@
     <ClInclude Include="Authentication\AuthCodes.h">
       <Filter>Authentication</Filter>
     </ClInclude>
-    <ClInclude Include="Database\Database.h">
-      <Filter>Database</Filter>
-    </ClInclude>
-    <ClInclude Include="Database\DatabaseWorker.h">
-      <Filter>Database</Filter>
-    </ClInclude>
-    <ClInclude Include="Database\DBConnection.h">
-      <Filter>Database</Filter>
-    </ClInclude>
-    <ClInclude Include="Database\LoginDatabase.h">
-      <Filter>Database</Filter>
-    </ClInclude>
     <ClInclude Include="Encryption\AES.h">
       <Filter>Encryption</Filter>
     </ClInclude>
