@@ -6,6 +6,9 @@
 
 #include <unordered_map>
 
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+
 namespace NECRO
 {
 namespace Auth
@@ -40,7 +43,8 @@ namespace Auth
 	{
 		static int timeout = -1;	// wait forever until at least one socket has an event
 
-		LOG_INFO("Polling %d", list.size());
+		LOG_DEBUG(fmt::format("Polling {}", list.size()));
+
 		int res = WSAPoll(poll_fds.data(), poll_fds.size(), timeout);
 
 		// Check for errors
@@ -97,7 +101,7 @@ namespace Auth
 
 						if (err == SSL_ERROR_SYSCALL)
 						{
-							LOG_ERROR("System call error during TLS handshake. Ret: %d.", ret);
+							LOG_ERROR(fmt::format("System call error during TLS handshake. Ret: {}.", ret));
 							success = false;
 							break;
 						}
@@ -105,7 +109,7 @@ namespace Auth
 						if (err == SSL_ERROR_SSL)
 						{
 							if (SSL_get_verify_result(inSock->GetSSL()) != X509_V_OK)
-								LOG_ERROR("Verify error: %s\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL())));
+								LOG_ERROR(fmt::format("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL()))));
 						}
 
 						LOG_ERROR("TLSPerformHandshake failed!");
@@ -183,7 +187,7 @@ namespace Auth
 			std::sort(toRemove.begin(), toRemove.end(), std::greater<int>());
 			for (int idx : toRemove)
 			{
-				LOG_INFO("Removing %d", idx);
+				LOG_DEBUG(fmt::format("Removing {}.", idx));
 
 				list[idx - 1]->Close();
 				usernameMap.erase(list[idx - 1]->GetAccountData().username);

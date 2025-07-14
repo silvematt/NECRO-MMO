@@ -7,6 +7,9 @@
 #include <sstream>
 #include <iomanip>
 
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+
 namespace NECRO
 {
 namespace Auth
@@ -25,7 +28,7 @@ namespace Auth
 
     void AuthSession::ReadCallback()
     {
-        LOG_OK("AuthSession ReadCallback");
+        LOG_DEBUG("AuthSession ReadCallback");
 
         NetworkMessage& packet = inBuffer;
 
@@ -44,7 +47,7 @@ namespace Auth
             // Check if the current cmd matches our state
             if (status != it->second.status)
             {
-                LOG_WARNING("Status mismatch for user: " + data.username + ". Status is: '" + std::to_string(static_cast<int>(status)) + "' but should have been '" + std::to_string(static_cast<int>(it->second.status)) + "'. Closing the connection.");
+                LOG_WARNING(fmt::format("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", data.username, static_cast<int>(status), static_cast<int>(it->second.status)));
 
                 Shutdown();
                 Close();
@@ -105,7 +108,7 @@ namespace Auth
 
         std::string login((char const*)pcktData->username, pcktData->usernameSize);
 
-        LOG_OK("Handling AuthLoginInfo for user:" + login);
+        LOG_DEBUG(fmt::format("Handling AuthLoginInfo for user: {}", login));
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         // Just check if the username is active 
@@ -154,7 +157,7 @@ namespace Auth
                 TCPSocketManager::RegisterUsername(login, this);
                 data.username = login;
                 data.accountID = row[0];
-                LOG_INFO("Account " + login + " has DB accountID: " + std::to_string(data.accountID));
+                LOG_INFO(fmt::format("Account {} has DB AccountID: {}.", login, data.accountID));
                 status = SocketStatus::LOGIN_ATTEMPT;
 
                 // Done, will wait for client's proof packet
@@ -185,7 +188,7 @@ namespace Auth
     {
         SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(inBuffer.GetReadPointer());
 
-        LOG_OK("Handling AuthLoginProof for user:" + data.username);
+        LOG_OK(fmt::format("Handling AuthLoginProof for user {}", data.username));
 
         // Reply to the client
         Packet packet;
@@ -207,7 +210,7 @@ namespace Auth
         auto& dbWorker = server.GetDBWorker();
         if (!authenticated)
         {
-            LOG_INFO("User " + this->GetRemoteAddressAndPort() + " tried to send proof with a wrong password.");
+            LOG_INFO(fmt::format("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort()));
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
@@ -234,7 +237,7 @@ namespace Auth
 
             data.iv.ResetCounter();
 
-            LOG_INFO("Client's IV Random Prefix: " + std::to_string(pcktData->clientsIVRandomPrefix) + " | Server's IV Random Prefix: " + std::to_string(data.iv.prefix));
+            LOG_INFO(fmt::format("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", pcktData->clientsIVRandomPrefix, data.iv.prefix));
 
             // Calculate a random session key
             data.sessionKey = AES::GenerateSessionKey();
@@ -247,7 +250,7 @@ namespace Auth
             }
             std::string sessionStr = sessionStrStream.str();
 
-            LOG_DEBUG("Session key for user " + data.username + " is: " + sessionStr);
+            LOG_DEBUG(fmt::format("Session key for user {} is {}.", data.username, sessionStr));
 
             // Write session key to packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
