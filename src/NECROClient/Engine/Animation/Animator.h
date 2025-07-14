@@ -19,7 +19,7 @@ namespace Client
 	private:
 		std::string name;
 		std::string defaultStateName = "NULL";	// if specified and different than 'NULL' in the .nanim file, after loading the animator from the file we can call Animator.PlayDefaultIfNotNull()
-		// this is done to allow automatic animation play from file definition for simple entities.
+												// this is done to allow automatic animation play from file definition for simple entities.
 
 		float animTime = 0;
 

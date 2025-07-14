@@ -40,10 +40,10 @@ namespace Client
 
 		int offsetX;
 		int offsetY;					// Offset Y is used to draw images that are, for example 64x64 on map of 64x32
-		// If the 'tree.png' is 64x64, it should be drawn with a y offset of -32 (to draw the bottom of the tree correctly)
-
+										// If the 'tree.png' is 64x64, it should be drawn with a y offset of -32 (to draw the bottom of the tree correctly)
 		bool isTileset;
 		std::shared_ptr<Tileset> tileset;
+
 	public:
 		Image(SDL_Texture* tex, int xOff, int yOff);
 		Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, int tNumX, int tNumY);

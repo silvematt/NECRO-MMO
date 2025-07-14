@@ -31,16 +31,17 @@ namespace Client
 		float curMoveSpeed = 2.5f;
 		IsoDirection isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
 
-		float deltaX = 0.0f, deltaY = 0.0f;
+		float deltaX = 0.0f;
+		float deltaY = 0.0f;
 
 		bool wasAiming = false;
 		bool isAiming = false;									// Is the player in aim mode?
-
 		bool wasMoving = false;
 		bool isMoving = false;
 
 		// Relative mouse pos used when aiming
-		float relativeMouseX, relativeMouseY;
+		float relativeMouseX;
+		float relativeMouseY;
 
 		// List of close (8-neighbours close) entities, filled every frame
 		std::vector<Entity*> closeEntities;
