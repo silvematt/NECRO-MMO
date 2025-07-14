@@ -1,5 +1,5 @@
 #ifndef TCP_SOCKET_H
-#define TCP_SOCEKT_H
+#define TCP_SOCKET_H
 
 #ifdef _WIN32
 	#include "WinSock2.h"
