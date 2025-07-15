@@ -4,10 +4,10 @@
 
 int main()
 {
-	if (NECRO::Auth::server.Init() == 0)
+	if (NECRO::Auth::g_server.Init() == 0)
 	{
-		NECRO::Auth::server.Start();
-		NECRO::Auth::server.Update();
+		NECRO::Auth::g_server.Start();
+		NECRO::Auth::g_server.Update();
 	}
 
 	return 0;

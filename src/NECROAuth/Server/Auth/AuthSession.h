@@ -40,17 +40,20 @@ namespace Auth
     class AuthSession : public TCPSocket
     {
     private:
-        AccountData data;
+        AccountData m_data;
 
     public:
-        AuthSession(sock_t socket) : TCPSocket(socket), status(SocketStatus::GATHER_INFO) {}
-        SocketStatus status;
+        AuthSession(sock_t socket) : TCPSocket(socket), m_status(SocketStatus::GATHER_INFO) 
+        {
+        }
+
+        SocketStatus m_status;
 
         static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 
         AccountData& GetAccountData()
         {
-            return data;
+            return m_data;
         }
 
         void ReadCallback() override;

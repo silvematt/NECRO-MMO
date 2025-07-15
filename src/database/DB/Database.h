@@ -18,7 +18,7 @@ namespace NECRO
 
 
 	protected:
-		DBConnection conn;
+		DBConnection m_conn;
 
 
 	public:

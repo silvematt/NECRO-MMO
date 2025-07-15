@@ -30,7 +30,7 @@ namespace Auth
     {
         LOG_DEBUG("AuthSession ReadCallback");
 
-        NetworkMessage& packet = inBuffer;
+        NetworkMessage& packet = m_inBuffer;
 
         while (packet.GetActiveSize())
         {
@@ -45,9 +45,9 @@ namespace Auth
             }
 
             // Check if the current cmd matches our state
-            if (status != it->second.status)
+            if (m_status != it->second.status)
             {
-                LOG_WARNING(fmt::format("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", data.username, static_cast<int>(status), static_cast<int>(it->second.status)));
+                LOG_WARNING(fmt::format("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status)));
 
                 Shutdown();
                 Close();
@@ -104,15 +104,13 @@ namespace Auth
 
     bool AuthSession::HandleAuthLoginGatherInfoPacket()
     {
-        SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(inBuffer.GetReadPointer());
+        SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(m_inBuffer.GetReadPointer());
 
         std::string login((char const*)pcktData->username, pcktData->usernameSize);
 
         LOG_DEBUG(fmt::format("Handling AuthLoginInfo for user: {}", login));
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
-        // Just check if the username is active 
-        bool usernameInUse = TCPSocketManager::UsernameIsActive(login);
 
         // Reply to the client
         Packet packet;
@@ -120,24 +118,9 @@ namespace Auth
         packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
 
         // Check the DB, see if user exists
-        LoginDatabase& db = server.GetDirectDB();
+        LoginDatabase& db = g_server.GetDirectDB();
         mysqlx::SqlStatement s = db.Prepare(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME));
         s.bind(login);
-
-        /*
-        * EXAMPLE OF WORKER THREAD USAGE
-        auto& w = server.GetDBWorker();
-
-        for (int i = 0; i < 100000; i++)
-        {
-            // MAKE SURE STATEMENT IS PREPARED FROM THE WORKER DB!!!
-            mysqlx::SqlStatement s = server.GetDBWorker().Prepare(LoginDatabaseStatements::LOGIN_SEL_ACCOUNT_ID_BY_NAME);
-            s.bind(login);
-
-            w.Enqueue(std::move(s));
-        }
-        */
-
         mysqlx::SqlResult result = db.Execute(s);
         mysqlx::Row row = result.fetchOne();
 
@@ -154,11 +137,10 @@ namespace Auth
             {
                 packet << uint8_t(AuthResults::SUCCESS);
 
-                TCPSocketManager::RegisterUsername(login, this);
-                data.username = login;
-                data.accountID = row[0];
-                LOG_INFO(fmt::format("Account {} has DB AccountID: {}.", login, data.accountID));
-                status = SocketStatus::LOGIN_ATTEMPT;
+                m_data.username = login;
+                m_data.accountID = row[0];
+                LOG_INFO(fmt::format("Account {} has DB AccountID: {}.", login, m_data.accountID));
+                m_status = SocketStatus::LOGIN_ATTEMPT;
 
                 // Done, will wait for client's proof packet
             }
@@ -186,9 +168,9 @@ namespace Auth
 
     bool AuthSession::HandleAuthLoginProofPacket()
     {
-        SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(inBuffer.GetReadPointer());
+        SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(m_inBuffer.GetReadPointer());
 
-        LOG_OK(fmt::format("Handling AuthLoginProof for user {}", data.username));
+        LOG_OK(fmt::format("Handling AuthLoginProof for user {}", m_data.username));
 
         // Reply to the client
         Packet packet;
@@ -196,9 +178,9 @@ namespace Auth
         packet << uint8_t(PacketIDs::LOGIN_ATTEMPT);
 
         // Check the DB, see if password is correct
-        LoginDatabase& db = server.GetDirectDB();
+        LoginDatabase& db = g_server.GetDirectDB();
         mysqlx::SqlStatement dStmt1 = db.Prepare(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD));
-        dStmt1.bind(data.accountID);
+        dStmt1.bind(m_data.accountID);
         mysqlx::SqlResult res = db.Execute(dStmt1);
 
         mysqlx::Row row = res.fetchOne();
@@ -207,7 +189,7 @@ namespace Auth
 
         bool authenticated = row[0].get<std::string>() == givenPass;
 
-        auto& dbWorker = server.GetDBWorker();
+        auto& dbWorker = g_server.GetDBWorker();
         if (!authenticated)
         {
             LOG_INFO(fmt::format("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort()));
@@ -216,7 +198,7 @@ namespace Auth
             {
                 mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD));
                 s.bind(this->GetRemoteAddressAndPort());
-                s.bind(data.username);
+                s.bind(m_data.username);
                 s.bind("WRONG_PASSWORD");
                 dbWorker.Enqueue(std::move(s));
             }
@@ -232,30 +214,30 @@ namespace Auth
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
             // Calculate this side's IV, making sure it's different from the client's
-            while (pcktData->clientsIVRandomPrefix == data.iv.prefix)
-                data.iv.RandomizePrefix();
+            while (pcktData->clientsIVRandomPrefix == m_data.iv.prefix)
+                m_data.iv.RandomizePrefix();
 
-            data.iv.ResetCounter();
+            m_data.iv.ResetCounter();
 
-            LOG_INFO(fmt::format("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", pcktData->clientsIVRandomPrefix, data.iv.prefix));
+            LOG_INFO(fmt::format("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", pcktData->clientsIVRandomPrefix, m_data.iv.prefix));
 
             // Calculate a random session key
-            data.sessionKey = AES::GenerateSessionKey();
+            m_data.sessionKey = AES::GenerateSessionKey();
 
             // Convert sessionKey to hex string in order to print it
             std::ostringstream sessionStrStream;
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
             {
-                sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(data.sessionKey[i]);
+                sessionStrStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(m_data.sessionKey[i]);
             }
             std::string sessionStr = sessionStrStream.str();
 
-            LOG_DEBUG(fmt::format("Session key for user {} is {}.", data.username, sessionStr));
+            LOG_DEBUG(fmt::format("Session key for user {} is {}.", m_data.username, sessionStr));
 
             // Write session key to packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
             {
-                packet << data.sessionKey[i];
+                packet << m_data.sessionKey[i];
             }
 
             // Create a new greetcode (RAND_bytes). Greetcode is appended with the first packet the client sends to the server, so the server can understand who's he talking to. ONE USE! Server will clear it after first usage
@@ -265,15 +247,15 @@ namespace Auth
             // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
             {
                 mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS));
-                s.bind(data.accountID);
+                s.bind(m_data.accountID);
                 dbWorker.Enqueue(std::move(s));
             }
 
             // Do an async insert on the DB worker to create a new active_session
             {
                 mysqlx::SqlStatement s = dbWorker.Prepare(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION));
-                s.bind(data.accountID);
-                s.bind(mysqlx::bytes(data.sessionKey.data(), data.sessionKey.size()));
+                s.bind(m_data.accountID);
+                s.bind(mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()));
                 s.bind(this->GetRemoteAddress());
                 s.bind(mysqlx::bytes(greetcode.data(), greetcode.size()));
                 dbWorker.Enqueue(std::move(s));

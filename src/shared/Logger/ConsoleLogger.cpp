@@ -46,7 +46,7 @@ namespace NECRO
         std::string formattedMessage = FormatString(message.c_str(), args);
 
         // lock_guard will automatically release the mutex as soon as it is destroyed
-        std::lock_guard<std::mutex> guard(lMutex);
+        std::lock_guard<std::mutex> guard(m_logMutex);
 
         // Get timestamp
         std::string nowTimestamp = Utility::time_stamp();

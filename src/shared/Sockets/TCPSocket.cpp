@@ -16,11 +16,11 @@ namespace NECRO
 {
 	TCPSocket::TCPSocket(SocketAddressesFamily family)
 	{
-		ssl = nullptr;
-		bio = nullptr;
+		m_ssl = nullptr;
+		m_bio = nullptr;
 
-		usesTLS = false;
-		closed = false;
+		m_usesTLS = false;
+		m_closed = false;
 
 		m_socket = socket(static_cast<int>(family), SOCK_STREAM, IPPROTO_TCP);
 
@@ -33,11 +33,11 @@ namespace NECRO
 
 	TCPSocket::TCPSocket(sock_t inSocket)
 	{
-		ssl = nullptr;
-		bio = nullptr;
+		m_ssl = nullptr;
+		m_bio = nullptr;
 
-		usesTLS = false;
-		closed = false;
+		m_usesTLS = false;
+		m_closed = false;
 
 		m_socket = inSocket;
 
@@ -55,7 +55,7 @@ namespace NECRO
 
 	bool TCPSocket::IsOpen()
 	{
-		return (!closed);
+		return (!m_closed);
 	}
 
 	int TCPSocket::Bind(const SocketAddress& addr)
@@ -68,7 +68,7 @@ namespace NECRO
 			return SocketUtility::GetLastError();
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 	}
 
 	int TCPSocket::Listen(int backlog)
@@ -81,7 +81,7 @@ namespace NECRO
 			return SocketUtility::GetLastError();
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 	}
 
 	int TCPSocket::Connect(const SocketAddress& addr)
@@ -97,28 +97,28 @@ namespace NECRO
 			}
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 	}
 
 	void TCPSocket::QueuePacket(NetworkMessage&& pckt)
 	{
-		outQueue.push(std::move(pckt));
+		m_outQueue.push(std::move(pckt));
 
 		// Update pfd events
-		if (pfd)
-			pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
+		if (m_pfd)
+			m_pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
 	}
 
 	int TCPSocket::Send()
 	{
-		if (outQueue.empty())
+		if (m_outQueue.empty())
 			return 0;
 
-		NetworkMessage& out = outQueue.front();
+		NetworkMessage& out = m_outQueue.front();
 
 		int bytesSent = 0;
 		size_t sslBytesSent;
-		if (!usesTLS)
+		if (!m_usesTLS)
 		{
 			bytesSent = send(m_socket, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), 0);
 
@@ -135,11 +135,11 @@ namespace NECRO
 		}
 		else
 		{
-			int ret = SSL_write_ex(ssl, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), &sslBytesSent);
+			int ret = SSL_write_ex(m_ssl, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), &sslBytesSent);
 
 			if (ret <= 0)
 			{
-				int sslError = SSL_get_error(ssl, ret);
+				int sslError = SSL_get_error(m_ssl, ret);
 				if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
 					return 0;
 
@@ -150,20 +150,20 @@ namespace NECRO
 			}
 		}
 
-		if (usesTLS)
+		if (m_usesTLS)
 			bytesSent = sslBytesSent;
 
 		// Mark that 'bytesSent' were sent
 		out.ReadCompleted(bytesSent);
 
 		if (out.GetActiveSize() == 0)
-			outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
+			m_outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
 
 		// SendCallback(); needed?
 
 		// Update pfd events
-		if (pfd)
-			pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
+		if (m_pfd)
+			m_pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
 
 		return bytesSent;
 	}
@@ -173,15 +173,15 @@ namespace NECRO
 		if (!IsOpen())
 			return 0;
 
-		inBuffer.CompactData();
-		inBuffer.EnlargeBufferIfNeeded();
+		m_inBuffer.CompactData();
+		m_inBuffer.EnlargeBufferIfNeeded();
 
 		// Manually write on the inBuffer
 		int bytesReceived = 0;
 		size_t sslBytesReceived = 0;
-		if (!usesTLS)
+		if (!m_usesTLS)
 		{
-			bytesReceived = recv(m_socket, reinterpret_cast<char*>(inBuffer.GetWritePointer()), inBuffer.GetRemainingSpace(), 0);
+			bytesReceived = recv(m_socket, reinterpret_cast<char*>(m_inBuffer.GetWritePointer()), m_inBuffer.GetRemainingSpace(), 0);
 
 			if (bytesReceived < 0)
 			{
@@ -195,11 +195,11 @@ namespace NECRO
 		}
 		else
 		{
-			int ret = SSL_read_ex(ssl, reinterpret_cast<char*>(inBuffer.GetWritePointer()), inBuffer.GetRemainingSpace(), &sslBytesReceived);
+			int ret = SSL_read_ex(m_ssl, reinterpret_cast<char*>(m_inBuffer.GetWritePointer()), m_inBuffer.GetRemainingSpace(), &sslBytesReceived);
 
 			if (ret <= 0)
 			{
-				int sslError = SSL_get_error(ssl, ret);
+				int sslError = SSL_get_error(m_ssl, ret);
 				if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
 					return 0;
 				else if (sslError == SSL_ERROR_ZERO_RETURN)
@@ -218,11 +218,11 @@ namespace NECRO
 			}
 		}
 
-		if (usesTLS)
+		if (m_usesTLS)
 			bytesReceived = sslBytesReceived;
 
 		// Make sure to update the write pos
-		inBuffer.WriteCompleted(bytesReceived);
+		m_inBuffer.WriteCompleted(bytesReceived);
 
 		LOG_INFO("Received %d bytes of something!", bytesReceived);
 
@@ -243,7 +243,7 @@ namespace NECRO
 			return SocketUtility::GetLastError();
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 #else
 		int flags = fcntl(fd, F_GETFL, 0);
 
@@ -263,7 +263,7 @@ namespace NECRO
 			return SocketUtility::GetLastError();
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 #endif
 	}
 
@@ -277,21 +277,21 @@ namespace NECRO
 			return SocketUtility::GetLastError();
 		}
 
-		return SOCKET_UTILITY_NO_ERROR;
+		return SocketUtility::SU_NO_ERROR_VAL;
 	}
 
 	int TCPSocket::Shutdown()
 	{
-		if (closed)
+		if (m_closed)
 			return 0;
 
-		closed = true;
+		m_closed = true;
 
 		// Free OpenSSL data
-		if (ssl != nullptr)
+		if (m_ssl != nullptr)
 		{
-			SSL_free(ssl);
-			ssl = nullptr;
+			SSL_free(m_ssl);
+			m_ssl = nullptr;
 		}
 #ifdef _WIN32
 		int result = shutdown(m_socket, SD_SEND);
@@ -313,10 +313,10 @@ namespace NECRO
 	int TCPSocket::Close()
 	{
 		// Free OpenSSL data
-		if (ssl != nullptr)
+		if (m_ssl != nullptr)
 		{
-			SSL_free(ssl);
-			ssl = nullptr;
+			SSL_free(m_ssl);
+			m_ssl = nullptr;
 		}
 #ifdef _WIN32
 
@@ -331,24 +331,24 @@ namespace NECRO
 	// OpenSSL
 	void TCPSocket::ServerTLSSetup(const char* hostname)
 	{
-		usesTLS = true;
+		m_usesTLS = true;
 
-		bio = OpenSSLManager::CreateBioAndWrapSocket(GetSocketFD());
-		ssl = OpenSSLManager::ServerCreateSSLObject(bio);
+		m_bio = OpenSSLManager::CreateBioAndWrapSocket(GetSocketFD());
+		m_ssl = OpenSSLManager::ServerCreateSSLObject(m_bio);
 
-		OpenSSLManager::SetSNIHostname(ssl, hostname);
-		OpenSSLManager::SetCertVerificationHostname(ssl, hostname);
+		OpenSSLManager::SetSNIHostname(m_ssl, hostname);
+		OpenSSLManager::SetCertVerificationHostname(m_ssl, hostname);
 	}
 
 	void TCPSocket::ClientTLSSetup(const char* hostname)
 	{
-		usesTLS = true;
+		m_usesTLS = true;
 
-		bio = OpenSSLManager::CreateBioAndWrapSocket(GetSocketFD());
-		ssl = OpenSSLManager::ClientCreateSSLObject(bio);
+		m_bio = OpenSSLManager::CreateBioAndWrapSocket(GetSocketFD());
+		m_ssl = OpenSSLManager::ClientCreateSSLObject(m_bio);
 
-		OpenSSLManager::SetSNIHostname(ssl, hostname);
-		OpenSSLManager::SetCertVerificationHostname(ssl, hostname);
+		OpenSSLManager::SetSNIHostname(m_ssl, hostname);
+		OpenSSLManager::SetCertVerificationHostname(m_ssl, hostname);
 	}
 
 	int TCPSocket::TLSPerformHandshake()
@@ -356,9 +356,9 @@ namespace NECRO
 		int ret;
 		bool success = true;
 		// Perform the handshake
-		while ((ret = SSL_connect(ssl)) != 1)
+		while ((ret = SSL_connect(m_ssl)) != 1)
 		{
-			int err = SSL_get_error(ssl, ret);
+			int err = SSL_get_error(m_ssl, ret);
 
 			// Keep trying
 			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
@@ -385,8 +385,8 @@ namespace NECRO
 			LOG_ERROR("TLSPerformHandshake failed!");
 			if (err == SSL_ERROR_SSL)
 			{
-				if (SSL_get_verify_result(ssl) != X509_V_OK)
-					LOG_ERROR("Verify error: %s\n", X509_verify_cert_error_string(SSL_get_verify_result(ssl)));
+				if (SSL_get_verify_result(m_ssl) != X509_V_OK)
+					LOG_ERROR("Verify error: %s\n", X509_verify_cert_error_string(SSL_get_verify_result(m_ssl)));
 
 				success = false;
 			}

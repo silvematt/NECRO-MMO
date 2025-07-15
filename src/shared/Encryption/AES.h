@@ -9,14 +9,12 @@
 
 namespace NECRO
 {
-	#define AES_128_KEY_SIZE 16	// 128-bit key
-	#define GCM_IV_SIZE 12
-	#define GCM_TAG_SIZE 16
+	constexpr int AES_128_KEY_SIZE = 16;	// 128-bit key
+	constexpr int GCM_IV_SIZE = 12;
+	constexpr int GCM_TAG_SIZE = 16;
 
-	class AES
+	namespace AES
 	{
-
-	public:
 		// GCM IV
 		struct IV
 		{
@@ -54,8 +52,7 @@ namespace NECRO
 			}
 		};
 
-	public:
-		static std::array<uint8_t, AES_128_KEY_SIZE> GenerateSessionKey()
+		inline std::array<uint8_t, AES_128_KEY_SIZE> GenerateSessionKey()
 		{
 			std::array<uint8_t, AES_128_KEY_SIZE> k{};
 			if (RAND_bytes(k.data(), AES_128_KEY_SIZE) != 1)
@@ -129,7 +126,7 @@ namespace NECRO
 			return ciphertext_len;
 		}
 
-		static int Decrypt(unsigned char* ciphertext, int ciphertext_len,
+		inline int Decrypt(unsigned char* ciphertext, int ciphertext_len,
 			unsigned char* aad, int aad_len,
 			unsigned char* tag,
 			unsigned char* key,
@@ -197,8 +194,8 @@ namespace NECRO
 				return -1;
 			}
 		}
-	};
 
+	}
 }
 
 #endif

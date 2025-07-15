@@ -24,10 +24,10 @@ namespace NECRO
 	class OpenSSLManager
 	{
 	private:
-		static SSL_CTX* server_ctx;
-		static SSL_CTX* client_ctx;
+		static SSL_CTX* s_server_ctx;
+		static SSL_CTX* s_client_ctx;
 
-		static const std::array<unsigned char, 4> cache_id;
+		static const std::array<unsigned char, 4> s_cache_id;
 
 	public:
 		static int ServerInit()
@@ -37,17 +37,17 @@ namespace NECRO
 			SSL_library_init();
 
 			// Create Context
-			server_ctx = SSL_CTX_new(TLS_server_method());
+			s_server_ctx = SSL_CTX_new(TLS_server_method());
 
-			if (server_ctx == NULL)
+			if (s_server_ctx == NULL)
 			{
 				LOG_ERROR("OpenSSLManager: Could not create anew CTX");
 				return 1;
 			}
 
-			if (!SSL_CTX_set_min_proto_version(server_ctx, TLS1_3_VERSION))
+			if (!SSL_CTX_set_min_proto_version(s_server_ctx, TLS1_3_VERSION))
 			{
-				SSL_CTX_free(server_ctx);
+				SSL_CTX_free(s_server_ctx);
 				LOG_ERROR("OpenSSLManager: failed to set the minimum TLS protocol version.");
 				return 2;
 			}
@@ -58,31 +58,31 @@ namespace NECRO
 			opts |= SSL_OP_NO_RENEGOTIATION;
 			opts |= SSL_OP_CIPHER_SERVER_PREFERENCE;
 
-			SSL_CTX_set_options(server_ctx, opts);
+			SSL_CTX_set_options(s_server_ctx, opts);
 
 			// Set certificate and private key
-			if (SSL_CTX_use_certificate_file(server_ctx, "server.pem", SSL_FILETYPE_PEM) <= 0)
+			if (SSL_CTX_use_certificate_file(s_server_ctx, "server.pem", SSL_FILETYPE_PEM) <= 0)
 			{
-				SSL_CTX_free(server_ctx);
+				SSL_CTX_free(s_server_ctx);
 				LOG_ERROR("OpenSSLManager: failed to load the server certificate.");
 				return 3;
 			}
 
-			if (SSL_CTX_use_PrivateKey_file(server_ctx, "pkey.pem", SSL_FILETYPE_PEM) <= 0)
+			if (SSL_CTX_use_PrivateKey_file(s_server_ctx, "pkey.pem", SSL_FILETYPE_PEM) <= 0)
 			{
-				SSL_CTX_free(server_ctx);
+				SSL_CTX_free(s_server_ctx);
 				LOG_ERROR("OpenSSLManager: failed to load the server private key file. Possible key/cert mismatch.");
 				return 4;
 			}
 
 			// Set cache mode
-			SSL_CTX_set_session_id_context(server_ctx, OpenSSLManager::cache_id.data(), OpenSSLManager::cache_id.size());
-			SSL_CTX_set_session_cache_mode(server_ctx, SSL_SESS_CACHE_SERVER);
-			SSL_CTX_sess_set_cache_size(server_ctx, 1024);
-			SSL_CTX_set_timeout(server_ctx, 3600);
+			SSL_CTX_set_session_id_context(s_server_ctx, OpenSSLManager::s_cache_id.data(), OpenSSLManager::s_cache_id.size());
+			SSL_CTX_set_session_cache_mode(s_server_ctx, SSL_SESS_CACHE_SERVER);
+			SSL_CTX_sess_set_cache_size(s_server_ctx, 1024);
+			SSL_CTX_set_timeout(s_server_ctx, 3600);
 
 			// We don't need to verify client's certificates
-			SSL_CTX_set_verify(server_ctx, SSL_VERIFY_NONE, NULL);
+			SSL_CTX_set_verify(s_server_ctx, SSL_VERIFY_NONE, NULL);
 
 			LOG_OK("OpenSSLManager: Initialization Completed!");
 			return 0;
@@ -91,27 +91,27 @@ namespace NECRO
 		static int ClientInit()
 		{
 			// Create Context
-			client_ctx = SSL_CTX_new(TLS_client_method());
+			s_client_ctx = SSL_CTX_new(TLS_client_method());
 
-			if (client_ctx == NULL)
+			if (s_client_ctx == NULL)
 			{
 				LOG_ERROR("OpenSSLManager: Could not create a new CTX.");
 				return 1;
 			}
 
 			// Set verify of the certs
-			SSL_CTX_load_verify_locations(client_ctx, "server.pem", nullptr); // Trust this cert
-			SSL_CTX_set_verify(client_ctx, SSL_VERIFY_PEER, NULL);
+			SSL_CTX_load_verify_locations(s_client_ctx, "server.pem", nullptr); // Trust this cert
+			SSL_CTX_set_verify(s_client_ctx, SSL_VERIFY_PEER, NULL);
 
 			// Use the default trusted certificate store
-			if (!SSL_CTX_set_default_verify_paths(client_ctx))
+			if (!SSL_CTX_set_default_verify_paths(s_client_ctx))
 			{
 				LOG_ERROR("OpenSSLManager: Could not set default verify paths.");
 				return 2;
 			}
 
 			// Restrict to TLS v1.3
-			if (!SSL_CTX_set_min_proto_version(client_ctx, TLS1_3_VERSION))
+			if (!SSL_CTX_set_min_proto_version(s_client_ctx, TLS1_3_VERSION))
 			{
 				LOG_ERROR("OpenSSLManager: failed to set min protocol version.");
 				return 3;
@@ -139,7 +139,7 @@ namespace NECRO
 
 		static SSL* ServerCreateSSLObject(BIO* setBio = nullptr)
 		{
-			SSL* s = SSL_new(server_ctx);
+			SSL* s = SSL_new(s_server_ctx);
 
 			if (s == NULL)
 			{
@@ -157,7 +157,7 @@ namespace NECRO
 
 		static SSL* ClientCreateSSLObject(BIO* setBio = nullptr)
 		{
-			SSL* s = SSL_new(client_ctx);
+			SSL* s = SSL_new(s_client_ctx);
 
 			if (s == NULL)
 			{
@@ -196,7 +196,7 @@ namespace NECRO
 
 		static int ServerShutdown()
 		{
-			SSL_CTX_free(server_ctx);
+			SSL_CTX_free(s_server_ctx);
 			return 0;
 		}
 	};

@@ -8,11 +8,11 @@ namespace NECRO
 {
 namespace World
 {
-	Server server;
+	Server g_server;
 
 	int Server::Init()
 	{
-		isRunning = false;
+		m_isRunning = false;
 
 		LOG_OK("Booting up NECROServer...");
 
@@ -23,7 +23,7 @@ namespace World
 
 	void Server::Update()
 	{
-		isRunning = true;
+		m_isRunning = true;
 		LOG_OK("Server is running...");
 
 		// DEBUG: Just a quick test
@@ -39,7 +39,7 @@ namespace World
 		std::shared_ptr<TCPSocket> inSock;
 
 		// Engine Loop
-		while (isRunning)
+		while (m_isRunning)
 		{
 			// Loop
 			SocketAddress otherAddress;
@@ -56,7 +56,7 @@ namespace World
 	{
 		LOG_OK("Stopping the server...");
 
-		isRunning = false;
+		m_isRunning = false;
 	}
 
 	int Server::Shutdown()

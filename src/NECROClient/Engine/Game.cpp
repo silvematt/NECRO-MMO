@@ -54,7 +54,7 @@ namespace Client
 		Input& input = engine.GetInput();
 
 		// Switch game mode
-		if (engine.GetInput().GetKeyDown(SDL_SCANCODE_TAB))
+		if (input.GetKeyDown(SDL_SCANCODE_TAB))
 		{
 			switch (curMode)
 			{

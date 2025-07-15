@@ -69,7 +69,7 @@ namespace Client
     {
         LOG_OK("AuthSession ReadCallback");
 
-        NetworkMessage& packet = inBuffer;
+        NetworkMessage& packet = m_inBuffer;
 
         while (packet.GetActiveSize())
         {
@@ -134,7 +134,7 @@ namespace Client
     bool AuthSession::HandlePacketAuthLoginGatherInfoResponse()
     {
         Console& c = engine.GetConsole();
-        NECRO::Auth::CPacketAuthLoginGatherInfo* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginGatherInfo*>(inBuffer.GetBasePointer());
+        NECRO::Auth::CPacketAuthLoginGatherInfo* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginGatherInfo*>(m_inBuffer.GetBasePointer());
         AuthManager& net = engine.GetAuthManager();
 
         if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::SUCCESS))
@@ -204,7 +204,7 @@ namespace Client
         AuthManager& netManager = engine.GetAuthManager();
 
         Console& c = engine.GetConsole();
-        NECRO::Auth::CPacketAuthLoginProof* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginProof*>(inBuffer.GetBasePointer());
+        NECRO::Auth::CPacketAuthLoginProof* pckData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginProof*>(m_inBuffer.GetBasePointer());
 
         if (pckData->error == static_cast<int>(NECRO::Auth::LoginProofResults::SUCCESS))
         {

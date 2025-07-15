@@ -14,43 +14,43 @@ namespace NECRO
     class NetworkMessage
     {
     private:
-        size_t rpos, wpos;          // Read Pos, Write Pos. 
+        size_t m_rpos;          // Read Pos
+        size_t m_wpos;          // Write Pos 
         // ReadPos in the NetworkMessage can be viewed as "consumed" pos, 
         // if it's > 0 it means we've consumed the data until there, so it's probably a good idea to move the remaining data at beginning of the buffer with CompactData()
 
-        std::vector<uint8_t> data;          // Raw Data
-        std::vector<uint8_t> cipherData;    // Data after being encrpyted/decrypted
-        unsigned char tag[GCM_TAG_SIZE];
+        std::vector<uint8_t>    m_data;          // Raw Data
+        std::vector<uint8_t>    m_cipherData;    // Data after being encrpyted/decrypted
+        unsigned char           m_tag[GCM_TAG_SIZE];
 
     public:
         // Move constructor
         NetworkMessage(NetworkMessage&& other) noexcept :
-            rpos(other.rpos),
-            wpos(other.wpos),
-            data(std::move(other.data)),                // Move the vector
-            cipherData(std::move(other.cipherData)),    // Move the vector
-            tag()                                       // Initialize tag
+            m_rpos(other.m_rpos),
+            m_wpos(other.m_wpos),
+            m_data(std::move(other.m_data)),                // Move the vector
+            m_cipherData(std::move(other.m_cipherData))     // Move the vector
         {
             // Copy the tag array
-            std::memcpy(tag, other.tag, GCM_TAG_SIZE);
+            std::memcpy(m_tag, other.m_tag, GCM_TAG_SIZE);
         }
 
         // NetworkMessage Constructor
         // data is resized (not reserved) because we'll need it as soon as this is created, and probably we'll need exactly the reservedSize amount
-        NetworkMessage() : rpos(0), wpos(0)
+        NetworkMessage() : m_rpos(0), m_wpos(0)
         {
-            data.resize(Packet::DEFAULT_PCKT_SIZE);
+            m_data.resize(Packet::DEFAULT_PCKT_SIZE);
         }
 
-        NetworkMessage(size_t reservedSize) : rpos(0), wpos(0)
+        NetworkMessage(size_t reservedSize) : m_rpos(0), m_wpos(0)
         {
-            data.resize(reservedSize);
+            m_data.resize(reservedSize);
         }
 
         // Wraps a packet in a NetworkMessage
         NetworkMessage(const Packet& p)
         {
-            data.resize(p.Size());
+            m_data.resize(p.Size());
             Write(p.GetContentToRead(), p.Size());
         }
 
@@ -59,8 +59,8 @@ namespace NECRO
         //-----------------------------------------------------------------------------------------------------------
         void Clear()
         {
-            data.clear();
-            rpos = wpos = 0;
+            m_data.clear();
+            m_rpos = m_wpos = 0;
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -68,20 +68,20 @@ namespace NECRO
         //-----------------------------------------------------------------------------------------------------------
         void SoftClear()
         {
-            rpos = wpos = 0;
+            m_rpos = m_wpos = 0;
         }
 
-        size_t  Size()  const { return data.size(); }
-        bool    Empty() const { return data.empty(); }
+        size_t  Size()  const { return m_data.size(); }
+        bool    Empty() const { return m_data.empty(); }
 
         // Functions to easily access data locations
-        uint8_t* GetBasePointer() { return data.data(); }
-        uint8_t* GetReadPointer() { return GetBasePointer() + rpos; }
-        uint8_t* GetWritePointer() { return GetBasePointer() + wpos; }
+        uint8_t* GetBasePointer() { return m_data.data(); }
+        uint8_t* GetReadPointer() { return GetBasePointer() + m_rpos; }
+        uint8_t* GetWritePointer() { return GetBasePointer() + m_wpos; }
 
         // Useful information
-        size_t GetActiveSize() const { return wpos - rpos; }
-        size_t GetRemainingSpace() const { return data.size() - wpos; }
+        size_t GetActiveSize() const { return m_wpos - m_rpos; }
+        size_t GetRemainingSpace() const { return m_data.size() - m_wpos; }
 
         // Encrpytion
         int AESEncrypt(unsigned char* key, AES::IV& iv, unsigned char* aad, int aadLen)
@@ -92,8 +92,8 @@ namespace NECRO
             iv.IncrementCounter(); // increment counter here! So we are sure each encrypt operation increases the counter
 
             // Transform the data in this message to the encrypted equivalend, format [PCKT_SIZE | IV | TAG | CIPHERTEXT]
-            cipherData.resize(GetActiveSize());  // same as plaintext, since GCM shouldn't expand
-            int ciphertext_len = AES::Encrypt(GetReadPointer(), GetActiveSize(), aad, aadLen, key, ivBytes.data(), GCM_IV_SIZE, cipherData.data(), tag);
+            m_cipherData.resize(GetActiveSize());  // same as plaintext, since GCM shouldn't expand
+            int ciphertext_len = AES::Encrypt(GetReadPointer(), GetActiveSize(), aad, aadLen, key, ivBytes.data(), GCM_IV_SIZE, m_cipherData.data(), m_tag);
 
             if (ciphertext_len >= 0)
             {
@@ -104,8 +104,8 @@ namespace NECRO
 
                 Write(&packetSize, sizeof(packetSize)); // write the whole packet size as first uint32_t
                 Write(ivBytes.data(), GCM_IV_SIZE);
-                Write(tag, GCM_TAG_SIZE);
-                Write(cipherData.data(), ciphertext_len);
+                Write(m_tag, GCM_TAG_SIZE);
+                Write(m_cipherData.data(), ciphertext_len);
 
                 return ciphertext_len;
             }
@@ -135,15 +135,15 @@ namespace NECRO
                 return -2; // malformed packet
 
             // Decrypt
-            cipherData.resize(cipherTextLen);
-            int plainTextLen = AES::Decrypt(cipherPtr, cipherTextLen, aad, aadLen, tagPtr, key, ivPtr, GCM_IV_SIZE, cipherData.data());
+            m_cipherData.resize(cipherTextLen);
+            int plainTextLen = AES::Decrypt(cipherPtr, cipherTextLen, aad, aadLen, tagPtr, key, ivPtr, GCM_IV_SIZE, m_cipherData.data());
 
             if (plainTextLen < 0)
                 return -3; // decryption failed
 
             // Replace internal buffer with plaintext
             SoftClear();
-            Write(cipherData.data(), plainTextLen);
+            Write(m_cipherData.data(), plainTextLen);
 
             return plainTextLen;
         }
@@ -153,7 +153,7 @@ namespace NECRO
         //-----------------------------------------------------------------------------------------------------------------
         void ReadCompleted(size_t bytes)
         {
-            rpos += bytes;
+            m_rpos += bytes;
         }
 
         //-----------------------------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ namespace NECRO
         //-----------------------------------------------------------------------------------------------------------------
         void WriteCompleted(size_t bytes)
         {
-            wpos += bytes;
+            m_wpos += bytes;
         }
 
 
@@ -170,13 +170,13 @@ namespace NECRO
         //-----------------------------------------------------------------------------------------------------------------
         void CompactData()
         {
-            if (rpos > 0)
+            if (m_rpos > 0)
             {
-                if (rpos != wpos) // if there's data to shift
+                if (m_rpos != m_wpos) // if there's data to shift
                     memmove(GetBasePointer(), GetReadPointer(), GetActiveSize());
 
-                wpos = wpos - rpos; // adjust wpos accordingly
-                rpos = 0;
+                m_wpos = m_wpos - m_rpos; // adjust wpos accordingly
+                m_rpos = 0;
             }
         }
 
@@ -198,12 +198,12 @@ namespace NECRO
                     {
                         size_t newSize = (Size() + size);
                         newSize += (newSize / 2); // give an extra 50% of storage
-                        data.resize(newSize);
+                        m_data.resize(newSize);
                     }
                 }
 
                 memcpy(GetWritePointer(), bytes, size);
-                wpos += size;
+                m_wpos += size;
             }
         }
 
@@ -214,7 +214,7 @@ namespace NECRO
         void EnlargeBufferIfNeeded()
         {
             if (GetRemainingSpace() == 0)
-                data.resize(Size() + (Size() / 2));
+                m_data.resize(Size() + (Size() / 2));
         }
 
     };

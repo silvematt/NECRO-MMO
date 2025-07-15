@@ -27,7 +27,7 @@ namespace NECRO
 	typedef int sock_t;
 #endif
 
-	#define READ_BLOCK_SIZE 4096
+	constexpr int READ_BLOCK_SIZE = 4096;
 
 	const int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
 
@@ -46,24 +46,24 @@ namespace NECRO
 		friend class SocketAddress;
 		sock_t m_socket;
 
-		SocketAddress remoteAddress;
-		uint16_t remotePort;
+		SocketAddress	m_remoteAddress;
+		uint16_t		m_remotePort;
 
 		// Read/Write buffers
-		NetworkMessage inBuffer;
-		std::queue<NetworkMessage> outQueue;
+		NetworkMessage				m_inBuffer;
+		std::queue<NetworkMessage>	m_outQueue;
 
-		bool closed = false;
+		bool m_closed = false;
 
 		// OpenSSL support
-		bool usesTLS = false;
-		SSL* ssl;
-		BIO* bio;
+		bool m_usesTLS = false;
+		SSL* m_ssl;
+		BIO* m_bio;
 
 		// Used for dynamic POLLIN | POLLOUT behavior, save the pfd and we'll update the events to look for in base of the content of the outQueue
 		// If the outqueue is empty, only poll for POLLIN events, otherwise, also POLLOUT events
 		// This is better than the callback Send() approach because even if a Send fails because the socket was not writable at the time of the callback, we'll still try to send the packets later
-		pollfd* pfd;
+		pollfd* m_pfd;
 
 
 	public:
@@ -93,8 +93,8 @@ namespace NECRO
 			if (inSocket != INVALID_SOCKET)
 			{
 				std::shared_ptr<T> newSocket = std::make_shared<T>(inSocket);
-				newSocket->remoteAddress = addr;
-				newSocket->remotePort = ntohs(reinterpret_cast<sockaddr_in*>(&addr.m_addr)->sin_port);
+				newSocket->m_remoteAddress = addr;
+				newSocket->m_remotePort = ntohs(reinterpret_cast<sockaddr_in*>(&addr.m_addr)->sin_port);
 				return newSocket;
 			}
 			else
@@ -115,28 +115,28 @@ namespace NECRO
 
 		std::string GetRemoteAddressAndPort()
 		{
-			return remoteAddress.RemoteAddressAndPortToString();
+			return m_remoteAddress.RemoteAddressAndPortToString();
 		}
 
 		std::string GetRemoteAddress()
 		{
-			return remoteAddress.RemoteAddressToString();
+			return m_remoteAddress.RemoteAddressToString();
 		}
 
 		void SetRemoteAddressAndPort(const SocketAddress& s, const uint16_t& p)
 		{
-			remoteAddress = s;
-			remotePort = p;
+			m_remoteAddress = s;
+			m_remotePort = p;
 		}
 
 		void SetPfd(pollfd* fd)
 		{
-			pfd = fd;
+			m_pfd = fd;
 		}
 
 		bool HasPendingData() const
 		{
-			return !outQueue.empty();
+			return !m_outQueue.empty();
 		}
 
 		int							Shutdown();
@@ -147,7 +147,7 @@ namespace NECRO
 		int							SetBlockingEnabled(bool blocking);
 		int							SetSocketOption(int lvl, int optName, const char* optVal, int optLen);
 
-		SSL* GetSSL() { return ssl; }
+		SSL* GetSSL() { return m_ssl; }
 
 		// OpenSSL
 		void ServerTLSSetup(const char* hostname);

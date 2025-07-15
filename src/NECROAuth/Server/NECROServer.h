@@ -20,32 +20,33 @@ namespace Auth
 	{
 	public:
 		Server() :
-			isRunning(false)
+			m_isRunning(false)
 		{
 
 		}
 
 	private:
 		// Status
-		bool isRunning;
+		bool m_isRunning;
 
-		ConsoleLogger cLogger;
-		FileLogger fLogger;
-		std::unique_ptr<TCPSocketManager> sockManager;
+		ConsoleLogger	m_cLogger;
+		FileLogger		m_fLogger;
+
+		std::unique_ptr<TCPSocketManager> m_sockManager;
 
 		// directdb will be used for queries that run (and block) on the main thread
 		// to use only with data-critical code, for example, while making a response packet where an information in the database is needed to go further
 		// for "fire-and-forget" operations like updating logs, fields, etc we can use the dbworker
-		LoginDatabase directdb;
-		DatabaseWorker dbworker;
+		LoginDatabase	m_directdb;
+		DatabaseWorker	m_dbworker;
 
 	public:
-		ConsoleLogger& GetConsoleLogger();
-		FileLogger& GetFileLogger();
-		TCPSocketManager& GetSocketManager();
+		ConsoleLogger&		GetConsoleLogger();
+		FileLogger&			GetFileLogger();
+		TCPSocketManager&	GetSocketManager();
 
-		LoginDatabase& GetDirectDB();
-		DatabaseWorker& GetDBWorker();
+		LoginDatabase&	GetDirectDB();
+		DatabaseWorker&	GetDBWorker();
 
 		int						Init();
 		void					Start();
@@ -55,32 +56,32 @@ namespace Auth
 	};
 
 	// Global access for the Server 
-	extern Server server;
+	extern Server g_server;
 
 	// Inline functions
 	inline ConsoleLogger& Server::GetConsoleLogger()
 	{
-		return cLogger;
+		return m_cLogger;
 	}
 
 	inline FileLogger& Server::GetFileLogger()
 	{
-		return fLogger;
+		return m_fLogger;
 	}
 
 	inline TCPSocketManager& Server::GetSocketManager()
 	{
-		return *sockManager.get();
+		return *m_sockManager.get();
 	}
 
 	inline LoginDatabase& Server::GetDirectDB()
 	{
-		return directdb;
+		return m_directdb;
 	}
 
 	inline DatabaseWorker& Server::GetDBWorker()
 	{
-		return dbworker;
+		return m_dbworker;
 	}
 }
 }

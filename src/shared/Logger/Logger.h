@@ -25,6 +25,14 @@ namespace NECRO
             LOG_LEVEL_CRITICAL
         };
 
+    protected:
+        std::mutex m_logMutex;
+
+        std::string GetLogLevelStr(LogLevel level);
+
+    public:
+        virtual void Log(const std::string& message, LogLevel level, const char* file, int line, ...) = 0;
+
         // Helper function to format the string using variadic arguments
         std::string FormatString(const char* str, va_list args)
         {
@@ -33,14 +41,7 @@ namespace NECRO
             std::string result(size, '\0');
             std::vsnprintf(&result[0], size, str, args);  // Write the formatted string into the result
             return result;
-        }
-
-    protected:
-        std::mutex lMutex;
-        std::string GetLogLevelStr(LogLevel level);
-
-    public:
-        virtual void Log(const std::string& message, LogLevel level, const char* file, int line, ...) = 0;
+        }        
 
     #define cLog ConsoleLogger::Instance()
     #define fLog FileLogger::Instance()

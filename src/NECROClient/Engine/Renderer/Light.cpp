@@ -153,10 +153,10 @@ namespace Client
     //-----------------------------------------------------------------
     void Light::Animate()
     {
-        float deltaTime = engine.GetDeltaTime();
+        float dTime = engine.GetDeltaTime();
 
         float direction = goUp ? 1.0f : -1.0f;
-        intensity += direction * animSpeed * deltaTime;
+        intensity += direction * animSpeed * dTime;
 
         // Toggle directions (pulse light)
         if (intensity <= minIntensity)

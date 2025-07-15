@@ -13,49 +13,50 @@ namespace NECRO
     class Packet
     {
     private:
-        size_t rpos, wpos;          // Read Pos, Write Pos
-        std::vector<uint8_t> data;  // Raw Data
+        size_t                  m_rpos;     // Read Pos
+        size_t                  m_wpos;     // Write Pos
+        std::vector<uint8_t>    m_data;       // Raw Data
 
     public:
         constexpr static size_t DEFAULT_PCKT_SIZE = 0x1000;
 
         // Packet Constructor
-        Packet() : rpos(0), wpos(0)
+        Packet() : m_rpos(0), m_wpos(0)
         {
             // Data is reserved, not allocated. Reserving data allows to avoid stress on the allocator when appending bytes to the packet.
             // This means when we'll send the packet to the network, we'll still use 'data.size()' which will only contain the bytes we've actually written and need to send.
-            data.reserve(DEFAULT_PCKT_SIZE);
+            m_data.reserve(DEFAULT_PCKT_SIZE);
         }
 
-        Packet(size_t reservedSize) : rpos(0), wpos(0)
+        Packet(size_t reservedSize) : m_rpos(0), m_wpos(0)
         {
-            data.reserve(reservedSize);
+            m_data.reserve(reservedSize);
         }
 
         void Clear()
         {
-            data.clear();
-            wpos = wpos = 0;
+            m_data.clear();
+            m_wpos = m_rpos = 0;
         }
 
         uint8_t* GetContent()
         {
-            if (data.empty())
+            if (m_data.empty())
                 throw std::out_of_range("Trying to GetContent of an empty packet!");
 
-            return data.data();
+            return m_data.data();
         }
 
         const uint8_t* GetContentToRead() const
         {
-            if (data.empty())
+            if (m_data.empty())
                 throw std::out_of_range("Trying to GetContent of an empty packet!");
 
-            return data.data();
+            return m_data.data();
         }
 
-        size_t  Size()  const { return data.size(); }
-        bool    Empty() const { return data.empty(); }
+        size_t  Size()  const { return m_data.size(); }
+        bool    Empty() const { return m_data.empty(); }
 
 
         // Base append function

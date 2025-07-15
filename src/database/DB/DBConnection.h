@@ -17,14 +17,14 @@ namespace NECRO
     class DBConnection
     {
     public:
-        std::unique_ptr<mysqlx::Session> session;
+        std::unique_ptr<mysqlx::Session> m_session;
 
         int Init(const std::string& host, int port, const std::string& user, const std::string& pass)
         {
             try
             {
                 // Establish a session to the MySQL server
-                session = std::make_unique<mysqlx::Session>(host, port, user, pass);
+                m_session = std::make_unique<mysqlx::Session>(host, port, user, pass);
                 LOG_INFO("Database session initialized successfully.");
                 return 0;
             }
@@ -51,7 +51,7 @@ namespace NECRO
         {
             try
             {
-                session->close();
+                m_session->close();
             }
             catch (const mysqlx::Error& err)
             {

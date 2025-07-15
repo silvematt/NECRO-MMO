@@ -12,7 +12,7 @@ namespace NECRO
 	private:
 		const std::string DEFAULT_LOG_FILE_NAME = "ServerLog.txt";
 
-		std::ofstream logFile;
+		std::ofstream m_logFile;
 
 	public:
 		static FileLogger* Instance();

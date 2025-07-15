@@ -4,9 +4,9 @@
 
 int main()
 {
-	if (NECRO::World::server.Init() == 0)
+	if (NECRO::World::g_server.Init() == 0)
 	{
-		NECRO::World::server.Update();
+		NECRO::World::g_server.Update();
 	}
 
 	return 0;

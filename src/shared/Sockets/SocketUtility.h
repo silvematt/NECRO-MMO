@@ -12,16 +12,14 @@
 
 namespace NECRO
 {
-	constexpr int SOCKET_UTILITY_NO_ERROR = 0;
-
-	class SocketUtility
+	namespace SocketUtility
 	{
-	public:
+		constexpr int SU_NO_ERROR_VAL = 0;
 
 		//---------------------------------------------------------
 		// Returns the last error that occurred
 		//---------------------------------------------------------
-		static int GetLastError()
+		inline int GetLastError()
 		{
 #ifdef _WIN32
 			return WSAGetLastError();
@@ -30,7 +28,7 @@ namespace NECRO
 #endif
 		}
 
-		static bool ErrorIsWouldBlock()
+		inline bool ErrorIsWouldBlock()
 		{
 #ifdef _WIN32
 			if (GetLastError() == WSAEWOULDBLOCK)
@@ -43,7 +41,7 @@ namespace NECRO
 			return false;
 		}
 
-		static bool ErrorIsIsInProgres()
+		inline bool ErrorIsIsInProgres()
 		{
 #ifdef _WIN32
 			if (GetLastError() == WSAEINPROGRESS)
@@ -56,7 +54,7 @@ namespace NECRO
 			return false;
 		}
 
-		static bool ErrorIsIsConnectionRefused()
+		inline bool ErrorIsIsConnectionRefused()
 		{
 #ifdef _WIN32
 			if (GetLastError() == WSAECONNREFUSED)
@@ -72,7 +70,7 @@ namespace NECRO
 		//---------------------------------------------------------
 		// Initializes Winsock if on windows, otherwise do nothing.
 		//---------------------------------------------------------
-		static void Initialize()
+		inline void Initialize()
 		{
 #ifdef _WIN32
 			WORD wVersion = MAKEWORD(2, 2);

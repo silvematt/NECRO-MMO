@@ -13,39 +13,37 @@ namespace NECRO
 {
 namespace Auth
 {
-	std::unordered_map<std::string, AuthSession*> TCPSocketManager::usernameMap;
-
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
 	//-----------------------------------------------------------------------------------------------------
-	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : listener(_family)
+	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family)
 	{
 		uint16_t inPort = 61531;
 		SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
 		int flag = 1;
 
-		listener.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
-		listener.SetSocketOption(SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(int));
+		m_listener.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+		m_listener.SetSocketOption(SOL_SOCKET, SO_REUSEADDR, (char*)&flag, sizeof(int));
 
-		listener.Bind(localAddr);
-		listener.SetBlockingEnabled(false);
-		listener.Listen();
+		m_listener.Bind(localAddr);
+		m_listener.SetBlockingEnabled(false);
+		m_listener.Listen();
 
 		// Initialize the pollfds vector
 		pollfd pfd;
-		pfd.fd = listener.GetSocketFD();
+		pfd.fd = m_listener.GetSocketFD();
 		pfd.events = POLLIN;
 		pfd.revents = 0;
-		poll_fds.push_back(pfd);
+		m_poll_fds.push_back(pfd);
 	}
 
 	int TCPSocketManager::Poll()
 	{
 		static int timeout = -1;	// wait forever until at least one socket has an event
 
-		LOG_DEBUG(fmt::format("Polling {}", list.size()));
+		LOG_DEBUG(fmt::format("Polling {}", m_list.size()));
 
-		int res = WSAPoll(poll_fds.data(), poll_fds.size(), timeout);
+		int res = WSAPoll(m_poll_fds.data(), m_poll_fds.size(), timeout);
 
 		// Check for errors
 		if (res < 0)
@@ -61,18 +59,18 @@ namespace Auth
 		}
 
 		// Check for the listener (index 0)
-		if (poll_fds[0].revents != 0)
+		if (m_poll_fds[0].revents != 0)
 		{
-			if (poll_fds[0].revents & (POLLERR | POLLHUP | POLLNVAL))
+			if (m_poll_fds[0].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				LOG_ERROR("Listener encountered an error.");
 				return -1;
 			}
 			// If there's a reading event for the listener socket, it's a new connection
-			else if (poll_fds[0].revents & POLLIN)
+			else if (m_poll_fds[0].revents & POLLIN)
 			{
 				SocketAddress otherAddr;
-				if (std::shared_ptr<AuthSession> inSock = listener.Accept<AuthSession>(otherAddr))
+				if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 				{
 					LOG_INFO("New connection! Setting up TLS and handshaking...");
 
@@ -122,18 +120,18 @@ namespace Auth
 						LOG_OK("TLSPerformHandshake succeeded!");
 
 						// Initialize status
-						inSock->status = SocketStatus::GATHER_INFO;
-						list.push_back(inSock); // save it in the active list
+						inSock->m_status = SocketStatus::GATHER_INFO;
+						m_list.push_back(inSock); // save it in the active list
 
 						// Add the new connection to the pfds
 						pollfd newPfd;
 						newPfd.fd = inSock->GetSocketFD();
 						newPfd.events = POLLIN;
 						newPfd.revents = 0;
-						poll_fds.push_back(newPfd);
+						m_poll_fds.push_back(newPfd);
 
 						// Set inSock PFD pointer with the one we've just created and put in the vector
-						inSock->SetPfd(&poll_fds[poll_fds.size() - 1]);
+						inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
 					}
 				}
 			}
@@ -143,9 +141,9 @@ namespace Auth
 		std::vector<int> toRemove;
 
 		// Check for clients
-		for (size_t i = 1; i < poll_fds.size(); i++)
+		for (size_t i = 1; i < m_poll_fds.size(); i++)
 		{
-			if (poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+			if (m_poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				LOG_INFO("Client socket error/disconnection detected. Removing it later.");
 				toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
@@ -153,9 +151,9 @@ namespace Auth
 			else
 			{
 				// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
-				if (poll_fds[i].revents & POLLOUT)
+				if (m_poll_fds[i].revents & POLLOUT)
 				{
-					int r = list[i - 1]->Send();
+					int r = m_list[i - 1]->Send();
 
 					// If send failed
 					if (r < 0)
@@ -166,9 +164,9 @@ namespace Auth
 					}
 				}
 
-				if (poll_fds[i].revents & POLLIN)
+				if (m_poll_fds[i].revents & POLLIN)
 				{
-					int r = list[i - 1]->Receive();
+					int r = m_list[i - 1]->Receive();
 
 					// If receive failed, 
 					if (r < 0)
@@ -189,31 +187,14 @@ namespace Auth
 			{
 				LOG_DEBUG(fmt::format("Removing {}.", idx));
 
-				list[idx - 1]->Close();
-				usernameMap.erase(list[idx - 1]->GetAccountData().username);
+				m_list[idx - 1]->Close();
 
-				poll_fds.erase(poll_fds.begin() + idx);
-				list.erase(list.begin() + (idx - 1));
+				m_poll_fds.erase(m_poll_fds.begin() + idx);
+				m_list.erase(m_list.begin() + (idx - 1));
 			}
 		}
 
 		return 0;
-	}
-
-	bool TCPSocketManager::UsernameIsActive(const std::string& s)
-	{
-		auto it = usernameMap.find(s);
-		if (it == usernameMap.end())
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	void TCPSocketManager::RegisterUsername(const std::string& user, AuthSession* session)
-	{
-		usernameMap[user] = session;
 	}
 
 }

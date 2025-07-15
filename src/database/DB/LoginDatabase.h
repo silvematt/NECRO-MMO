@@ -28,7 +28,7 @@ namespace NECRO
 	public:
 		int Init() override
 		{
-			if (conn.Init("localhost", 33060, "root", "root") == 0)
+			if (m_conn.Init("localhost", 33060, "root", "root") == 0)
 				return 0;
 			else
 				return -1;
@@ -43,19 +43,19 @@ namespace NECRO
 			switch (enum_value)
 			{
 			case static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME):
-				return conn.session->sql("SELECT id FROM necroauth.users WHERE username = ?;");
-
+				return m_conn.m_session->sql("SELECT id FROM necroauth.users WHERE username = ?;");
+				
 			case static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD):
-				return conn.session->sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
+				return m_conn.m_session->sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
 
 			case static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD):
-				return conn.session->sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
+				return m_conn.m_session->sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
 
 			case static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS):
-				return conn.session->sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
+				return m_conn.m_session->sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
 
 			case static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION):
-				return conn.session->sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
+				return m_conn.m_session->sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
 
 			case static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN):
 				// TODO
@@ -93,7 +93,7 @@ namespace NECRO
 
 		int Close() override
 		{
-			conn.Close();
+			m_conn.Close();
 
 			return 0;
 		}

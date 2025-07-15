@@ -23,21 +23,15 @@ namespace Auth
 
 	protected:
 		// Underlying listener socket
-		TCPSocket listener;
+		TCPSocket m_listener;
 
 		// Connections container
-		std::vector<std::shared_ptr<AuthSession>> list;
+		std::vector<std::shared_ptr<AuthSession>> m_list;
 
-		std::vector<pollfd> poll_fds;
-
-		// Map for username lookup (since we don't use databases yet)
-		static std::unordered_map<std::string, AuthSession*> usernameMap;
+		std::vector<pollfd> m_poll_fds;
 
 	public:
 		int Poll();
-
-		static void RegisterUsername(const std::string& user, AuthSession* session);
-		static bool UsernameIsActive(const std::string& s);
 	};
 
 }

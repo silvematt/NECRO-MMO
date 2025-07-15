@@ -118,24 +118,6 @@ namespace Client
 		// Select tile from tileset (used for rendering)
 		tilesetYOff = static_cast<int>(isoDirection);		// pick y offset in base of direction
 
-		/*
-		* WASD NON-ISOMETRIC ALLIGNED MOVEMENT
-		// Normalize the input
-		Vector2 moveInput(deltaX, deltaY);
-		moveInput.Normalize();
-
-		// Convert to Isometric
-		// divison CELL_ components are inverted to equalize the movement
-		NMath::CartToIso(moveInput.x / CELL_WIDTH, moveInput.y / CELL_HEIGHT, moveInput.x, moveInput.y);
-
-		// Set speed
-		curMoveSpeed = isAiming ? PLAYER_MOVE_SPEED_AIM : PLAYER_MOVE_SPEED_FREE;
-
-		// Move while accounting for close entities colliders
-		float moveAmountX = moveInput.x * curMoveSpeed * engine.GetDeltaTime();
-		float moveAmountY = moveInput.y * curMoveSpeed * engine.GetDeltaTime();
-		*/
-
 		// Build raw input vector
 		Vector2 cartMove(deltaX, deltaY);
 

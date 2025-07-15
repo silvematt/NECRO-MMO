@@ -13,21 +13,21 @@ namespace NECRO
 
     FileLogger::~FileLogger()
     {
-        if (logFile.is_open())
-            logFile.close();
+        if (m_logFile.is_open())
+            m_logFile.close();
     }
 
     FileLogger::FileLogger()
     {
-        logFile.open(DEFAULT_LOG_FILE_NAME, std::ios::out | std::ios::app);
-        if (!logFile.is_open())
+        m_logFile.open(DEFAULT_LOG_FILE_NAME, std::ios::out | std::ios::app);
+        if (!m_logFile.is_open())
             std::cerr << "Error while trying to open LogFile: " << DEFAULT_LOG_FILE_NAME << std::endl;
     }
 
     FileLogger::FileLogger(const std::string& filePath)
     {
-        logFile.open(filePath, std::ios::out | std::ios::app);
-        if (!logFile.is_open())
+        m_logFile.open(filePath, std::ios::out | std::ios::app);
+        if (!m_logFile.is_open())
             std::cerr << "Error while trying to open LogFile: " << DEFAULT_LOG_FILE_NAME << std::endl;
     }
 
@@ -41,9 +41,9 @@ namespace NECRO
         // Format the message (parse variadic arguments)
         std::string formattedMessage = FormatString(message.c_str(), args);
 
-        std::lock_guard<std::mutex> guard(lMutex);
+        std::lock_guard<std::mutex> guard(m_logMutex);
 
-        if (!logFile.is_open())
+        if (!m_logFile.is_open())
         {
             std::cerr << "Attempt to log to an unopened file." << std::endl;
             return;
@@ -56,13 +56,13 @@ namespace NECRO
         std::string levelStr = GetLogLevelStr(lvl);
 
         // Format and write the log message
-        logFile << "[" << nowTimestamp << "] " << "[" << levelStr << "] ";
+        m_logFile << "[" << nowTimestamp << "] " << "[" << levelStr << "] ";
 
         if (file != nullptr)
-            logFile << "[" << file << ":" << line << "] ";
+            m_logFile << "[" << file << ":" << line << "] ";
 
         // Write the formatted message
-        logFile << formattedMessage << std::endl;
+        m_logFile << formattedMessage << std::endl;
 
         va_end(args);
     }

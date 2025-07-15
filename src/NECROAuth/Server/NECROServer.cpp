@@ -28,11 +28,11 @@ namespace NECRO
 {
 namespace Auth
 {
-	Server server;
+	Server g_server;
 
 	int Server::Init()
 	{
-		isRunning = false;
+		m_isRunning = false;
 
 		LOG_OK("Booting up NECROAuth...");
 
@@ -41,33 +41,33 @@ namespace Auth
 		if (OpenSSLManager::ServerInit() != 0)
 			return -1;
 
-		if (directdb.Init() != 0)
+		if (m_directdb.Init() != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 			return -2;
 		}
 
-		if (dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
+		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 			return -3;
 		}
 
-		if (dbworker.Start() != 0)
+		if (m_dbworker.Start() != 0)
 		{
 			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
 			return -4;
 		}
 
 		// Make TCPSocketManager
-		sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
+		m_sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
 
 		return 0;
 	}
 
 	void Server::Start()
 	{
-		isRunning = true;
+		m_isRunning = true;
 
 		LOG_OK("NECROAuth is running...");
 	}
@@ -75,9 +75,9 @@ namespace Auth
 	void Server::Update()
 	{
 		// Server Loop
-		while (isRunning)
+		while (m_isRunning)
 		{
-			int pollVal = sockManager->Poll();
+			int pollVal = m_sockManager->Poll();
 
 			if (pollVal == -1)
 				Stop();
@@ -90,7 +90,7 @@ namespace Auth
 	{
 		LOG_OK("Stopping NECROAuth...");
 
-		isRunning = false;
+		m_isRunning = false;
 	}
 
 	int Server::Shutdown()
@@ -98,11 +98,11 @@ namespace Auth
 		// Shutdown
 		LOG_OK("Shutting down NECROAuth...");
 
-		directdb.Close();
+		m_directdb.Close();
 
-		dbworker.Stop();
-		dbworker.Join();
-		dbworker.CloseDB();
+		m_dbworker.Stop();
+		m_dbworker.Join();
+		m_dbworker.CloseDB();
 
 		LOG_OK("Shut down of the NECROAuth completed.");
 		return 0;

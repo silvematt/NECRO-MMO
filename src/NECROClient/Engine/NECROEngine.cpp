@@ -38,35 +38,35 @@ namespace Client
 		}
 
 		// Initialize Input SubSystem
-		if (input.Init() != 0)
+		if (m_input.Init() != 0)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize Input SubSystem\n");
 			return -4;
 		}
 
 		// Initialize Renderer Subsystem
-		if (renderer.Init() != 0)
+		if (m_renderer.Init() != 0)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize Renderer SubSystem\n");
 			return -5;
 		}
 
 		// Initialize AssetsManager SubSystem
-		if (assetsManager.Init() != 0)
+		if (m_assetsManager.Init() != 0)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize AssetsManager SubSystem\n");
 			return -6;
 		}
 
 		// Inizialize Console
-		if (console.Init() != 0)
+		if (m_console.Init() != 0)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize Console SubSystem.\n");
 			return -7;
 		}
 
 		// Initialize Network
-		if (netManager.Init() != 0)
+		if (m_netManager.Init() != 0)
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize Network SubSystem.\n");
 			return -8;
@@ -74,9 +74,9 @@ namespace Client
 
 		srand(time(NULL));
 
-		lastUpdate = 0;
-		deltaTime = 0;
-		fps = 0;
+		m_lastUpdate = 0;
+		m_deltaTime = 0;
+		m_fps = 0;
 
 		SDL_Log("Initializing done.\n");
 		return 0;
@@ -90,8 +90,8 @@ namespace Client
 		SDL_Log("Shutting down the engine...");
 
 		// Shutdown subsystem
-		renderer.Shutdown();
-		console.Shutdown();
+		m_renderer.Shutdown();
+		m_console.Shutdown();
 
 		// Shutdown SDL
 		SDL_Quit();
@@ -108,7 +108,7 @@ namespace Client
 	{
 		SDL_Log("Stopping the engine...");
 
-		isRunning = false;
+		m_isRunning = false;
 	}
 
 	//--------------------------------------------------------------------------
@@ -118,12 +118,12 @@ namespace Client
 	{
 		SDL_Log("Engine is running.");
 
-		isRunning = true;
+		m_isRunning = true;
 
 		// Initialize game
-		game.Init();
+		m_game.Init();
 
-		lastUpdate = SDL_GetTicks();
+		m_lastUpdate = SDL_GetTicks();
 	}
 
 
@@ -133,28 +133,28 @@ namespace Client
 	void Engine::Update()
 	{
 		// Engine Loop
-		while (isRunning)
+		while (m_isRunning)
 		{
 			Uint64 start = SDL_GetPerformanceCounter();
 			uint32_t current = SDL_GetTicks();
-			deltaTime = (current - lastUpdate) / 1000.0f;
-			lastUpdate = current;
+			m_deltaTime = (current - m_lastUpdate) / 1000.0f;
+			m_lastUpdate = current;
 
-			input.Handle();
-			renderer.Clear();
+			m_input.Handle();
+			m_renderer.Clear();
 
-			game.Update();
+			m_game.Update();
 
-			renderer.Update();
-			renderer.Show();
+			m_renderer.Update();
+			m_renderer.Show();
 
 			Uint64 end = SDL_GetPerformanceCounter();
 			float elapsed = (end - start) / (float)SDL_GetPerformanceFrequency();
-			fps = (1.0f / elapsed);
+			m_fps = (1.0f / elapsed);
 		}
 
 		// Shutdown
-		game.Shutdown();
+		m_game.Shutdown();
 		Shutdown();
 	}
 

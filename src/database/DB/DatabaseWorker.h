@@ -7,7 +7,7 @@
 #include <queue>
 #include <memory>
 
-#include "Database.h"
+#include "LoginDatabase.h"
 
 namespace NECRO
 {
@@ -17,15 +17,17 @@ namespace NECRO
 	class DatabaseWorker
 	{
 	private:
-		std::unique_ptr<Database> db;
-		std::thread thread;
+		std::unique_ptr<Database>	m_db;
+		std::thread					m_thread;
 
-		std::mutex queueMutex;
-		int qSize = 0;
-		std::queue<mysqlx::SqlStatement> q;
-		std::condition_variable cond;
+		std::mutex					m_queueMutex;
+		std::condition_variable		m_cond;
 
-		std::atomic<bool> running{ false };
+		std::atomic<bool> m_running{ false };
+
+		// !! Shared Members (access with mutex) !!
+		std::queue<mysqlx::SqlStatement> m_q;
+		int m_qSize = 0;
 
 	public:
 		int Setup(Database::DBType t)
@@ -33,14 +35,14 @@ namespace NECRO
 			switch (t)
 			{
 			case Database::DBType::LOGIN_DATABASE:
-				db = std::make_unique<LoginDatabase>();
+				m_db = std::make_unique<LoginDatabase>();
 				break;
 
 			default:
 				throw std::exception("No database type!");
 			}
 
-			if (db->Init() == 0)
+			if (m_db->Init() == 0)
 				return 0;
 			else
 			{
@@ -54,15 +56,15 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		int Start()
 		{
-			if (thread.joinable())
+			if (m_thread.joinable())
 			{
 				LOG_WARNING("Attempting to start while thread is still joinable. This should not happen. Trying to stop and join.");
 				Stop();
 				Join();
 			}
 
-			running = true;
-			thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
+			m_running = true;
+			m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
 
 			return 0;
 		}
@@ -73,11 +75,11 @@ namespace NECRO
 		void Stop()
 		{
 			{
-				std::lock_guard<std::mutex> lock(queueMutex);
+				std::lock_guard<std::mutex> lock(m_queueMutex);
 
-				running = false;
+				m_running = false;
 			}
-			cond.notify_all();
+			m_cond.notify_all();
 		}
 
 		// ----------------------------------------------------------------------------------------------------
@@ -85,8 +87,8 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		void Join()
 		{
-			if (thread.joinable())
-				thread.join();
+			if (m_thread.joinable())
+				m_thread.join();
 		}
 
 		// ----------------------------------------------------------------------------------------------------
@@ -94,50 +96,50 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		void CloseDB()
 		{
-			db->Close();
+			m_db->Close();
 		}
 
 		void Enqueue(mysqlx::SqlStatement&& s)
 		{
-			std::lock_guard<std::mutex> lock(queueMutex);
-			q.push(std::move(s));
-			qSize++;
+			std::lock_guard<std::mutex> lock(m_queueMutex);
+			m_q.push(std::move(s));
+			m_qSize++;
 
-			cond.notify_all();
+			m_cond.notify_all();
 		}
 
 		mysqlx::SqlStatement Prepare(int enum_val)
 		{
-			return db->Prepare(enum_val);
+			return m_db->Prepare(enum_val);
 		}
 
 		void ThreadRoutine()
 		{
 			while (true)
 			{
-				std::unique_lock<std::mutex> lock(queueMutex);
+				std::unique_lock<std::mutex> lock(m_queueMutex);
 
 				// If we Stopped the thread and there's nothing in the queue, exit
-				if (!running && qSize <= 0)
+				if (!m_running && m_qSize <= 0)
 				{
 					lock.unlock();
 					break;
 				}
 
 				// Otherwise, we're either still running or there's still something in the queue
-				if (qSize <= 0) // if we're still running and queue is empty
+				if (m_qSize <= 0) // if we're still running and queue is empty
 				{
 					// Sleep
-					while (qSize <= 0 && running)
-						cond.wait(lock);
+					while (m_qSize <= 0 && m_running)
+						m_cond.wait(lock);
 				}
 				else // we have something to run
 				{
 					// We have lock here
 
-					mysqlx::SqlStatement stmt = std::move(q.front());
-					q.pop();
-					qSize--;
+					mysqlx::SqlStatement stmt = std::move(m_q.front());
+					m_q.pop();
+					m_qSize--;
 
 					lock.unlock();
 

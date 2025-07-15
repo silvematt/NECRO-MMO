@@ -23,39 +23,38 @@ namespace Client
 	{
 	private:
 		// Status
-		bool isRunning;
-		double deltaTime;
-		uint32_t lastUpdate;
-		float fps;
+		bool		m_isRunning;
+		double		m_deltaTime;
+		uint32_t	m_lastUpdate;
+		float		m_fps;
 
 		// Game
-		Game game;
+		Game m_game;
 
 		// Subsystems
-		Input			input;
-		Renderer		renderer;
-		AssetsManager	assetsManager;
-		Console		console;
-		AuthManager		netManager;
+		Input			m_input;
+		Renderer		m_renderer;
+		AssetsManager	m_assetsManager;
+		Console			m_console;
+		AuthManager		m_netManager;
 
-		int						Shutdown();
+		int				Shutdown();
 
 	public:
-		Game& GetGame();
+		Game&				GetGame();
+		Input&				GetInput();
+		Renderer&			GetRenderer();
+		AssetsManager&		GetAssetsManager();
+		Console&			GetConsole();
+		AuthManager&		GetAuthManager();
 
-		Input& GetInput();
-		Renderer& GetRenderer();
-		AssetsManager& GetAssetsManager();
-		Console& GetConsole();
-		AuthManager& GetAuthManager();
+		const double		GetDeltaTime() const;
+		const float			GetFPS() const;
 
-		const double			GetDeltaTime() const;
-		const float				GetFPS() const;
-
-		int						Init();
-		void					Start();
-		void					Update();
-		void					Stop();
+		int					Init();
+		void				Start();
+		void				Update();
+		void				Stop();
 	};
 
 
@@ -65,42 +64,42 @@ namespace Client
 	// Inline functions
 	inline Game& Engine::GetGame()
 	{
-		return game;
+		return m_game;
 	}
 
 	inline Input& Engine::GetInput()
 	{
-		return input;
+		return m_input;
 	}
 
 	inline Renderer& Engine::GetRenderer()
 	{
-		return renderer;
+		return m_renderer;
 	}
 
 	inline AssetsManager& Engine::GetAssetsManager()
 	{
-		return assetsManager;
+		return m_assetsManager;
 	}
 
 	inline Console& Engine::GetConsole()
 	{
-		return console;
+		return m_console;
 	}
 
 	inline AuthManager& Engine::GetAuthManager()
 	{
-		return netManager;
+		return m_netManager;
 	}
 
 	inline const double Engine::GetDeltaTime() const
 	{
-		return deltaTime;
+		return m_deltaTime;
 	}
 
 	inline const float Engine::GetFPS() const
 	{
-		return fps;
+		return m_fps;
 	}
 
 }
