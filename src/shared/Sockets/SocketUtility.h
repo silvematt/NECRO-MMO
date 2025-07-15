@@ -14,7 +14,7 @@ namespace NECRO
 {
 	namespace SocketUtility
 	{
-		constexpr int SU_NO_ERROR_VAL = 0;
+		inline constexpr int SU_NO_ERROR_VAL = 0;
 
 		//---------------------------------------------------------
 		// Returns the last error that occurred

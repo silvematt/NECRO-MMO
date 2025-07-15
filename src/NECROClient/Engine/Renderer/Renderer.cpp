@@ -9,15 +9,6 @@ namespace NECRO
 {
 namespace Client
 {
-	// Define color shortcuts
-	const SDL_Color colorBlack = { 0, 0, 0, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorGreen = { 0, 255, 0, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorRed = { 255, 0, 0, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorYellow = { 255, 255, 0, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorWhite = { 255, 255, 255, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorGray = { 128, 128, 128, SDL_ALPHA_OPAQUE };
-	const SDL_Color colorPink = { 255, 20, 147, SDL_ALPHA_OPAQUE };
-
 	//--------------------------------------
 	// Initialize
 	//--------------------------------------

@@ -10,17 +10,17 @@ namespace NECRO
 {
 namespace Client
 {
-	constexpr float PLAYER_MOVE_SPEED_FREE = 180.0f;
-	constexpr float PLAYER_MOVE_SPEED_AIM = 100.0f;
+	inline constexpr float PLAYER_MOVE_SPEED_FREE = 180.0f;
+	inline constexpr float PLAYER_MOVE_SPEED_AIM = 100.0f;
 
 	// Dimensions of each player frame
-	constexpr int PLAYER_WIDTH = 128;
-	constexpr int PLAYER_HEIGHT = 128;
+	inline constexpr int PLAYER_WIDTH = 128;
+	inline constexpr int PLAYER_HEIGHT = 128;
 
-	constexpr int HALF_PLAYER_WIDTH = 64;
-	constexpr int HALF_PLAYER_HEIGHT = 64;
+	inline constexpr int HALF_PLAYER_WIDTH = 64;
+	inline constexpr int HALF_PLAYER_HEIGHT = 64;
 
-	constexpr float PLAYER_CONST_Z_POS = 0.01f; // a constant added to the player's zPos when modified
+	inline constexpr float PLAYER_CONST_Z_POS = 0.01f; // a constant added to the player's zPos when modified
 
 	//-------------------------------------------------
 	// Player class, derived by Entity

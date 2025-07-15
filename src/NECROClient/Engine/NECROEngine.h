@@ -15,9 +15,9 @@ namespace NECRO
 {
 namespace Client
 {
-	constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
-	constexpr uint8_t CLIENT_VERSION_MINOR = 0;
-	constexpr uint8_t CLIENT_VERSION_REVISION = 0;
+	inline constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
+	inline constexpr uint8_t CLIENT_VERSION_MINOR = 0;
+	inline constexpr uint8_t CLIENT_VERSION_REVISION = 0;
 
 	class Engine
 	{

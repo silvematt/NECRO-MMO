@@ -13,12 +13,12 @@ namespace NECRO
 {
 namespace Client
 {
-	const int WORLD_WIDTH = 50; //TODO make this variable and specified in Mapfile
-	const int WORLD_HEIGHT = 50;
+	inline constexpr int WORLD_WIDTH = 50; //TODO make this variable and specified in Mapfile
+	inline constexpr int WORLD_HEIGHT = 50;
 
 	// Constant added to visible min/max
-	constexpr int VISIBLE_X_PLUS_OFFSET = 4;
-	constexpr int VISIBLE_Y_PLUS_OFFSET = 4;
+	inline constexpr int VISIBLE_X_PLUS_OFFSET = 4;
+	inline constexpr int VISIBLE_Y_PLUS_OFFSET = 4;
 
 	//-------------------------------------------------
 	// A World represents a level or a map with its

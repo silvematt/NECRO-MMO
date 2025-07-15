@@ -12,8 +12,8 @@ namespace NECRO
 namespace Client
 {
 	// IMGs Defs folder and extension
-	#define IMG_DEFS_FOLDER "Data/imgs/defs/"
-	#define IMG_DEFS_EXTENSION ".nidf"
+	inline constexpr const char* IMG_DEFS_FOLDER = "Data/imgs/defs/";
+	inline constexpr const char* IMG_DEFS_EXTENSION = ".nidf";
 
 	//-------------------------------------------------------
 	// Represents an Image
@@ -21,7 +21,7 @@ namespace Client
 	class Image
 	{
 	public:
-		// Data for tilesets
+		// Data for tilesetsWh
 		struct Tileset
 		{
 			int tileWidth;

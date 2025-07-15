@@ -16,7 +16,12 @@ namespace NECRO
 {
 namespace Client
 {
-	const int FONT_DEFAULT_PTSIZE = 24;
+	inline constexpr int FONT_DEFAULT_PTSIZE = 24;
+
+	inline constexpr const char* IMGS_FOLDER = "Data/imgs/";
+	inline constexpr const char* FONTS_FOLDER = "Data/fonts/";
+	inline constexpr const char* PREFABS_FOLDER = "Data/prefabs/";
+	inline constexpr const char* ANIMATORS_FOLDER = "Data/prefabs/animators/";
 
 	// TODO on AssetsManager:
 	// 1) Make sure ill-formed files are stopped from being loaded instead of trying to go on and throwing exceptions
@@ -52,11 +57,6 @@ namespace Client
 		Prefab* GetPrefab(const std::string& prefabName);
 		Animator* GetAnimator(const std::string& animName);
 	};
-
-	extern const char* IMGS_FOLDER;
-	extern const char* FONTS_FOLDER;
-	extern const char* PREFABS_FOLDER;
-	extern const char* ANIMATORS_FOLDER;
 
 }
 }

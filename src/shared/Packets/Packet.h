@@ -15,7 +15,7 @@ namespace NECRO
     private:
         size_t                  m_rpos;     // Read Pos
         size_t                  m_wpos;     // Write Pos
-        std::vector<uint8_t>    m_data;       // Raw Data
+        std::vector<uint8_t>    m_data;     // Raw Data
 
     public:
         constexpr static size_t DEFAULT_PCKT_SIZE = 0x1000;

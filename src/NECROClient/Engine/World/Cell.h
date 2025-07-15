@@ -13,11 +13,11 @@ namespace NECRO
 {
 namespace Client
 {
-	constexpr int CELL_WIDTH = 64;
-	constexpr int CELL_HEIGHT = 32;
+	inline constexpr int CELL_WIDTH = 64;
+	inline constexpr int CELL_HEIGHT = 32;
 
-	constexpr int HALF_CELL_WIDTH = 32;
-	constexpr int HALF_CELL_HEIGHT = 16;
+	inline constexpr int HALF_CELL_WIDTH = 32;
+	inline constexpr int HALF_CELL_HEIGHT = 16;
 
 	// Forward Declaration
 	class World;

@@ -14,7 +14,7 @@ namespace NECRO
 {
 namespace Client
 {
-	constexpr int LAYER_Z_COEFFICIENT = 100; // A layer counts as 100 Z pos unit for entities
+	inline constexpr int LAYER_Z_COEFFICIENT = 100; // A layer counts as 100 Z pos unit for entities
 
 	class Interactable;
 	class Cell;

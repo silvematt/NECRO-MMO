@@ -27,9 +27,9 @@ namespace NECRO
 	typedef int sock_t;
 #endif
 
-	constexpr int READ_BLOCK_SIZE = 4096;
+	inline constexpr int READ_BLOCK_SIZE = 4096;
 
-	const int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
+	inline constexpr int TCP_LISTEN_DEFUALT_BACKLOG = SOMAXCONN;
 
 	enum class SocketAddressesFamily
 	{

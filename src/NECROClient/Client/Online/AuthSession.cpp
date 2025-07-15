@@ -20,7 +20,7 @@ namespace Client
 
         // fill
         handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO)] = { NECRO::Auth::SocketStatus::GATHER_INFO, sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo) , &HandlePacketAuthLoginGatherInfoResponse };
-        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT)] = {NECRO::Auth::SocketStatus::LOGIN_ATTEMPT, C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse};
+        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT)] = {NECRO::Auth::SocketStatus::LOGIN_ATTEMPT, NECRO::Auth::C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse};
 
         return handlers;
     }
@@ -51,7 +51,7 @@ namespace Client
 
         greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
         greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
-        greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
+        greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
 
         greetPacket << CLIENT_VERSION_MAJOR;
         greetPacket << CLIENT_VERSION_MINOR;
@@ -151,7 +151,7 @@ namespace Client
 
             packet << uint8_t(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
             packet << uint8_t(NECRO::Auth::LoginProofResults::SUCCESS);
-            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof) - S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength - 1); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength-1 bytes in order to correctly read this packet
+            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength - 1); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength-1 bytes in order to correctly read this packet
 
             // Randomize and send the prefix
             net.GetData().iv.RandomizePrefix();

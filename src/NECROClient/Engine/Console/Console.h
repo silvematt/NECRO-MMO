@@ -14,15 +14,14 @@ namespace NECRO
 {
 namespace Client
 {
-	const int CONSOLE_MAX_LINES_PER_PAGE = 5;
-	const float	CONSOLE_FADE_OUT_TIME = 5.0f; // after 5 seconds, the messages will fade out until the console is toggled again
+	inline constexpr int	CONSOLE_MAX_LINES_PER_PAGE = 5;
+	inline constexpr float	CONSOLE_FADE_OUT_TIME = 5.0f; // after 5 seconds, the messages will fade out until the console is toggled again
 
 	// Limits
-	const int CONSOLE_LOGS_MAX_LENGTH = 128;		// To limit logs vector size
-	const int CONSOLE_CMD_HISTORY_MAX_LENGTH = 32;  // To limit command history vector size
+	inline constexpr int CONSOLE_LOGS_MAX_LENGTH = 128;		// To limit logs vector size
+	inline constexpr int CONSOLE_CMD_HISTORY_MAX_LENGTH = 32;  // To limit command history vector size
 
-	extern const char* CONSOLE_CMDS_LOG_FILENAME;
-
+	inline constexpr const char* CONSOLE_CMDS_LOG_FILENAME = "lastconsolecmdshistory.log";
 
 	//----------------------------------------------------------------------------------------------
 	// Console, for console commands and in-game chat

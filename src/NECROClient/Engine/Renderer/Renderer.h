@@ -11,18 +11,27 @@ namespace NECRO
 namespace Client
 {
 	// TODO variable resolution
-	const int SCREEN_WIDTH = 1920;
-	const int SCREEN_HEIGHT = 1080;
+	inline const int SCREEN_WIDTH = 1920;
+	inline const int SCREEN_HEIGHT = 1080;
 
-	const int HALF_SCREEN_WIDTH = 960;
-	const int HALF_SCREEN_HEIGHT = 540;
+	inline const int HALF_SCREEN_WIDTH = 960;
+	inline const int HALF_SCREEN_HEIGHT = 540;
 
 	// The distance in terms of gridpos of entity->player to know when to start checking for occlusion tests
-	constexpr int	ENTITY_OCCLUSION_TEST_X_DIFF = 6;
-	constexpr int	ENTITY_OCCLUSION_TEST_Y_DIFF = 6;
+	inline constexpr int	ENTITY_OCCLUSION_TEST_X_DIFF = 6;
+	inline constexpr int	ENTITY_OCCLUSION_TEST_Y_DIFF = 6;
 
-	constexpr Uint8 NOT_OCCLUDED_SPRITE_ALPHA_VALUE = 255;
-	constexpr Uint8 OCCLUDED_SPRITE_ALPHA_VALUE = 80;
+	inline constexpr Uint8 NOT_OCCLUDED_SPRITE_ALPHA_VALUE = 255;
+	inline constexpr Uint8 OCCLUDED_SPRITE_ALPHA_VALUE = 80;
+
+	// Define color shortcuts
+	inline constexpr SDL_Color colorBlack = { 0, 0, 0, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorGreen = { 0, 255, 0, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorRed = { 255, 0, 0, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorYellow = { 255, 255, 0, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorWhite = { 255, 255, 255, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorGray = { 128, 128, 128, SDL_ALPHA_OPAQUE };
+	inline constexpr SDL_Color colorPink = { 255, 20, 147, SDL_ALPHA_OPAQUE };
 
 	class Renderer
 	{
@@ -79,14 +88,6 @@ namespace Client
 		void					ExportComposedFinalImage();
 	};
 
-	// Color shortcuts
-	extern const SDL_Color colorBlack;
-	extern const SDL_Color colorGreen;
-	extern const SDL_Color colorRed;
-	extern const SDL_Color colorYellow;
-	extern const SDL_Color colorWhite;
-	extern const SDL_Color colorGray;
-	extern const SDL_Color colorPink;
 
 	inline SDL_Window* const Renderer::GetWindow() const
 	{

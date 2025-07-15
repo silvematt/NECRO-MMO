@@ -8,7 +8,7 @@ namespace NECRO
 {
 namespace Client
 {
-	constexpr float CAMERA_DEFAULT_ZOOM = 1.0f;
+	inline constexpr float CAMERA_DEFAULT_ZOOM = 1.0f;
 
 	class Camera
 	{

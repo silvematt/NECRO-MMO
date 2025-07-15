@@ -14,8 +14,8 @@ namespace NECRO
 namespace Client
 {
 	// TilesetDefs folder and extension
-	#define TILESET_DEFS_FOLDER "Data/maps/tiledefs/"
-	#define TILESET_DEFS_EXTENSION ".ntdef"
+	inline constexpr const char* TILESET_DEFS_FOLDER = "Data/maps/tiledefs/";
+	inline constexpr const char* TILESET_DEFS_EXTENSION = ".ntdef";
 
 	//----------------------------------------------------------------------------------------------
 	// A TilesetDef contains all the images of a tileset indexed by an int, used in the Mapfile.

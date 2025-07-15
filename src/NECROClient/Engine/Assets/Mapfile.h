@@ -7,7 +7,7 @@ namespace NECRO
 {
 namespace Client
 {
-	#define MAPFILES_DIRECTORY "Data/maps/"
+	inline constexpr const char* MAPFILES_DIRECTORY = "Data/maps/";
 
 	//------------------------------------------------------------------------------
 	// Contains the Map definition that specifies the World structure and content.

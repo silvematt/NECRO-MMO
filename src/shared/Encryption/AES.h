@@ -9,9 +9,9 @@
 
 namespace NECRO
 {
-	constexpr int AES_128_KEY_SIZE = 16;	// 128-bit key
-	constexpr int GCM_IV_SIZE = 12;
-	constexpr int GCM_TAG_SIZE = 16;
+	inline constexpr int AES_128_KEY_SIZE = 16;	// 128-bit key
+	inline constexpr int GCM_IV_SIZE = 12;
+	inline constexpr int GCM_TAG_SIZE = 16;
 
 	namespace AES
 	{

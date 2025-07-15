@@ -5,11 +5,6 @@ namespace NECRO
 {
 namespace Client
 {
-	const char* IMGS_FOLDER = "Data/imgs/";
-	const char* FONTS_FOLDER = "Data/fonts/";
-	const char* PREFABS_FOLDER = "Data/prefabs/";
-	const char* ANIMATORS_FOLDER = "Data/prefabs/animators/";
-
 	//-------------------------------------------------
 	// Initializing the AssetsManager loads everything
 	//-------------------------------------------------

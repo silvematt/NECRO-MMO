@@ -68,9 +68,9 @@ namespace Auth
         uint8_t		username[1];
     };
     static_assert(sizeof(SPacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 1), "SPacketAuthLoginGatherInfo size assert failed!");
-    #define	MAX_USERNAME_LENGTH 16-1 // 1 is already in packet username[1] 
-    #define S_MAX_ACCEPTED_GATHER_INFO_SIZE (sizeof(SPacketAuthLoginGatherInfo) + MAX_USERNAME_LENGTH) // 16 is username length
-    #define S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+    inline constexpr int MAX_USERNAME_LENGTH  = 16 - 1;                                                                   // 1 is already in packet username[1] 
+    inline constexpr int S_MAX_ACCEPTED_GATHER_INFO_SIZE = (sizeof(SPacketAuthLoginGatherInfo) + MAX_USERNAME_LENGTH);    // 16 is username length
+    inline constexpr int S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 
     struct CPacketAuthLoginGatherInfo
@@ -92,9 +92,9 @@ namespace Auth
         uint8_t password[1];
     };
     static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 4 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
-    #define	MAX_PASSWORD_LENGTH 16-1 // 1 is already in packet password[1] 
-    #define S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE (sizeof(SPacketAuthLoginProof) + MAX_PASSWORD_LENGTH) // 16 is username length
-    #define S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+    inline constexpr int MAX_PASSWORD_LENGTH = 16 - 1; // 1 is already in packet password[1] 
+    inline constexpr int S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE = (sizeof(SPacketAuthLoginProof) + MAX_PASSWORD_LENGTH); // 16 is username length
+    inline constexpr int S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
     struct CPacketAuthLoginProof
     {
@@ -106,7 +106,7 @@ namespace Auth
         uint8_t     greetcode[AES_128_KEY_SIZE];
     };
     static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + AES_128_KEY_SIZE + AES_128_KEY_SIZE), "CPacketAuthLoginProof size assert failed!");
-    #define C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE 4 // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+    inline constexpr int C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
     #pragma pack(pop)
 

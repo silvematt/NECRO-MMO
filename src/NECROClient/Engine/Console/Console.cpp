@@ -9,8 +9,6 @@ namespace NECRO
 {
 namespace Client
 {
-	const char* CONSOLE_CMDS_LOG_FILENAME = "lastconsolecmdshistory.log";
-
 	//-------------------------------------------------------
 	// Initializes the console
 	//-------------------------------------------------------
