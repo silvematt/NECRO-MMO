@@ -17,24 +17,24 @@ namespace Client
 		AnimState(std::string pName, Image* pImg, float pSpeed);
 
 	private:
-		std::string name;
-		Image* img;
+		std::string m_name;
+		Image*		m_img;
 
-		float speed = 75;
+		float m_speed = 75;
 
 	public:
-		Image* GetImg() const;
+		Image*	GetImg() const;
 		float	GetSpeed() const;
 	};
 
 	inline Image* AnimState::GetImg() const
 	{
-		return img;
+		return m_img;
 	}
 
 	inline float AnimState::GetSpeed() const
 	{
-		return speed;
+		return m_speed;
 	}
 
 }

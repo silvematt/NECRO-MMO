@@ -16,20 +16,20 @@ namespace Client
 	//----------------------------------------------------------------------------------------------
 	class InputField
 	{
-		SDL_Rect rect = { 0, 0, 0, 0 };
-		SDL_Rect dstRect = { 0, 0, 0, 0 };
+		SDL_Rect	m_rect = { 0, 0, 0, 0 };
+		SDL_Rect	m_dstRect = { 0, 0, 0, 0 };
 
-		Image* img = nullptr;
-		Image* focusedImage = nullptr;
-		TTF_Font* font = nullptr;
-		SDL_Color color = { 255, 255, 255, 255 };
+		Image*		m_img = nullptr;
+		Image*		m_focusedImage = nullptr;
+		TTF_Font*	m_font = nullptr;
+		SDL_Color	m_color = { 255, 255, 255, 255 };
 
-		bool isFocused = false;
-		int xOffset = 5;
-		int textLimit = 0;
+		bool	m_isFocused = false;
+		int		m_xOffset = 5;
+		int		m_textLimit = 0;
 
 	public:
-		std::string str = "";
+		std::string m_str = "";
 
 
 	public:
@@ -44,7 +44,7 @@ namespace Client
 
 	inline int InputField::GetTextLimit() const
 	{
-		return textLimit;
+		return m_textLimit;
 	}
 
 }

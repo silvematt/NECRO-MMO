@@ -10,11 +10,11 @@ namespace Client
 	//--------------------------------------------------
 	int AI::Init()
 	{
-		state = AIStates::IDLE;
+		m_state = AIStates::IDLE;
 
 		// Construct the States->Behavior link
 		// Idle = 0
-		behaviorsPtrs.push_back(&AIBehavior::BehaviorIdle);
+		m_behaviorsPtrs.push_back(&AIBehavior::BehaviorIdle);
 
 		// Others...
 
@@ -27,12 +27,12 @@ namespace Client
 	void AI::Update()
 	{
 		// AI Base update
-		tilesetYOff = static_cast<int>(isoDirection);
+		m_tilesetYOff = static_cast<int>(m_isoDirection);
 
 		// TODO: we may not need do behaviors update not every frame
 		// Run the behavior in base of the current state
-		if (behaviorsPtrs.size() > static_cast<int>(state))
-			behaviorsPtrs[static_cast<int>(state)](this);
+		if (m_behaviorsPtrs.size() > static_cast<int>(m_state))
+			m_behaviorsPtrs[static_cast<int>(m_state)](this);
 
 		// Update the entity base, pos, gridPos, isoPos etc.
 		Entity::Update();

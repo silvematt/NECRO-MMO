@@ -8,32 +8,32 @@ namespace Client
 {
 	void Collider::Init(bool pEnabled, Entity* own, int x, int y, int w, int h)
 	{
-		r.x = x;
-		r.y = y;
-		r.w = w;
-		r.h = h;
+		m_r.x = x;
+		m_r.y = y;
+		m_r.w = w;
+		m_r.h = h;
 
-		enabled = pEnabled;
-		owner = own;
+		m_enabled = pEnabled;
+		m_owner = own;
 	}
 
 	void Collider::SetOffset(float x, float y)
 	{
-		collOffset.x = x;
-		collOffset.y = y;
+		m_collOffset.x = x;
+		m_collOffset.y = y;
 	}
 
 	void Collider::Update()
 	{
-		if (!enabled || !owner)
+		if (!m_enabled || !m_owner)
 			return;
 
-		float posX = owner->pos.x + collOffset.x;
-		float posY = owner->pos.y + collOffset.y;
+		float posX = m_owner->m_pos.x + m_collOffset.x;
+		float posY = m_owner->m_pos.y + m_collOffset.y;
 
 		// Center-align the collision rectangle on its entity's position:
-		r.x = posX + (r.w / 2.0f);
-		r.y = posY - (r.h / 2.0f);
+		m_r.x = posX + (m_r.w / 2.0f);
+		m_r.y = posY - (m_r.h / 2.0f);
 	}
 
 	void Collider::DebugDraw()
@@ -46,16 +46,15 @@ namespace Client
 		engine.GetRenderer().SetScale(zoomLevel, zoomLevel); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 
 		Camera* c = engine.GetGame().GetMainCamera();
-		engine.GetRenderer().DrawIsoBox(&r, colorPink, c->pos.x - HALF_CELL_WIDTH, c->pos.y - HALF_CELL_WIDTH, c->GetZoom()); // subtracting HALF_CELL_WIDTH corrects offset
+		engine.GetRenderer().DrawIsoBox(&m_r, colorPink, c->m_pos.x - HALF_CELL_WIDTH, c->m_pos.y - HALF_CELL_WIDTH, c->GetZoom()); // subtracting HALF_CELL_WIDTH corrects offset
 
 		// Restore previous target
 		engine.GetRenderer().SetRenderTarget(previousTarget);
 	}
 
-	// TODO: Implement intersection check instead of using SDL's.
 	bool Collider::TestIntersection(const Collider* other)
 	{
-		return SDL_HasIntersection(&r, &other->r);
+		return SDL_HasIntersection(&m_r, &other->m_r);
 	}
 
 }

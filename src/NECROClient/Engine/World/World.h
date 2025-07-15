@@ -16,6 +16,10 @@ namespace Client
 	const int WORLD_WIDTH = 50; //TODO make this variable and specified in Mapfile
 	const int WORLD_HEIGHT = 50;
 
+	// Constant added to visible min/max
+	constexpr int VISIBLE_X_PLUS_OFFSET = 4;
+	constexpr int VISIBLE_Y_PLUS_OFFSET = 4;
+
 	//-------------------------------------------------
 	// A World represents a level or a map with its
 	// cells and entities that lives in them.
@@ -27,22 +31,20 @@ namespace Client
 		friend Mapfile;
 
 	private:
-		Mapfile map;
-		TilesetDef tileDef;
+		Mapfile		m_map;
+		TilesetDef	m_tileDef;
 
-		Cell worldmap[WORLD_WIDTH][WORLD_HEIGHT];
-		Cell* worldCursor = nullptr;					// The cell the mouse is currently hovering on (if any)
-		SDL_Texture* worldCursorEditTexture;
-		SDL_Texture* worldCursorPlayTexture;
+		Cell			m_worldmap[WORLD_WIDTH][WORLD_HEIGHT];
+		Cell*			m_worldCursor = nullptr;					// The cell the mouse is currently hovering on (if any)
+		SDL_Texture*	m_worldCursorEditTexture;
+		SDL_Texture*	m_worldCursorPlayTexture;
 
-		// Constant added to visible min/max
-		const int VISIBLE_X_PLUS_OFFSET = 4;
-		const int VISIBLE_Y_PLUS_OFFSET = 4;
 
-		int visibleMinX = 0;
-		int visibleMaxX = 0;
-		int visibleMinY = 0;
-		int visibleMaxY = 0;
+		// Min/Max visible space to render and update
+		int m_visibleMinX = 0;
+		int m_visibleMaxX = 0;
+		int m_visibleMinY = 0;
+		int m_visibleMaxY = 0;
 
 		//--------------------------------------------------------------------------------------
 		// Entities physically exist and are phyiscally owned by the World they're spawned in.
@@ -52,18 +54,18 @@ namespace Client
 		// to the allEntities they logically own. That means we can quickly get any entity by ID
 		// and given the Cell, we can quickly get all the entities contained in that cell.
 		//--------------------------------------------------------------------------------------
-		std::unordered_map<uint32_t, std::unique_ptr<Entity>> allEntities;
+		std::unordered_map<uint32_t, std::unique_ptr<Entity>> m_allEntities;
 
 		// See Entity::TransferToCellImmediately
-		std::vector<Entity*> entitiesWaitingForTransfer;
+		std::vector<Entity*> m_entitiesWaitingForTransfer;
 
 		// Lighting, for how lighting works it's better to have the world totally black and let entities with lights lit it, because if we apply a base color like gray (128,128,128), we can never have a fully red zone (255, 0, 0)
-		SDL_Color baseLightColor = colorWhite;
-		float baseLight = 1;
+		SDL_Color	m_baseLightColor = colorWhite;
+		float		m_baseLight = 1;
 
 		// True if the player can interact with hovered entity during PLAY_MODE
 		// Used to draw the cell highlight
-		bool canInteract = false;
+		bool m_canInteract = false;
 
 	private:
 		void			UpdateVisibleCoords(); // updates visibleMinMax variables based on curCamera position and zoom
@@ -96,17 +98,17 @@ namespace Client
 
 	inline const std::unordered_map<uint32_t, std::unique_ptr<Entity>>& World::GetEntities()
 	{
-		return allEntities;
+		return m_allEntities;
 	}
 
 	inline float World::GetBaseLightIntensity() const
 	{
-		return baseLight;
+		return m_baseLight;
 	}
 
 	inline SDL_Color World::GetBaseLightColor() const
 	{
-		return baseLightColor;
+		return m_baseLightColor;
 	}
 
 }

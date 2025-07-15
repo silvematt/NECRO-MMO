@@ -10,17 +10,17 @@ namespace NECRO
 {
 namespace Client
 {
-	const float PLAYER_MOVE_SPEED_FREE = 180.0f;
-	const float PLAYER_MOVE_SPEED_AIM = 100.0f;
+	constexpr float PLAYER_MOVE_SPEED_FREE = 180.0f;
+	constexpr float PLAYER_MOVE_SPEED_AIM = 100.0f;
 
 	// Dimensions of each player frame
-	const int PLAYER_WIDTH = 128;
-	const int PLAYER_HEIGHT = 128;
+	constexpr int PLAYER_WIDTH = 128;
+	constexpr int PLAYER_HEIGHT = 128;
 
-	const int HALF_PLAYER_WIDTH = 64;
-	const int HALF_PLAYER_HEIGHT = 64;
+	constexpr int HALF_PLAYER_WIDTH = 64;
+	constexpr int HALF_PLAYER_HEIGHT = 64;
 
-	const float PLAYER_CONST_Z_POS = 0.01f; // a constant added to the player's zPos when modified
+	constexpr float PLAYER_CONST_Z_POS = 0.01f; // a constant added to the player's zPos when modified
 
 	//-------------------------------------------------
 	// Player class, derived by Entity
@@ -28,23 +28,23 @@ namespace Client
 	class Player : public Entity
 	{
 	private:
-		float curMoveSpeed = 2.5f;
-		IsoDirection isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
+		float			m_curMoveSpeed = 2.5f;
+		IsoDirection	m_isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
 
-		float deltaX = 0.0f;
-		float deltaY = 0.0f;
+		float m_deltaX = 0.0f;
+		float m_deltaY = 0.0f;
 
-		bool wasAiming = false;
-		bool isAiming = false;									// Is the player in aim mode?
-		bool wasMoving = false;
-		bool isMoving = false;
+		bool m_wasAiming = false;
+		bool m_isAiming = false;									// Is the player in aim mode?
+		bool m_wasMoving = false;
+		bool m_isMoving = false;
 
 		// Relative mouse pos used when aiming
-		float relativeMouseX;
-		float relativeMouseY;
+		float m_relativeMouseX;
+		float m_relativeMouseY;
 
 		// List of close (8-neighbours close) entities, filled every frame
-		std::vector<Entity*> closeEntities;
+		std::vector<Entity*> m_closeEntities;
 
 	private:
 		void			CalculateIsoDirection(float deltaX, float deltaY);
@@ -58,7 +58,7 @@ namespace Client
 		~Player();
 
 		static uint32_t	ENT_ID;
-		bool			controlsEnabled = true; // TEST: 
+		bool			m_controlsEnabled = true; // TEST: 
 
 	public:
 		void			Init();
@@ -75,12 +75,12 @@ namespace Client
 
 	inline float Player::GetCurMoveSpeed() const
 	{
-		return curMoveSpeed;
+		return m_curMoveSpeed;
 	}
 
 	inline void Player::SetControlsEnabled(bool e)
 	{
-		controlsEnabled = e;
+		m_controlsEnabled = e;
 	}
 
 }

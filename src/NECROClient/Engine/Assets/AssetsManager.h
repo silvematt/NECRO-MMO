@@ -23,10 +23,10 @@ namespace Client
 	class AssetsManager
 	{
 	private:
-		std::unordered_map<std::string, Image> images;
-		std::unordered_map<std::string, TTF_Font*> fonts;
-		std::unordered_map<std::string, Prefab> prefabs;
-		std::unordered_map<std::string, Animator> animators;
+		std::unordered_map<std::string, Image>		m_images;
+		std::unordered_map<std::string, TTF_Font*>	m_fonts;
+		std::unordered_map<std::string, Prefab>		m_prefabs;
+		std::unordered_map<std::string, Animator>	m_animators;
 
 	private:
 		void				LoadAllImages();

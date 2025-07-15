@@ -29,13 +29,13 @@ namespace Client
 		AI() = default;
 
 	private:
-		std::string name;
+		std::string m_name;
 
-		AIStates state = AIStates::IDLE;
-		std::vector<void (*)(AI* owner)> behaviorsPtrs;	// Behavior routines of the AI for each state
+		AIStates							m_state = AIStates::IDLE;
+		std::vector<void (*)(AI* owner)>	m_behaviorsPtrs;			// Behavior routines of the AI for each state
 
-		float baseSpeed = 2.5f;
-		IsoDirection isoDirection = IsoDirection::SOUTH;
+		float			m_baseSpeed = 2.5f;
+		IsoDirection	m_isoDirection = IsoDirection::SOUTH;
 
 	public:
 		int			Init();

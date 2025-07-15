@@ -40,34 +40,34 @@ namespace Client
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		name = curValStr;
+		m_name = curValStr;
 
 		// tilesetDefName
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		tilesetDefName = curValStr;
+		m_tilesetDefName = curValStr;
 
 		// Load the tileset definition
-		w->tileDef.LoadFromFile(tilesetDefName);
+		w->m_tileDef.LoadFromFile(m_tilesetDefName);
 
 		// width
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		width = ClientUtility::TryParseInt(curValStr);
+		m_width = ClientUtility::TryParseInt(curValStr);
 
 		// height
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		height = ClientUtility::TryParseInt(curValStr);
+		m_height = ClientUtility::TryParseInt(curValStr);
 
 		// nLayers
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		nLayers = ClientUtility::TryParseInt(curValStr);
+		m_nLayers = ClientUtility::TryParseInt(curValStr);
 
 		// Load layers and add tiles as entities
 		bool layersDone = false;
@@ -78,12 +78,12 @@ namespace Client
 			std::getline(stream, curLine); // {
 
 			// Load the matrix
-			for (int i = 0; i < height; i++)
+			for (int i = 0; i < m_height; i++)
 			{
 				std::getline(stream, curLine); // get row
 				// StartPos to read matrix values
 				int startPos = 0;
-				for (int j = 0; j < width; j++)
+				for (int j = 0; j < m_width; j++)
 				{
 					int endPos = curLine.find(',', startPos + 1);  // read until the ','
 
@@ -92,19 +92,19 @@ namespace Client
 					if (curVal != 0) // if not empty
 					{
 						// Get the resource img this value comes from
-						int resIndex = w->tileDef.GetResourceIndexFromID(curVal);
+						int resIndex = w->m_tileDef.GetResourceIndexFromID(curVal);
 
 						// Spawn the Tile as an Entity
-						TilesetDef::TileData* data = w->tileDef.GetTileData(curVal);
+						TilesetDef::TileData* data = w->m_tileDef.GetTileData(curVal);
 
-						std::unique_ptr<Entity> e(new Entity(Vector2(static_cast<float>(CELL_WIDTH * j), static_cast<float>(CELL_HEIGHT * i)), w->tileDef.GetResource(resIndex)));
+						std::unique_ptr<Entity> e(new Entity(Vector2(static_cast<float>(CELL_WIDTH * j), static_cast<float>(CELL_HEIGHT * i)), w->m_tileDef.GetResource(resIndex)));
 						e->SetLayer(curLayer);
-						e->SetTilesetOffset(w->tileDef.GetTile(curVal).first, w->tileDef.GetTile(curVal).second);
+						e->SetTilesetOffset(w->m_tileDef.GetTile(curVal).first, w->m_tileDef.GetTile(curVal).second);
 
 						// If per-tile data is defined, apply it
 						if (data)
 						{
-							e->zPos = data->zOffset;
+							e->m_zPos = data->zOffset;
 
 							if (data->colliderEnabled)
 							{
@@ -186,7 +186,7 @@ namespace Client
 
 				if (prefab != NULL)
 				{
-					prefab->zPos = zPos;
+					prefab->m_zPos = zPos;
 					prefab->SetLayer(prefab->GetLayerFromZPos());
 
 					w->AddEntity(std::move(prefab));

@@ -12,9 +12,9 @@ namespace Client
 {
 	void Interactable::Interact()
 	{
-		SDL_Log("Entity[%d] has been interacted with. TYPE[%d]", owner->GetID(), static_cast<int>(type));
+		SDL_Log("Entity[%d] has been interacted with. TYPE[%d]", m_owner->GetID(), static_cast<int>(m_type));
 
-		switch (type)
+		switch (m_type)
 		{
 		case InteractType::DESTROY:
 			INDestroy();
@@ -29,15 +29,15 @@ namespace Client
 			break;
 
 		case InteractType::PLAY_ANIM:
-			INPlayAnim(parStr);
+			INPlayAnim(m_parStr);
 			break;
 
 		case InteractType::MOVE:
-			INMove(parFloat1, parFloat2);
+			INMove(m_parFloat1, m_parFloat2);
 			break;
 
 		case InteractType::MOVE_RELATIVE:
-			INMoveRelative(parFloat1, parFloat2);
+			INMoveRelative(m_parFloat1, m_parFloat2);
 			break;
 
 		default:
@@ -47,37 +47,37 @@ namespace Client
 
 	void Interactable::INDestroy()
 	{
-		owner->GetOwner()->GetWorld()->RemoveEntity(owner->GetID());
+		m_owner->GetOwner()->GetWorld()->RemoveEntity(m_owner->GetID());
 	}
 
 	void Interactable::INToggleLight()
 	{
-		if (owner->HasLight())
-			owner->GetLight()->enabled = !owner->GetLight()->enabled;
+		if (m_owner->HasLight())
+			m_owner->GetLight()->m_enabled = !m_owner->GetLight()->m_enabled;
 	}
 
 	void Interactable::INToggleColl()
 	{
-		if (owner->HasCollider())
-			owner->GetCollider()->enabled = !owner->GetCollider()->enabled;
+		if (m_owner->HasCollider())
+			m_owner->GetCollider()->m_enabled = !m_owner->GetCollider()->m_enabled;
 	}
 
 	void Interactable::INPlayAnim(std::string state)
 	{
-		if (owner->HasAnimator())
-			owner->GetAnimator()->Play(state);
+		if (m_owner->HasAnimator())
+			m_owner->GetAnimator()->Play(state);
 	}
 
 	void Interactable::INMove(float x, float y)
 	{
-		owner->pos.x = x;
-		owner->pos.y = y;
+		m_owner->m_pos.x = x;
+		m_owner->m_pos.y = y;
 	}
 
 	void Interactable::INMoveRelative(float x, float y)
 	{
-		owner->pos.x += x;
-		owner->pos.y += y;
+		m_owner->m_pos.x += x;
+		m_owner->m_pos.y += y;
 	}
 
 }

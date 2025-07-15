@@ -7,15 +7,15 @@ namespace Client
 {
 	void InputField::Init(SDL_Rect sRct, SDL_Rect dRct, const std::string& s, Image* im, Image* actIm, int tLimit)
 	{
-		rect = sRct;
-		dstRect = dRct;
-		str = s;
-		img = im;
-		focusedImage = actIm;
-		textLimit = tLimit;
+		m_rect = sRct;
+		m_dstRect = dRct;
+		m_str = s;
+		m_img = im;
+		m_focusedImage = actIm;
+		m_textLimit = tLimit;
 
 		// Default font
-		font = engine.GetAssetsManager().GetFont("defaultFont");
+		m_font = engine.GetAssetsManager().GetFont("defaultFont");
 	}
 
 	void InputField::Draw()
@@ -23,44 +23,44 @@ namespace Client
 		Renderer& r = engine.GetRenderer();
 
 		// Draw correct background
-		r.DrawImageDirectly(isFocused ? focusedImage->GetSrc() : img->GetSrc(), &rect, &dstRect);
+		r.DrawImageDirectly(m_isFocused ? m_focusedImage->GetSrc() : m_img->GetSrc(), &m_rect, &m_dstRect);
 
 		// Draw the only visible portion of the text inside the textfield
-		int strSize = str.size();
+		int strSize = m_str.size();
 
 		if (strSize > 0)
 		{
 			// Offset to draw the string within the bounds of the text field
 			int w = 0, h = 0;
-			TTF_SizeText(font, str.c_str(), &w, &h);
+			TTF_SizeText(m_font, m_str.c_str(), &w, &h);
 
 			// MaxWidth is the width of the inputfield in pixels
-			int maxWidth = rect.w;
+			int maxWidth = m_rect.w;
 
 			// A substring will be adjusted until it fits the maximum width
-			std::string visibleStr = str;
+			std::string visibleStr = m_str;
 			int visibleWidth = w;
 
 			// Until the visible width is greater than the maxwidth, remove a character and recalculate
 			while (visibleWidth > maxWidth)
 			{
 				visibleStr = visibleStr.substr(1); // Remove the first character
-				TTF_SizeText(font, visibleStr.c_str(), &visibleWidth, &h);
+				TTF_SizeText(m_font, visibleStr.c_str(), &visibleWidth, &h);
 			}
 
 			// Draw text inside the field img
-			r.DrawTextDirectly(font, visibleStr.c_str(), dstRect.x + xOffset, dstRect.y, color);
+			r.DrawTextDirectly(m_font, visibleStr.c_str(), m_dstRect.x + m_xOffset, m_dstRect.y, m_color);
 		}
 	}
 
 	void InputField::SetFocused(bool f)
 	{
-		isFocused = f;
+		m_isFocused = f;
 
-		if (isFocused)
+		if (m_isFocused)
 		{
 			// Reset the string
-			str.clear();
+			m_str.clear();
 			engine.GetInput().SetCurInputField(this);
 		}
 		else

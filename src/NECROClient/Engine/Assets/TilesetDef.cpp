@@ -36,12 +36,12 @@ namespace Client
 		std::getline(stream, curLine);
 		curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 		curValStr = curValStr.substr(0, curValStr.find(";"));
-		name = curValStr;
+		m_name = curValStr;
 
-		nTilesets = 0; // filled as we read
+		m_nTilesets = 0; // filled as we read
 
 		// Read actual images
-		tiles.push_back(std::make_pair(0, 0)); // index 0 means no image, so add empty space
+		m_tiles.push_back(std::make_pair(0, 0)); // index 0 means no image, so add empty space
 
 		bool doneReadingTilesets = false;
 		int curID = 1; // id of tiles, starts at 1 because ID 0 means empty
@@ -61,7 +61,7 @@ namespace Client
 				{
 					if (curLine == "END")
 					{
-						nTilesets++;
+						m_nTilesets++;
 						curTilesetIndx++;
 						break;
 					}
@@ -79,7 +79,7 @@ namespace Client
 						Image* img = engine.GetAssetsManager().GetImage(curValStr);
 
 						// Put image pointer in resources, so we can quickly access it with an int index
-						resources.push_back(img);
+						m_resources.push_back(img);
 
 						// Load the tiles
 						if (img->IsTileset())
@@ -88,7 +88,7 @@ namespace Client
 							for (int y = 0; y < t->tileYNum; y++)
 								for (int x = 0; x < t->tileXNum; x++)
 								{
-									tiles.push_back(std::make_pair(x, y));
+									m_tiles.push_back(std::make_pair(x, y));
 									curID++;
 								}
 						}
@@ -96,7 +96,7 @@ namespace Client
 							LOG_WARNING("While loading the Tiledef '" + filename + "', a tileset named '" + curValStr.c_str() + "' was to be loaded, but IT IS NOT defined as a tileset in its definition file (or the definition file is missing). Skipping it.\nThis will cause a Resource ID mismatch.");
 
 						// Keep end-map updated
-						resourceEndMap.push_back(std::make_pair(curTilesetIndx, curID - 1));
+						m_resourceEndMap.push_back(std::make_pair(curTilesetIndx, curID - 1));
 					}
 					else // Otherwise, it's tile-specific data
 					{
@@ -152,7 +152,7 @@ namespace Client
 
 						//SDL_Log("%d -> %f\n", curID, zOffset);
 
-						tilesData.insert({ curID, TileData(zOffset, cEnabled, collOffX, collOffY, collWidth, collHeight, occlEnabled, occlOffsetX, occlOffsetY, zMod) });
+						m_tilesData.insert({ curID, TileData(zOffset, cEnabled, collOffX, collOffY, collWidth, collHeight, occlEnabled, occlOffsetX, occlOffsetY, zMod) });
 					}
 
 					std::getline(stream, curLine); // get next line
@@ -160,7 +160,7 @@ namespace Client
 			}
 		}
 
-		loaded = true;
+		m_loaded = true;
 	}
 
 }

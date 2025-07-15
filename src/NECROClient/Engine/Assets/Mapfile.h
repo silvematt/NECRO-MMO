@@ -15,11 +15,12 @@ namespace Client
 	class Mapfile
 	{
 	public:
-		std::string name;
-		std::string tilesetDefName;	// A Mapfile uses a TilesetDef to specify the tiles used in the layers matrices
-		int width;
-		int height;
-		int nLayers; // number of layers of this map
+		std::string		m_name;
+		std::string		m_tilesetDefName;	// A Mapfile uses a TilesetDef to specify the tiles used in the layers matrices
+
+		int m_width;
+		int m_height;
+		int m_nLayers; // number of layers of this map
 
 		bool			LoadMap(const std::string& filename);
 	};

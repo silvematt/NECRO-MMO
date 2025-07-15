@@ -7,15 +7,8 @@ namespace NECRO
 {
 namespace Client
 {
-	class NMath
-	{
-	public:
-		static void IsoToCart(int screenx, int screeny, int& mapx, int& mapy);
-		static void CartToIso(int mapx, int mapy, int& screenx, int& screeny);
-
-		static void IsoToCart(float screenx, float screeny, float& mapx, float& mapy);
-		static void CartToIso(float mapx, float mapy, float& screenx, float& screeny);
-	};
+namespace NMath
+{
 
 	//-------------------------------------------------------------------------------------------
 	// Converting Cartesian coordinates to Isometric coordinates.
@@ -40,13 +33,13 @@ namespace Client
 	//		CartToIso(x/TILE_WIDTH, y/TILE_HEIGHT, screenx, screeny);
 	//-------------------------------------------------------------------------------------------
 
-	inline void NMath::CartToIso(int mapx, int mapy, int& screenx, int& screeny)
+	inline void CartToIso(int mapx, int mapy, int& screenx, int& screeny)
 	{
 		screenx = (mapx - mapy) * HALF_CELL_WIDTH;
 		screeny = (mapx + mapy) * HALF_CELL_HEIGHT;
 	}
 
-	inline void NMath::IsoToCart(int screenx, int screeny, int& mapx, int& mapy)
+	inline void IsoToCart(int screenx, int screeny, int& mapx, int& mapy)
 	{
 		// Convert to calculate in floating point
 		float screenxf = static_cast<float>(screenx);
@@ -57,18 +50,19 @@ namespace Client
 		mapy = static_cast<int>(screenyf / CELL_HEIGHT - screenxf / CELL_WIDTH);
 	}
 
-	inline void NMath::CartToIso(float mapx, float mapy, float& screenx, float& screeny)
+	inline void CartToIso(float mapx, float mapy, float& screenx, float& screeny)
 	{
 		screenx = (mapx - mapy) * HALF_CELL_WIDTH;
 		screeny = (mapx + mapy) * HALF_CELL_HEIGHT;
 	}
 
-	inline void NMath::IsoToCart(float screenx, float screeny, float& mapx, float& mapy)
+	inline void IsoToCart(float screenx, float screeny, float& mapx, float& mapy)
 	{
 		mapx = (screenx / CELL_WIDTH + screeny / CELL_HEIGHT);
 		mapy = (screeny / CELL_HEIGHT - screenx / CELL_WIDTH);
 	}
 
+}
 }
 }
 

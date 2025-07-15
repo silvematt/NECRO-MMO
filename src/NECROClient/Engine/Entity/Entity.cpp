@@ -20,27 +20,27 @@ namespace Client
 
 	Entity::Entity()
 	{
-		ID = ENT_NEXT_ID;
+		m_ID = ENT_NEXT_ID;
 		ENT_NEXT_ID++;
 
-		img = nullptr;
-		owner = nextOwner = nullptr;
-		tilesetXOff = tilesetYOff = 0;
-		gridPosX = gridPosY = 0;
-		occlusionRect = { 0,0,0,0 };
-		toRender = true;
+		m_img = nullptr;
+		m_owner = m_nextOwner = nullptr;
+		m_tilesetXOff = m_tilesetYOff = 0;
+		m_gridPosX = m_gridPosY = 0;
+		m_occlusionRect = { 0,0,0,0 };
+		m_toRender = true;
 	}
 
 	Entity::Entity(Vector2 pInitialPos, Image* pImg)
 	{
-		ID = ENT_NEXT_ID;
+		m_ID = ENT_NEXT_ID;
 		ENT_NEXT_ID++;
 
-		pos = pInitialPos;
-		gridPosX = pos.x / CELL_WIDTH;
-		gridPosY = pos.y / CELL_HEIGHT;
-		zPos = 0;
-		toRender = true;
+		m_pos = pInitialPos;
+		m_gridPosX = m_pos.x / CELL_WIDTH;
+		m_gridPosY = m_pos.y / CELL_HEIGHT;
+		m_zPos = 0;
+		m_toRender = true;
 
 		SetImg(pImg);
 	}
@@ -50,7 +50,7 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::SetImg(Image* pImg)
 	{
-		img = pImg;
+		m_img = pImg;
 	}
 
 	//------------------------------------------------------------
@@ -58,7 +58,7 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::SetOwner(Cell* c)
 	{
-		owner = c;
+		m_owner = c;
 	}
 
 	//------------------------------------------------------------
@@ -66,7 +66,7 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::ClearOwner()
 	{
-		owner = nullptr;
+		m_owner = nullptr;
 	}
 
 	//-----------------------------------------------------------------------------------------------
@@ -84,11 +84,11 @@ namespace Client
 	void Entity::TransferToCellImmediately(Cell* c)
 	{
 		// If this is called with nullptr as argument, the transfer is supposed to be in nextOwner
-		if (c == nullptr && nextOwner)
-			c = nextOwner;
+		if (c == nullptr && m_nextOwner)
+			c = m_nextOwner;
 
 		// Remove Ptr from previous owner
-		owner->RemoveEntityPtr(ID);
+		m_owner->RemoveEntityPtr(m_ID);
 
 		// Update owner
 		SetOwner(c);
@@ -96,7 +96,7 @@ namespace Client
 		// Add Ptr to current owner
 		c->AddEntityPtr(this);
 
-		nextOwner = nullptr;
+		m_nextOwner = nullptr;
 
 		OnCellChanges();
 	}
@@ -106,8 +106,8 @@ namespace Client
 	//-----------------------------------------------------------------------------------------------
 	void Entity::TransferToCellQueue(Cell* c)
 	{
-		nextOwner = c;
-		owner->GetWorld()->AddPendingEntityToTransfer(this);
+		m_nextOwner = c;
+		m_owner->GetWorld()->AddPendingEntityToTransfer(this);
 	}
 
 	//------------------------------------------------------------
@@ -115,46 +115,46 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::Update()
 	{
-		int oldGridPosX = gridPosX;
-		int oldGridPosY = gridPosY;
+		int oldGridPosX = m_gridPosX;
+		int oldGridPosY = m_gridPosY;
 
 		// Update grid position
-		gridPosX = pos.x / CELL_WIDTH;
-		gridPosY = pos.y / CELL_HEIGHT;
+		m_gridPosX = m_pos.x / CELL_WIDTH;
+		m_gridPosY = m_pos.y / CELL_HEIGHT;
 
 		// Update ISO coordinates
-		NMath::CartToIso(pos.x / CELL_WIDTH, pos.y / CELL_HEIGHT, isoPos.x, isoPos.y);
+		NMath::CartToIso(m_pos.x / CELL_WIDTH, m_pos.y / CELL_HEIGHT, m_isoPos.x, m_isoPos.y);
 
-		isoPos.x -= HALF_CELL_WIDTH;
+		m_isoPos.x -= HALF_CELL_WIDTH;
 
 		// Adjust isoX and isoY to the camera offset
-		isoPos.x += engine.GetGame().GetMainCamera()->pos.x;
-		isoPos.y += engine.GetGame().GetMainCamera()->pos.y;
+		m_isoPos.x += engine.GetGame().GetMainCamera()->m_pos.x;
+		m_isoPos.y += engine.GetGame().GetMainCamera()->m_pos.y;
 
 		// Account for bottom-left origin
-		if (!img->IsTileset())
-			isoPos.y -= img->GetHeight();
+		if (!m_img->IsTileset())
+			m_isoPos.y -= m_img->GetHeight();
 		else
-			isoPos.y -= img->GetTilesetHeight();
+			m_isoPos.y -= m_img->GetTilesetHeight();
 
 		// Account for the offset of the image
-		isoPos.x += img->GetXOffset();
-		isoPos.y += img->GetYOffset();
+		m_isoPos.x += m_img->GetXOffset();
+		m_isoPos.y += m_img->GetYOffset();
 
 		// TODO: Naive solution? we can do topological sort instead of a single depth value if we encounter issues with this one for our goals, but it seems it can work
-		depth = owner->GetCellX() + owner->GetCellY() + (LAYER_Z_COEFFICIENT * layer) + zPos; // zPos is used to position dynamic entities, like the player, or to offset static sprites.
+		m_depth = m_owner->GetCellX() + m_owner->GetCellY() + (LAYER_Z_COEFFICIENT * m_layer) + m_zPos; // zPos is used to position dynamic entities, like the player, or to offset static sprites.
 
 		// If this entity has a collider and it is enabled, update it
-		if (coll && coll->enabled)
-			coll->Update();
+		if (m_coll && m_coll->m_enabled)
+			m_coll->Update();
 
 		// Check for occlusion against player
 		Entity* p = (Entity*)engine.GetGame().GetCurPlayer();
 		if (p && p != this && TestFlag(Entity::Flags::FCanOccludePlayer))
 		{
 			// Check if this entity is close enough to the player to be worth testing intersection (first with gridPos, then with pos)
-			if (abs(p->gridPosX - gridPosX) < ENTITY_OCCLUSION_TEST_X_DIFF && abs(p->gridPosY - gridPosY) < ENTITY_OCCLUSION_TEST_Y_DIFF &&
-				(p->pos.x < this->pos.x || p->pos.y < this->pos.y) && SDL_HasIntersection(&occlusionRect, &p->occlusionRect))
+			if (abs(p->m_gridPosX - m_gridPosX) < ENTITY_OCCLUSION_TEST_X_DIFF && abs(p->m_gridPosY - m_gridPosY) < ENTITY_OCCLUSION_TEST_Y_DIFF &&
+				(p->m_pos.x < this->m_pos.x || p->m_pos.y < this->m_pos.y) && SDL_HasIntersection(&m_occlusionRect, &p->m_occlusionRect))
 				SetOccludes(true);
 			else
 				SetOccludes(false);
@@ -168,10 +168,10 @@ namespace Client
 			GetAnimator()->Update();
 
 		// Perform Cell trasfer if needed
-		if (oldGridPosX != gridPosX || oldGridPosY != gridPosY)
+		if (oldGridPosX != m_gridPosX || oldGridPosY != m_gridPosY)
 		{
-			nextOwner = owner->GetWorld()->GetCellAt(gridPosX, gridPosY);
-			TransferToCellQueue(nextOwner); // will be done as soon as the world update is finished
+			m_nextOwner = m_owner->GetWorld()->GetCellAt(m_gridPosX, m_gridPosY);
+			TransferToCellQueue(m_nextOwner); // will be done as soon as the world update is finished
 		}
 	}
 
@@ -181,10 +181,10 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::UpdateLighting()
 	{
-		SDL_Color* cellColor = owner->GetLightingColor();
-		lightingColor.r = cellColor->r * owner->GetLightingIntensity();
-		lightingColor.g = cellColor->g * owner->GetLightingIntensity();
-		lightingColor.b = cellColor->b * owner->GetLightingIntensity();
+		SDL_Color* cellColor = m_owner->GetLightingColor();
+		m_lightingColor.r = cellColor->r * m_owner->GetLightingIntensity();
+		m_lightingColor.g = cellColor->g * m_owner->GetLightingIntensity();
+		m_lightingColor.b = cellColor->b * m_owner->GetLightingIntensity();
 	}
 
 	//------------------------------------------------------------
@@ -192,37 +192,37 @@ namespace Client
 	//------------------------------------------------------------
 	void Entity::Draw()
 	{
-		if (toRender)
+		if (m_toRender)
 		{
 			UpdateLighting();
 
 			// Save texture's alpha
 			Uint8 previousAlpha = 0;
-			SDL_GetTextureAlphaMod(img->GetSrc(), &previousAlpha);
+			SDL_GetTextureAlphaMod(m_img->GetSrc(), &previousAlpha);
 
 			// Save texture's color
 			Uint8 previousR, previousG, previousB;
-			SDL_GetTextureColorMod(img->GetSrc(), &previousR, &previousG, &previousB);
+			SDL_GetTextureColorMod(m_img->GetSrc(), &previousR, &previousG, &previousB);
 
 			// Update alpha
-			if (occludes)
-				SDL_SetTextureAlphaMod(img->GetSrc(), OCCLUDED_SPRITE_ALPHA_VALUE);
+			if (m_occludes)
+				SDL_SetTextureAlphaMod(m_img->GetSrc(), OCCLUDED_SPRITE_ALPHA_VALUE);
 
 			// Update Color with color data
-			SDL_SetTextureColorMod(img->GetSrc(), lightingColor.r, lightingColor.g, lightingColor.b);
+			SDL_SetTextureColorMod(m_img->GetSrc(), m_lightingColor.r, m_lightingColor.g, m_lightingColor.b);
 
-			if (!img->IsTileset())
+			if (!m_img->IsTileset())
 			{
-				SDL_Rect dstRect = { static_cast<int>(isoPos.x), static_cast<int>(isoPos.y), img->GetWidth(), img->GetHeight() };
-				occlusionRect = dstRect;
+				SDL_Rect dstRect = { static_cast<int>(m_isoPos.x), static_cast<int>(m_isoPos.y), m_img->GetWidth(), m_img->GetHeight() };
+				m_occlusionRect = dstRect;
 
-				occlusionRect.w -= occlModifierX;
-				occlusionRect.h -= occlModifierY;
-				occlusionRect.x += (occlModifierX / 2);
-				occlusionRect.y += (occlModifierY / 2);
+				m_occlusionRect.w -= m_occlModifierX;
+				m_occlusionRect.h -= m_occlModifierY;
+				m_occlusionRect.x += (m_occlModifierX / 2);
+				m_occlusionRect.y += (m_occlModifierY / 2);
 
 				// Draw the occlusion debug on the Debug Render Target
-				if (DEBUG_OCCLUSION_ENABLED && (TestFlag(FCanOccludePlayer) || ID == Player::ENT_ID))
+				if (DEBUG_OCCLUSION_ENABLED && (TestFlag(FCanOccludePlayer) || m_ID == Player::ENT_ID))
 				{
 					// Set debug target
 					auto previousTarget = engine.GetRenderer().GetCurrentERenderTargetVal();
@@ -233,28 +233,28 @@ namespace Client
 					engine.GetRenderer().SetScale(zoomLevel, zoomLevel); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 
 					// Draw
-					engine.GetRenderer().DrawRect(&occlusionRect, colorRed);
+					engine.GetRenderer().DrawRect(&m_occlusionRect, colorRed);
 
 					// Restore previous target
 					engine.GetRenderer().SetRenderTarget(previousTarget);
 				}
 
-				engine.GetRenderer().DrawImageDirectly(img->GetSrc(), NULL, &dstRect);
+				engine.GetRenderer().DrawImageDirectly(m_img->GetSrc(), NULL, &dstRect);
 			}
 			else
 			{
-				Image::Tileset* tset = img->GetTileset();
-				SDL_Rect srcRect = { tilesetXOff * tset->tileWidth, tilesetYOff * tset->tileHeight, tset->tileWidth, tset->tileHeight };
-				SDL_Rect dstRect = { static_cast<int>(isoPos.x), static_cast<int>(isoPos.y), tset->tileWidth, tset->tileHeight };
-				occlusionRect = dstRect;
+				Image::Tileset* tset = m_img->GetTileset();
+				SDL_Rect srcRect = { m_tilesetXOff * tset->tileWidth, m_tilesetYOff * tset->tileHeight, tset->tileWidth, tset->tileHeight };
+				SDL_Rect dstRect = { static_cast<int>(m_isoPos.x), static_cast<int>(m_isoPos.y), tset->tileWidth, tset->tileHeight };
+				m_occlusionRect = dstRect;
 
-				occlusionRect.w -= occlModifierX;
-				occlusionRect.h -= occlModifierY;
-				occlusionRect.x += (occlModifierX / 2);
-				occlusionRect.y += (occlModifierY / 2);
+				m_occlusionRect.w -= m_occlModifierX;
+				m_occlusionRect.h -= m_occlModifierY;
+				m_occlusionRect.x += (m_occlModifierX / 2);
+				m_occlusionRect.y += (m_occlModifierY / 2);
 
 				// Draw the occlusion debug on the Debug Render Target
-				if (DEBUG_OCCLUSION_ENABLED && (TestFlag(FCanOccludePlayer) || ID == Player::ENT_ID))
+				if (DEBUG_OCCLUSION_ENABLED && (TestFlag(FCanOccludePlayer) || m_ID == Player::ENT_ID))
 				{
 					// Set debug target
 					auto previousTarget = engine.GetRenderer().GetCurrentERenderTargetVal();
@@ -265,22 +265,22 @@ namespace Client
 					engine.GetRenderer().SetScale(zoomLevel, zoomLevel); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 
 					// Draw
-					engine.GetRenderer().DrawRect(&occlusionRect, colorYellow);
+					engine.GetRenderer().DrawRect(&m_occlusionRect, colorYellow);
 
 					// Restore previous target
 					engine.GetRenderer().SetRenderTarget(previousTarget);
 				}
 
-				engine.GetRenderer().DrawImageDirectly(img->GetSrc(), &srcRect, &dstRect);
+				engine.GetRenderer().DrawImageDirectly(m_img->GetSrc(), &srcRect, &dstRect);
 			}
 
 			// Restore alpha mod and color mod
-			SDL_SetTextureAlphaMod(img->GetSrc(), previousAlpha);
-			SDL_SetTextureColorMod(img->GetSrc(), previousR, previousG, previousB);
+			SDL_SetTextureAlphaMod(m_img->GetSrc(), previousAlpha);
+			SDL_SetTextureColorMod(m_img->GetSrc(), previousR, previousG, previousB);
 		}
 
-		if (HasCollider() && DEBUG_COLLIDER_ENABLED && (DEBUG_COLLIDER_LAYER == -1 || DEBUG_COLLIDER_LAYER == GetLayer() || ID == Player::ENT_ID))
-			coll->DebugDraw();
+		if (HasCollider() && DEBUG_COLLIDER_ENABLED && (DEBUG_COLLIDER_LAYER == -1 || DEBUG_COLLIDER_LAYER == GetLayer() || m_ID == Player::ENT_ID))
+			m_coll->DebugDraw();
 	}
 
 	//---------------------------------------------------------------------------------------------

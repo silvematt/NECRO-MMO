@@ -30,17 +30,17 @@ namespace Client
 	class Console
 	{
 	private:
-		bool active;
-		std::vector<std::string> logs;		// console log
-		std::vector<std::string> history;	// contains all the commands parsed in the console
+		bool m_active;
+		std::vector<std::string> m_logs;		// console log
+		std::vector<std::string> m_history;	// contains all the commands parsed in the console
 
-		int curLineOffset = 0; // offset in showing history
-		int curHistoryIndex = -1; // to press arrow-up/down and browse history
-		InputField inputField;
+		int m_curLineOffset = 0; // offset in showing history
+		int m_curHistoryIndex = -1; // to press arrow-up/down and browse history
+		
+		InputField m_inputField;
 
-		std::map<std::string, Cmd> cmds; // registered commands
-
-		std::fstream cmdsLogFile; // used to write/read commands from file, so we can save and retrieve the history of last application launch. file is CMDS_LOG_FILENAME
+		std::map<std::string, Cmd>	m_cmds;			// registered commands
+		std::fstream				m_cmdsLogFile;	// used to write/read commands from file, so we can save and retrieve the history of last application launch. file is CMDS_LOG_FILENAME
 
 	private:
 		int			SendCmd(const std::string& cmd);
@@ -61,7 +61,7 @@ namespace Client
 
 	inline bool Console::IsOpen() const
 	{
-		return active;
+		return m_active;
 	}
 
 }

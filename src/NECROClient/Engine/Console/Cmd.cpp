@@ -69,10 +69,10 @@ namespace Client
 		Console& c = engine.GetConsole();
 		Collider* pColl = engine.GetGame().GetCurPlayer()->GetCollider();
 
-		pColl->enabled = !pColl->enabled;
+		pColl->m_enabled = !pColl->m_enabled;
 
 		std::string s = "No Clip: ";
-		s.append((!pColl->enabled ? "enabled" : "disabled"));
+		s.append((!pColl->m_enabled ? "enabled" : "disabled"));
 		c.Log(s);
 
 		return 0;

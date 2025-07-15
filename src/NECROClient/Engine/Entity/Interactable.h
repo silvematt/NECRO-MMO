@@ -31,16 +31,16 @@ namespace Client
 	public:
 		Interactable(Entity* e, InteractType t = InteractType::DESTROY)
 		{
-			parStr = "";
-			parFloat1 = 0.0f;
-			parFloat2 = 0.0f;
+			m_parStr = "";
+			m_parFloat1 = 0.0f;
+			m_parFloat2 = 0.0f;
 
-			owner = e;
-			type = t;
+			m_owner = e;
+			m_type = t;
 		}
 
 	private:
-		Entity* owner;
+		Entity* m_owner;
 
 		// All types of interacitons, prefixed IN for INteraction
 		void INDestroy();
@@ -51,15 +51,15 @@ namespace Client
 		void INMoveRelative(float x, float y);
 
 	public:
-		InteractType type;
+		InteractType m_type;
 
-		int gridDistanceInteraction = 1; // the distance (in grid) between the interactor (player) and this interactable that needs to be respected to trigger the Interact call
+		int m_gridDistanceInteraction = 1; // the distance (in grid) between the interactor (player) and this interactable that needs to be respected to trigger the Interact call
 		// if 0, it means any distance
 
 		// Parameters
-		std::string parStr;
-		float parFloat1;
-		float parFloat2;
+		std::string m_parStr;
+		float m_parFloat1;
+		float m_parFloat2;
 
 		// Called upon interaction
 		void Interact();

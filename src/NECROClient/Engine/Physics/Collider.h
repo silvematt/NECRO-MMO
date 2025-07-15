@@ -21,20 +21,22 @@ namespace Client
 	public:
 		Collider() = default;
 
-	public:
-		void Init(bool pEnabled, Entity* own, int x, int y, int w, int h);
-		void Update();
 
 	private:
-		Entity* owner;
+		Entity*		m_owner;
 
-		Vector2 collOffset;			// the offset of the collision box 'r' added to r.x and r.y (which represent the position of the entity owning this collider)
-		SDL_Rect r;
+		Vector2		m_collOffset;			// the offset of the collision box 'r' added to r.x and r.y (which represent the position of the entity owning this collider)
+		SDL_Rect	m_r;
 
-		float isoPosX, isoPosY;
+		float		m_isoPosX;
+		float		m_isoPosY;
 
 	public:
-		bool enabled = false;
+		bool		m_enabled = false;
+
+
+		void			Init(bool pEnabled, Entity* own, int x, int y, int w, int h);
+		void			Update();
 
 		void			SetOffset(float x, float y);
 		void			DebugDraw();
@@ -46,7 +48,7 @@ namespace Client
 
 	inline const SDL_Rect* Collider::GetRect() const
 	{
-		return &r;
+		return &m_r;
 	}
 
 }

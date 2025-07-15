@@ -26,29 +26,29 @@ namespace Client
 		// Create Window
 		Uint32 winFlags = 0;
 		//Uint32 winFlags = SDL_WINDOW_FULLSCREEN;
-		window = SDL_CreateWindow("NECROClient", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, winFlags);
+		m_window = SDL_CreateWindow("NECROClient", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_WIDTH, SCREEN_HEIGHT, winFlags);
 
-		if (!window)
+		if (!m_window)
 			return -1;
 
 		// Create Renderer
 		Uint32 renFlags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_TARGETTEXTURE;
-		innerRenderer = SDL_CreateRenderer(window, -1, renFlags);
+		m_innerRenderer = SDL_CreateRenderer(m_window, -1, renFlags);
 
-		if (!innerRenderer)
+		if (!m_innerRenderer)
 			return -2;
 
 		// Initialize the Draw Color to black
-		SDL_SetRenderDrawColor(innerRenderer, colorBlack.r, colorBlack.g, colorBlack.b, colorBlack.a);
+		SDL_SetRenderDrawColor(m_innerRenderer, colorBlack.r, colorBlack.g, colorBlack.b, colorBlack.a);
 
 		// Create the RenderTargets
-		mainTarget.CreateMain(innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-		overlayTarget.Create(innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
-		debugTarget.Create(innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+		m_mainTarget.CreateMain(m_innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+		m_overlayTarget.Create(m_innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
+		m_debugTarget.Create(m_innerRenderer, SCREEN_WIDTH, SCREEN_HEIGHT);
 
 		SetRenderTarget(ETargets::MAIN_TARGET);
 
-		exportThisFrame = false;
+		m_exportThisFrame = false;
 
 		return 0;
 	}
@@ -58,11 +58,11 @@ namespace Client
 	//--------------------------------------
 	int Renderer::Shutdown()
 	{
-		if (innerRenderer)
-			SDL_DestroyRenderer(innerRenderer);
+		if (m_innerRenderer)
+			SDL_DestroyRenderer(m_innerRenderer);
 
-		if (window)
-			SDL_DestroyWindow(window);
+		if (m_window)
+			SDL_DestroyWindow(m_window);
 
 		return 0;
 	}
@@ -72,7 +72,7 @@ namespace Client
 	//--------------------------------------
 	void Renderer::Show()
 	{
-		SDL_RenderPresent(innerRenderer);
+		SDL_RenderPresent(m_innerRenderer);
 	}
 
 	//-----------------------------------------------------------------------------
@@ -81,21 +81,21 @@ namespace Client
 	void Renderer::Update()
 	{
 		// If there was a cmd issued to export render targe textures separately, we need to do it now before we start overlapping them
-		if (exportThisFrame)
+		if (m_exportThisFrame)
 			ExportTargetsSeparate();
 
 		// Actual Renderer::Update
 		SetRenderTarget(ETargets::MAIN_TARGET);
 
 		// Copy the other targets on the (default) mainTarget
-		SDL_RenderCopy(innerRenderer, overlayTarget.GetTargetTexture(), NULL, NULL);
-		SDL_RenderCopy(innerRenderer, debugTarget.GetTargetTexture(), NULL, NULL);
+		SDL_RenderCopy(m_innerRenderer, m_overlayTarget.GetTargetTexture(), NULL, NULL);
+		SDL_RenderCopy(m_innerRenderer, m_debugTarget.GetTargetTexture(), NULL, NULL);
 
 		// Export final image as well
-		if (exportThisFrame)
+		if (m_exportThisFrame)
 		{
 			ExportComposedFinalImage();
-			exportThisFrame = false;
+			m_exportThisFrame = false;
 		}
 	}
 
@@ -104,7 +104,7 @@ namespace Client
 	//----------------------------------------------
 	void Renderer::SetScale(float scaleX, float scaleY)
 	{
-		SDL_RenderSetScale(innerRenderer, scaleX, scaleY);
+		SDL_RenderSetScale(m_innerRenderer, scaleX, scaleY);
 	}
 
 	//----------------------------------------------
@@ -114,7 +114,7 @@ namespace Client
 	{
 		//if(toDraw == nullptr)
 		//	SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Nothing to draw!\n");
-		SDL_RenderCopy(innerRenderer, toDraw, srcRect, dstRect);
+		SDL_RenderCopy(m_innerRenderer, toDraw, srcRect, dstRect);
 	}
 
 	//-------------------------------------------------------------------
@@ -129,10 +129,10 @@ namespace Client
 		SDL_Texture* renderedText = nullptr;
 
 		SDL_Surface* textSurf = TTF_RenderText_Solid(font, str, color);
-		renderedText = SDL_CreateTextureFromSurface(innerRenderer, textSurf);
+		renderedText = SDL_CreateTextureFromSurface(m_innerRenderer, textSurf);
 		SDL_Rect dest = { screenX, screenY, textSurf->w, textSurf->h };
 
-		SDL_RenderCopy(innerRenderer, renderedText, NULL, &dest);
+		SDL_RenderCopy(m_innerRenderer, renderedText, NULL, &dest);
 
 		SDL_DestroyTexture(renderedText);
 		SDL_FreeSurface(textSurf);
@@ -145,7 +145,7 @@ namespace Client
 	{
 		// To correctly use SDL_RenderDrawLines, manually scale the coordinates based on the zoom level
 		float previousScaleX = 0, previousScaleY = 0;
-		SDL_RenderGetScale(innerRenderer, &previousScaleX, &previousScaleY);
+		SDL_RenderGetScale(m_innerRenderer, &previousScaleX, &previousScaleY);
 
 		// Set Scale to 1
 		SetScale(1.0, 1.0);
@@ -182,8 +182,8 @@ namespace Client
 		}
 
 		// Set render color and draw the lines
-		SDL_SetRenderDrawColor(innerRenderer, color.r, color.g, color.b, color.a);
-		SDL_RenderDrawLines(innerRenderer, points.data(), points.size());
+		SDL_SetRenderDrawColor(m_innerRenderer, color.r, color.g, color.b, color.a);
+		SDL_RenderDrawLines(m_innerRenderer, points.data(), points.size());
 		//SDL_RenderDrawPoints(innerRenderer, points.data(), points.size());
 
 		// Restore scale
@@ -195,8 +195,8 @@ namespace Client
 	//------------------------------------------------
 	void Renderer::DrawRect(SDL_Rect* r, SDL_Color c)
 	{
-		SDL_SetRenderDrawColor(innerRenderer, c.r, c.g, c.b, c.a);
-		SDL_RenderFillRect(innerRenderer, r);
+		SDL_SetRenderDrawColor(m_innerRenderer, c.r, c.g, c.b, c.a);
+		SDL_RenderFillRect(m_innerRenderer, r);
 	}
 
 	//--------------------------------------
@@ -204,9 +204,9 @@ namespace Client
 	//--------------------------------------
 	void Renderer::Clear()
 	{
-		mainTarget.Clear();
-		overlayTarget.Clear();
-		debugTarget.Clear();
+		m_mainTarget.Clear();
+		m_overlayTarget.Clear();
+		m_debugTarget.Clear();
 	}
 
 	//------------------------------------------------
@@ -217,22 +217,22 @@ namespace Client
 		switch (trg)
 		{
 		case ETargets::MAIN_TARGET:
-			curTarget = &mainTarget;
-			SDL_SetRenderTarget(innerRenderer, mainTarget.GetTargetTexture());
+			m_curTarget = &m_mainTarget;
+			SDL_SetRenderTarget(m_innerRenderer, m_mainTarget.GetTargetTexture());
 			break;
 
 		case ETargets::OVERLAY_TARGET:
-			curTarget = &overlayTarget;
-			SDL_SetRenderTarget(innerRenderer, overlayTarget.GetTargetTexture());
+			m_curTarget = &m_overlayTarget;
+			SDL_SetRenderTarget(m_innerRenderer, m_overlayTarget.GetTargetTexture());
 			break;
 
 		case ETargets::DEBUG_TARGET:
-			curTarget = &debugTarget;
-			SDL_SetRenderTarget(innerRenderer, debugTarget.GetTargetTexture());
+			m_curTarget = &m_debugTarget;
+			SDL_SetRenderTarget(m_innerRenderer, m_debugTarget.GetTargetTexture());
 			break;
 		}
 
-		curERenTarget = trg;
+		m_curERenTarget = trg;
 	}
 
 
@@ -302,9 +302,9 @@ namespace Client
 	//-----------------------------------------------------------------------------------------------
 	void Renderer::ExportTargetsSeparate()
 	{
-		SaveTexture("main.png", innerRenderer, NULL);
-		SaveTexture("overlay.png", innerRenderer, overlayTarget.GetTargetTexture());
-		SaveTexture("debug.png", innerRenderer, debugTarget.GetTargetTexture());
+		SaveTexture("main.png", m_innerRenderer, NULL);
+		SaveTexture("overlay.png", m_innerRenderer, m_overlayTarget.GetTargetTexture());
+		SaveTexture("debug.png", m_innerRenderer, m_debugTarget.GetTargetTexture());
 	}
 
 	//-----------------------------------------------------------------------------------------------
@@ -312,7 +312,7 @@ namespace Client
 	//-----------------------------------------------------------------------------------------------
 	void Renderer::ExportComposedFinalImage()
 	{
-		SaveTexture("final.png", innerRenderer, NULL);
+		SaveTexture("final.png", m_innerRenderer, NULL);
 	}
 
 }

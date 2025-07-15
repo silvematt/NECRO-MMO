@@ -30,33 +30,33 @@ namespace Client
 		};
 
 	public:
-		Entity* owner;
-
-		bool enabled = true;
-
-		Vector2 pos;
-		float intensity;
-		float radius;
-		float dropoffMultiplier; // how much reduction of light there is for cells that are far from the source
-		float farDropoffThreshold; // the dropoff distance (in cells) from which the lightFarDropoffMultiplier is applied on top of the base dropoff
-		float farDropoffMultiplier;
-		SDL_Color color;
+		Entity*		m_owner;
+					
+		bool		m_enabled = true;
+					
+		Vector2		m_pos;
+		float		m_intensity;
+		float		m_radius;
+		float		m_dropoffMultiplier; // how much reduction of light there is for cells that are far from the source
+		float		m_farDropoffThreshold; // the dropoff distance (in cells) from which the lightFarDropoffMultiplier is applied on top of the base dropoff
+		float		m_farDropoffMultiplier;
+		SDL_Color	m_color;
 
 		// Anim parameters
-		float animSpeed;
-		float minIntensity;
-		float maxIntensity;
-		float minIntensityDivider;
+		float m_animSpeed;
+		float m_minIntensity;
+		float m_maxIntensity;
+		float m_minIntensityDivider;
 
 	private:
-		PropagationSetting curPropagation;
+		PropagationSetting m_curPropagation;
 
 		// Settings to animate lights
-		bool doAnim = false;
+		bool m_doAnim = false;
 
 		// For pulse lighting effect
-		bool goUp = false;
-		bool goDown = true;
+		bool m_goUp = false;
+		bool m_goDown = true;
 
 	private:
 		void Animate();
@@ -77,7 +77,7 @@ namespace Client
 
 	inline void Light::SetPropagationSetting(PropagationSetting s)
 	{
-		curPropagation = s;
+		m_curPropagation = s;
 	}
 
 }

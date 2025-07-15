@@ -16,21 +16,21 @@ namespace Client
 	//-------------------------------------------------------
 	int Console::Init()
 	{
-		inputField.Init(SDL_Rect{ 0,0,309,52 }, SDL_Rect{ 25, SCREEN_HEIGHT - 120, 380,35 }, "", engine.GetAssetsManager().GetImage("default_input_field.png"), engine.GetAssetsManager().GetImage("default_active_input_field.png"), 0);
+		m_inputField.Init(SDL_Rect{ 0,0,309,52 }, SDL_Rect{ 25, SCREEN_HEIGHT - 120, 380,35 }, "", engine.GetAssetsManager().GetImage("default_input_field.png"), engine.GetAssetsManager().GetImage("default_active_input_field.png"), 0);
 
-		cmds.insert({ "help", Cmd(&Cmd::Cmd_Help) });
-		cmds.insert({ "tel", Cmd(&Cmd::Cmd_TeleportToGrid) });
-		cmds.insert({ "noclip", Cmd(&Cmd::Cmd_NoClip) });
-		cmds.insert({ "dcoll", Cmd(&Cmd::Cmd_ToggleCollisionDebug) });
-		cmds.insert({ "doccl", Cmd(&Cmd::Cmd_ToggleOcclusionDebug) });
-		cmds.insert({ "qqq", Cmd(&Cmd::Cmd_QuitApplication) });
-		cmds.insert({ "authconnect", Cmd(&Cmd::Cmd_ConnectToAuthServer) });
+		m_cmds.insert({ "help", Cmd(&Cmd::Cmd_Help) });
+		m_cmds.insert({ "tel", Cmd(&Cmd::Cmd_TeleportToGrid) });
+		m_cmds.insert({ "noclip", Cmd(&Cmd::Cmd_NoClip) });
+		m_cmds.insert({ "dcoll", Cmd(&Cmd::Cmd_ToggleCollisionDebug) });
+		m_cmds.insert({ "doccl", Cmd(&Cmd::Cmd_ToggleOcclusionDebug) });
+		m_cmds.insert({ "qqq", Cmd(&Cmd::Cmd_QuitApplication) });
+		m_cmds.insert({ "authconnect", Cmd(&Cmd::Cmd_ConnectToAuthServer) });
 
 		// Load history if present
-		cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::in);
+		m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::in);
 
 		// If we cannot open it, it's not there. It's not a error (may be first time the game is ran)
-		if (!cmdsLogFile.is_open())
+		if (!m_cmdsLogFile.is_open())
 		{
 			SDL_Log("CONSOLE: Could not open LogFile History: '%s'", CONSOLE_CMDS_LOG_FILENAME);
 		}
@@ -38,14 +38,14 @@ namespace Client
 		{
 			// Fill history
 			std::string line;
-			while (std::getline(cmdsLogFile, line))
+			while (std::getline(m_cmdsLogFile, line))
 			{
 				if (!line.empty())
-					history.push_back(std::move(line));
+					m_history.push_back(std::move(line));
 			}
 		}
 
-		cmdsLogFile.close();
+		m_cmdsLogFile.close();
 		return 0;
 	}
 
@@ -55,28 +55,28 @@ namespace Client
 	int Console::Shutdown()
 	{
 		// On shutdown, write the last saved commands to lastconsolecmdshistory.log
-		if (history.size() >= CONSOLE_CMD_HISTORY_MAX_LENGTH)
-			cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::out | std::ios::trunc);
+		if (m_history.size() >= CONSOLE_CMD_HISTORY_MAX_LENGTH)
+			m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::out | std::ios::trunc);
 		else
-			cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::out | std::ios::app);
+			m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::out | std::ios::app);
 
-		if (!cmdsLogFile.is_open())
+		if (!m_cmdsLogFile.is_open())
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "CONSOLE Error: Error occurred while trying to open LogFile History: '%s'", CONSOLE_CMDS_LOG_FILENAME);
 			return 1;
 		}
 
 		// Write the commands to the file
-		for (auto& cmd : history)
+		for (auto& cmd : m_history)
 		{
 			// Skip 'qqq'
 			if (cmd == "qqq")
 				continue;
 
-			cmdsLogFile << cmd.c_str() << std::endl;
+			m_cmdsLogFile << cmd.c_str() << std::endl;
 		}
 
-		cmdsLogFile.close();
+		m_cmdsLogFile.close();
 		return 0;
 	}
 
@@ -87,26 +87,26 @@ namespace Client
 	void Console::Toggle()
 	{
 		// If the console is active, see if we have to send cmd or close the console
-		if (active)
+		if (m_active)
 		{
-			if (inputField.str.size() > 0 && !ClientUtility::IsWhitespaceString(inputField.str))
+			if (m_inputField.m_str.size() > 0 && !ClientUtility::IsWhitespaceString(m_inputField.m_str))
 			{
 				// If the command is executed, close the console after sending it
-				int val = SendCmd(inputField.str);
+				int val = SendCmd(m_inputField.m_str);
 				if (val == 0)
-					active = false;
+					m_active = false;
 			}
 			else
-				active = false;
+				m_active = false;
 		}
 		else
 		{
-			active = true;
-			curLineOffset = 0;
-			curHistoryIndex = -1;
+			m_active = true;
+			m_curLineOffset = 0;
+			m_curHistoryIndex = -1;
 		}
 
-		inputField.SetFocused(active);
+		m_inputField.SetFocused(m_active);
 	}
 
 
@@ -120,34 +120,34 @@ namespace Client
 		if (i.GetKeyDown(SDL_SCANCODE_RETURN) || i.GetKeyDown(SDL_SCANCODE_KP_ENTER))
 			Toggle();
 
-		if (active)
+		if (m_active)
 		{
 			if (i.GetKeyDown(SDL_SCANCODE_PAGEUP))
-				curLineOffset += CONSOLE_MAX_LINES_PER_PAGE;
+				m_curLineOffset += CONSOLE_MAX_LINES_PER_PAGE;
 			else if (i.GetKeyDown(SDL_SCANCODE_PAGEDOWN))
-				curLineOffset -= CONSOLE_MAX_LINES_PER_PAGE;
+				m_curLineOffset -= CONSOLE_MAX_LINES_PER_PAGE;
 
-			curLineOffset = SDL_clamp(curLineOffset, 0, history.size());
+			m_curLineOffset = SDL_clamp(m_curLineOffset, 0, m_history.size());
 
 			// Browse history with arrows
 			if (i.GetKeyDown(SDL_SCANCODE_UP))
 			{
-				curHistoryIndex += 1;
-				curHistoryIndex = SDL_clamp(curHistoryIndex, 0, history.size() - 1);
+				m_curHistoryIndex += 1;
+				m_curHistoryIndex = SDL_clamp(m_curHistoryIndex, 0, m_history.size() - 1);
 
-				int index = history.size() - 1 - curHistoryIndex;
-				if (index >= 0 && index <= history.size() - 1)
-					inputField.str = history[index];
+				int index = m_history.size() - 1 - m_curHistoryIndex;
+				if (index >= 0 && index <= m_history.size() - 1)
+					m_inputField.m_str = m_history[index];
 
 			}
 			else if (i.GetKeyDown(SDL_SCANCODE_DOWN))
 			{
-				curHistoryIndex -= 1;
-				curHistoryIndex = SDL_clamp(curHistoryIndex, 0, history.size() - 1);
+				m_curHistoryIndex -= 1;
+				m_curHistoryIndex = SDL_clamp(m_curHistoryIndex, 0, m_history.size() - 1);
 
-				int index = history.size() - 1 - curHistoryIndex;
-				if (index >= 0 && index <= history.size() - 1)
-					inputField.str = history[index];
+				int index = m_history.size() - 1 - m_curHistoryIndex;
+				if (index >= 0 && index <= m_history.size() - 1)
+					m_inputField.m_str = m_history[index];
 			}
 
 			Draw();
@@ -160,15 +160,15 @@ namespace Client
 	void Console::Draw()
 	{
 		engine.GetRenderer().SetRenderTarget(Renderer::ETargets::DEBUG_TARGET);
-		inputField.Draw();
+		m_inputField.Draw();
 
 		int count = 1;
-		for (int i = logs.size() - 1; i >= 0; i--)
+		for (int i = m_logs.size() - 1; i >= 0; i--)
 		{
 			int actualOffset = 0;
 
-			if (i - curLineOffset < logs.size())
-				engine.GetRenderer().DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), logs[i - curLineOffset].c_str(), 25, (SCREEN_HEIGHT - 120) - 40 * count, colorWhite);
+			if (i - m_curLineOffset < m_logs.size())
+				engine.GetRenderer().DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), m_logs[i - m_curLineOffset].c_str(), 25, (SCREEN_HEIGHT - 120) - 40 * count, colorWhite);
 
 			// Limit console
 			if (count >= CONSOLE_MAX_LINES_PER_PAGE)
@@ -184,10 +184,10 @@ namespace Client
 	void Console::Log(const std::string& str)
 	{
 		// Check if logs vector is full, if it is, remove the first element before inserting another
-		if (logs.size() >= CONSOLE_LOGS_MAX_LENGTH)
-			logs.erase(logs.begin());
+		if (m_logs.size() >= CONSOLE_LOGS_MAX_LENGTH)
+			m_logs.erase(m_logs.begin());
 
-		logs.push_back(str);
+		m_logs.push_back(str);
 	}
 
 	//-------------------------------------------------------
@@ -199,11 +199,11 @@ namespace Client
 	int Console::SendCmd(const std::string& cmd)
 	{
 		// Check if history vector is full, if it is, remove the first element before inserting another
-		if (history.size() >= CONSOLE_CMD_HISTORY_MAX_LENGTH)
-			history.erase(history.begin());
+		if (m_history.size() >= CONSOLE_CMD_HISTORY_MAX_LENGTH)
+			m_history.erase(m_history.begin());
 
 		// Add command to history
-		history.push_back(cmd);
+		m_history.push_back(cmd);
 
 		Log("> " + cmd); // log command
 
@@ -216,11 +216,11 @@ namespace Client
 			// Input[0] is the function name, transform it to lowercase
 			std::transform(input[0].begin(), input[0].end(), input[0].begin(), std::tolower);
 
-			auto it = cmds.find(input[0]);
-			if (it != cmds.end())
+			auto it = m_cmds.find(input[0]);
+			if (it != m_cmds.end())
 			{
 				// Command found, execute it
-				return cmds.at(input[0]).Execute(input);
+				return m_cmds.at(input[0]).Execute(input);
 			} // ELSE command not registered, just keep it logged
 		}
 

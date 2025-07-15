@@ -8,7 +8,7 @@ namespace NECRO
 {
 namespace Client
 {
-	const float CAMERA_DEFAULT_ZOOM = 1.0f;
+	constexpr float CAMERA_DEFAULT_ZOOM = 1.0f;
 
 	class Camera
 	{
@@ -29,26 +29,26 @@ namespace Client
 		// hold the previous viewport size, which is used to adjust the camera position to 
 		// keep it centered correctly after the zoom.
 		// ------------------------------------------------------------------------------------------
-		float zoomSizeX;
-		float zoomSizeY;
+		float m_zoomSizeX;
+		float m_zoomSizeY;
 
-		float zoomLevel = 1.0f;
-		float zoomSpeed = 0.2f;
+		float m_zoomLevel = 1.0f;
+		float m_zoomSpeed = 0.2f;
 
-		float panSpeed = 50.0f;
+		float m_panSpeed = 50.0f;
 
-		bool freeCamera = false;
+		bool  m_freeCamera = false;
 
 
-		std::vector<Entity*> visibleStaticEntities;	// Entities, such as the terrain on layer0, that do not need any sorting to be drawn.
-		std::vector<Entity*> visibleEntities;		// Entities that are in the camera-space, that will need to be drawn after sorting
+		std::vector<Entity*> m_visibleStaticEntities;	// Entities, such as the terrain on layer0, that do not need any sorting to be drawn.
+		std::vector<Entity*> m_visibleEntities;			// Entities that are in the camera-space, that will need to be drawn after sorting
 
 	private:
 		void		FreeMove();
 		void		LockPlayerMove();
 
 	public:
-		Vector2 pos;
+		Vector2		m_pos;
 
 		void		Update();
 		void		SetZoom(float newZoom);
@@ -66,7 +66,7 @@ namespace Client
 
 	inline float Camera::GetZoom()
 	{
-		return zoomLevel;
+		return m_zoomLevel;
 	}
 
 }

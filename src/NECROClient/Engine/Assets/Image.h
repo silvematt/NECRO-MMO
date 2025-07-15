@@ -32,17 +32,18 @@ namespace Client
 		};
 
 	private:
-		SDL_Texture* imgTexture;
-		int width;
-		int height;
+		SDL_Texture* m_imgTexture;
 
-		SDL_Rect rect;
+		int m_width;
+		int m_height;
 
-		int offsetX;
-		int offsetY;					// Offset Y is used to draw images that are, for example 64x64 on map of 64x32
+		SDL_Rect m_rect;
+
+		int m_offsetX;
+		int m_offsetY;					// Offset Y is used to draw images that are, for example 64x64 on map of 64x32
 										// If the 'tree.png' is 64x64, it should be drawn with a y offset of -32 (to draw the bottom of the tree correctly)
-		bool isTileset;
-		std::shared_ptr<Tileset> tileset;
+		bool m_isTileset;
+		std::shared_ptr<Tileset> m_tileset;
 
 	public:
 		Image(SDL_Texture* tex, int xOff, int yOff);
@@ -69,39 +70,39 @@ namespace Client
 	// Constructor
 	//-------------------------------------------------------
 	inline Image::Image(SDL_Texture* tex, int xOff, int yOff) :
-		imgTexture(tex),
-		offsetX(xOff),
-		offsetY(yOff)
+		m_imgTexture(tex),
+		m_offsetX(xOff),
+		m_offsetY(yOff)
 	{
-		SDL_QueryTexture(imgTexture, NULL, NULL, &width, &height);
-		SDL_SetTextureBlendMode(imgTexture, SDL_BLENDMODE_BLEND);
+		SDL_QueryTexture(m_imgTexture, NULL, NULL, &m_width, &m_height);
+		SDL_SetTextureBlendMode(m_imgTexture, SDL_BLENDMODE_BLEND);
 
-		rect = { 0, 0, width, height };
+		m_rect = { 0, 0, m_width, m_height };
 
-		isTileset = false;
+		m_isTileset = false;
 	}
 
 	//-------------------------------------------------------
 	// Constructor for Tileset
 	//-------------------------------------------------------
 	inline Image::Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, int tNumX, int tNumY) :
-		imgTexture(tex),
-		offsetX(xOff),
-		offsetY(yOff)
+		m_imgTexture(tex),
+		m_offsetX(xOff),
+		m_offsetY(yOff)
 	{
-		SDL_QueryTexture(imgTexture, NULL, NULL, &width, &height);
-		SDL_SetTextureBlendMode(imgTexture, SDL_BLENDMODE_BLEND);
+		SDL_QueryTexture(m_imgTexture, NULL, NULL, &m_width, &m_height);
+		SDL_SetTextureBlendMode(m_imgTexture, SDL_BLENDMODE_BLEND);
 
-		rect = { 0, 0, width, height };
+		m_rect = { 0, 0, m_width, m_height };
 
-		isTileset = true;
+		m_isTileset = true;
 
-		tileset = std::make_shared<Tileset>();
+		m_tileset = std::make_shared<Tileset>();
 
-		tileset->tileWidth = tWidth;
-		tileset->tileHeight = tHeight;
-		tileset->tileXNum = tNumX;
-		tileset->tileYNum = tNumY;
+		m_tileset->tileWidth = tWidth;
+		m_tileset->tileHeight = tHeight;
+		m_tileset->tileXNum = tNumX;
+		m_tileset->tileYNum = tNumY;
 	}
 
 	//--------------------------------------------------------
@@ -141,48 +142,48 @@ namespace Client
 			std::getline(stream, curLine);
 			curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 			curValStr = curValStr.substr(0, curValStr.find(";"));
-			isTileset = ClientUtility::TryParseInt(curValStr);
+			m_isTileset = ClientUtility::TryParseInt(curValStr);
 
 			// xOffset
 			std::getline(stream, curLine);
 			curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 			curValStr = curValStr.substr(0, curValStr.find(";"));
-			offsetX = ClientUtility::TryParseInt(curValStr);
+			m_offsetX = ClientUtility::TryParseInt(curValStr);
 
 			// yOffset
 			std::getline(stream, curLine);
 			curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 			curValStr = curValStr.substr(0, curValStr.find(";"));
-			offsetY = ClientUtility::TryParseInt(curValStr);
+			m_offsetY = ClientUtility::TryParseInt(curValStr);
 
-			if (isTileset)
+			if (m_isTileset)
 			{
 				// Make the tileset data now that is needed
-				tileset = std::make_shared<Tileset>();
+				m_tileset = std::make_shared<Tileset>();
 
 				// tWidth
 				std::getline(stream, curLine);
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 				curValStr = curValStr.substr(0, curValStr.find(";"));
-				tileset->tileWidth = ClientUtility::TryParseInt(curValStr);
+				m_tileset->tileWidth = ClientUtility::TryParseInt(curValStr);
 
 				// tHeight
 				std::getline(stream, curLine);
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 				curValStr = curValStr.substr(0, curValStr.find(";"));
-				tileset->tileHeight = ClientUtility::TryParseInt(curValStr);
+				m_tileset->tileHeight = ClientUtility::TryParseInt(curValStr);
 
 				// tileXNum
 				std::getline(stream, curLine);
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 				curValStr = curValStr.substr(0, curValStr.find(";"));
-				tileset->tileXNum = ClientUtility::TryParseInt(curValStr);
+				m_tileset->tileXNum = ClientUtility::TryParseInt(curValStr);
 
 				// tileYNum
 				std::getline(stream, curLine);
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 				curValStr = curValStr.substr(0, curValStr.find(";"));
-				tileset->tileYNum = ClientUtility::TryParseInt(curValStr);
+				m_tileset->tileYNum = ClientUtility::TryParseInt(curValStr);
 			}
 
 			// ifstream is closed by destructor
@@ -193,52 +194,52 @@ namespace Client
 	inline SDL_Rect Image::TilesetGetSubframeAt(int x, int y)
 	{
 		SDL_Rect r;
-		r.x = x * tileset->tileWidth;
-		r.y = y * tileset->tileHeight;
-		r.w = tileset->tileWidth;
-		r.h = tileset->tileHeight;
+		r.x = x * m_tileset->tileWidth;
+		r.y = y * m_tileset->tileHeight;
+		r.w = m_tileset->tileWidth;
+		r.h = m_tileset->tileHeight;
 		return r;
 	}
 
 	inline SDL_Texture* Image::GetSrc() const
 	{
-		return imgTexture;
+		return m_imgTexture;
 	}
 
 	inline SDL_Rect& Image::GetRect()
 	{
-		return rect;
+		return m_rect;
 	}
 
 	inline int Image::GetWidth() const
 	{
-		return width;
+		return m_width;
 	}
 
 	inline int Image::GetHeight() const
 	{
-		return height;
+		return m_height;
 	}
 
 	inline int Image::GetYOffset() const
 	{
-		return offsetY;
+		return m_offsetY;
 	}
 
 	inline int Image::GetXOffset() const
 	{
-		return offsetX;
+		return m_offsetX;
 	}
 
 	inline bool Image::IsTileset() const
 	{
-		return isTileset;
+		return m_isTileset;
 	}
 
 	inline Image::Tileset* Image::GetTileset() const
 	{
 		if (IsTileset())
-			return tileset.get();
+			return m_tileset.get();
 		else
 			return nullptr;
 	}
@@ -246,7 +247,7 @@ namespace Client
 	inline int Image::GetTilesetHeight() const
 	{
 		if (IsTileset())
-			return tileset->tileHeight;
+			return m_tileset->tileHeight;
 		else
 			return 0;
 	}
@@ -254,7 +255,7 @@ namespace Client
 	inline int Image::GetTilesetWidth() const
 	{
 		if (IsTileset())
-			return tileset->tileWidth;
+			return m_tileset->tileWidth;
 		else
 			return 0;
 	}

@@ -16,15 +16,15 @@ namespace Client
 	//------------------------------------------------------------
 	void World::InitializeWorld()
 	{
-		worldCursor = nullptr;
-		worldCursorEditTexture = engine.GetAssetsManager().GetImage("tile_highlighted.png")->GetSrc();
-		worldCursorPlayTexture = engine.GetAssetsManager().GetImage("tile_highlighted_play.png")->GetSrc();
+		m_worldCursor = nullptr;
+		m_worldCursorEditTexture = engine.GetAssetsManager().GetImage("tile_highlighted.png")->GetSrc();
+		m_worldCursorPlayTexture = engine.GetAssetsManager().GetImage("tile_highlighted_play.png")->GetSrc();
 
 		// Add a player, just for testing (ID = 0)
 		std::unique_ptr<Player> p(new Player());
 		p->SetImg(engine.GetAssetsManager().GetImage("player_war_idle.png"));
-		p->pos = Vector2(static_cast<float>(22 * CELL_WIDTH), static_cast<float>(23 * CELL_HEIGHT));
-		p->zPos = 100.01f; // Player Z placement is controlled by zPos, while for static entities (map-defined) we use layers
+		p->m_pos = Vector2(static_cast<float>(22 * CELL_WIDTH), static_cast<float>(23 * CELL_HEIGHT));
+		p->m_zPos = 100.01f; // Player Z placement is controlled by zPos, while for static entities (map-defined) we use layers
 		p->SetLayer(0);
 		p->Init();
 		p->SetFlag(Entity::Flags::FDynamic);
@@ -32,13 +32,13 @@ namespace Client
 		engine.GetGame().SetCurPlayer(p.get());
 		AddEntity(std::move(p));
 
-		map.LoadMap("world.nmap");
+		m_map.LoadMap("world.nmap");
 
 		// TEST: Add AI for testing
 		std::unique_ptr<AI> ai(new AI());
 		ai->SetImg(engine.GetAssetsManager().GetImage("skeleton_war_idle.png"));
-		ai->pos = Vector2(static_cast<float>(29 * CELL_WIDTH), static_cast<float>(8 * CELL_HEIGHT));
-		ai->zPos = 100.01f;
+		ai->m_pos = Vector2(static_cast<float>(29 * CELL_WIDTH), static_cast<float>(8 * CELL_HEIGHT));
+		ai->m_zPos = 100.01f;
 		ai->SetLayer(0);
 		ai->Init();
 		ai->SetFlag(Entity::Flags::FDynamic);
@@ -48,7 +48,7 @@ namespace Client
 			for (int y = 0; y < WORLD_HEIGHT; y++)
 			{
 				// Initialize the Cells
-				Cell& currentCell = worldmap[x][y];
+				Cell& currentCell = m_worldmap[x][y];
 
 				currentCell.SetWorld(this);
 				currentCell.SetCellCoordinates(x, y);
@@ -56,8 +56,8 @@ namespace Client
 
 		// Set camera
 		curCamera = engine.GetGame().GetMainCamera();
-		curCamera->pos.x = SCREEN_WIDTH / 2;
-		curCamera->pos.y = SCREEN_HEIGHT / 2;
+		curCamera->m_pos.x = SCREEN_WIDTH / 2;
+		curCamera->m_pos.y = SCREEN_HEIGHT / 2;
 		curCamera->SetZoom(CAMERA_DEFAULT_ZOOM);
 	}
 
@@ -69,20 +69,20 @@ namespace Client
 		// Get tile at the center of the screen
 		Vector2 midTilePos = engine.GetGame().GetMainCamera()->ScreenToWorld(Vector2(HALF_SCREEN_WIDTH, HALF_SCREEN_HEIGHT));
 		midTilePos.Clamp(0, WORLD_WIDTH - 1, 0, WORLD_HEIGHT - 1);
-		Cell* midTile = &worldmap[(int)midTilePos.x][(int)midTilePos.y];
+		Cell* midTile = &m_worldmap[(int)midTilePos.x][(int)midTilePos.y];
 
 		// Compute visible min/max 
 		float curCameraZoom = curCamera->GetZoom();
-		visibleMinX = (int)(midTile->GetCellX() - roundf(((HALF_SCREEN_WIDTH / HALF_CELL_WIDTH) / curCameraZoom))) - VISIBLE_X_PLUS_OFFSET;
-		visibleMaxX = (int)(midTile->GetCellX() + roundf(((HALF_SCREEN_WIDTH / HALF_CELL_WIDTH) / curCameraZoom))) + VISIBLE_X_PLUS_OFFSET;
-		visibleMinY = (int)(midTile->GetCellY() - roundf(((HALF_SCREEN_HEIGHT / HALF_CELL_HEIGHT) / curCameraZoom))) - VISIBLE_X_PLUS_OFFSET;
-		visibleMaxY = (int)(midTile->GetCellY() + roundf(((HALF_SCREEN_HEIGHT / HALF_CELL_HEIGHT) / curCameraZoom))) + VISIBLE_X_PLUS_OFFSET;
+		m_visibleMinX = (int)(midTile->GetCellX() - roundf(((HALF_SCREEN_WIDTH / HALF_CELL_WIDTH) / curCameraZoom))) - VISIBLE_X_PLUS_OFFSET;
+		m_visibleMaxX = (int)(midTile->GetCellX() + roundf(((HALF_SCREEN_WIDTH / HALF_CELL_WIDTH) / curCameraZoom))) + VISIBLE_X_PLUS_OFFSET;
+		m_visibleMinY = (int)(midTile->GetCellY() - roundf(((HALF_SCREEN_HEIGHT / HALF_CELL_HEIGHT) / curCameraZoom))) - VISIBLE_X_PLUS_OFFSET;
+		m_visibleMaxY = (int)(midTile->GetCellY() + roundf(((HALF_SCREEN_HEIGHT / HALF_CELL_HEIGHT) / curCameraZoom))) + VISIBLE_X_PLUS_OFFSET;
 
 		// Clamp
-		visibleMinX = SDL_clamp(visibleMinX, 0, WORLD_WIDTH - 1);
-		visibleMaxX = SDL_clamp(visibleMaxX, 0, WORLD_WIDTH - 1);
-		visibleMinY = SDL_clamp(visibleMinY, 0, WORLD_HEIGHT - 1);
-		visibleMaxY = SDL_clamp(visibleMaxY, 0, WORLD_HEIGHT - 1);
+		m_visibleMinX = SDL_clamp(m_visibleMinX, 0, WORLD_WIDTH - 1);
+		m_visibleMaxX = SDL_clamp(m_visibleMaxX, 0, WORLD_WIDTH - 1);
+		m_visibleMinY = SDL_clamp(m_visibleMinY, 0, WORLD_HEIGHT - 1);
+		m_visibleMaxY = SDL_clamp(m_visibleMaxY, 0, WORLD_HEIGHT - 1);
 	}
 
 	//------------------------------------------------------------
@@ -99,12 +99,12 @@ namespace Client
 
 		// Update cells only in the visible rect : TODO: For updating entities (which are updated inside the Cell.Update() we may want to have some entities to update offscreen, like roaming bosses
 		//										   We can have a list of these entities instead of just updating the visible cells (the list will contain the entities inside the visible cells too)
-		entitiesWaitingForTransfer.clear();
-		for (int x = visibleMinX; x < visibleMaxX; x++)
-			for (int y = visibleMinY; y < visibleMaxY; y++)
+		m_entitiesWaitingForTransfer.clear();
+		for (int x = m_visibleMinX; x < m_visibleMaxX; x++)
+			for (int y = m_visibleMinY; y < m_visibleMaxY; y++)
 			{
 				// Update the cell
-				Cell& currentCell = worldmap[x][y];
+				Cell& currentCell = m_worldmap[x][y];
 				currentCell.Update();
 			}
 
@@ -121,20 +121,20 @@ namespace Client
 		engine.GetRenderer().SetScale(curCamera->GetZoom(), curCamera->GetZoom()); // TODO: this should not be here (probably in SetZoom with the main RenderTarget scale), we need to set the scale of the renderer one time and not for each debug draw
 
 		// Draw interact cursor before the actual entity
-		if (worldCursor && engine.GetGame().GetCurMode() == GameMode::PLAY_MODE && canInteract)
-			engine.GetRenderer().DrawImageDirectly(worldCursorPlayTexture, NULL, &worldCursor->GetDstRect());
+		if (m_worldCursor && engine.GetGame().GetCurMode() == GameMode::PLAY_MODE && m_canInteract)
+			engine.GetRenderer().DrawImageDirectly(m_worldCursorPlayTexture, NULL, &m_worldCursor->GetDstRect());
 
 		// Add visible entities to the camera list
-		for (int x = visibleMinX; x < visibleMaxX; x++)
-			for (int y = visibleMinY; y < visibleMaxY; y++)
+		for (int x = m_visibleMinX; x < m_visibleMaxX; x++)
+			for (int y = m_visibleMinY; y < m_visibleMaxY; y++)
 			{
-				Cell& currentCell = worldmap[x][y];
+				Cell& currentCell = m_worldmap[x][y];
 				currentCell.AddEntitiesAsVisible();
 			}
 
 		// Draw the edit cursor on top of entities
-		if (worldCursor && engine.GetGame().GetCurMode() == GameMode::EDIT_MODE)
-			engine.GetRenderer().DrawImageDirectly(worldCursorEditTexture, NULL, &worldCursor->GetDstRect());
+		if (m_worldCursor && engine.GetGame().GetCurMode() == GameMode::EDIT_MODE)
+			engine.GetRenderer().DrawImageDirectly(m_worldCursorEditTexture, NULL, &m_worldCursor->GetDstRect());
 
 		DrawUI();
 	}
@@ -156,33 +156,33 @@ namespace Client
 
 		if (selectedCellX >= 0 && selectedCellX < WORLD_WIDTH && selectedCellY >= 0 && selectedCellY < WORLD_HEIGHT)
 		{
-			worldCursor = &worldmap[selectedCellX][selectedCellY];
+			m_worldCursor = &m_worldmap[selectedCellX][selectedCellY];
 
 			// IF IN EDIT MDOE
 			if (engine.GetGame().GetCurMode() == GameMode::EDIT_MODE)
 			{
 				if (engine.GetInput().GetMouseDown(static_cast<SDL_Scancode>(SDL_BUTTON_LEFT)))
 				{
-					if (worldCursor->GetEntitiesPtrSize() != 0)
+					if (m_worldCursor->GetEntitiesPtrSize() != 0)
 					{
-						RemoveEntity(worldCursor->GetEntityPtrAt(0)->GetID());
+						RemoveEntity(m_worldCursor->GetEntityPtrAt(0)->GetID());
 					}
 					else
 					{
-						std::unique_ptr<Entity> tree = Prefab::InstantiatePrefab("campfire01", Vector2(worldCursor->GetCellX() * CELL_WIDTH, worldCursor->GetCellY() * CELL_HEIGHT));
+						std::unique_ptr<Entity> tree = Prefab::InstantiatePrefab("campfire01", Vector2(m_worldCursor->GetCellX() * CELL_WIDTH, m_worldCursor->GetCellY() * CELL_HEIGHT));
 						if (tree)
 							AddEntity(std::move(tree));
 					}
 				}
 				else if (engine.GetInput().GetMouseDown(static_cast<SDL_Scancode>(SDL_BUTTON_RIGHT)))
 				{
-					if (worldCursor->GetEntitiesPtrSize() != 0)
+					if (m_worldCursor->GetEntitiesPtrSize() != 0)
 					{
-						RemoveEntity(worldCursor->GetEntityPtrAt(0)->GetID());
+						RemoveEntity(m_worldCursor->GetEntityPtrAt(0)->GetID());
 					}
 					else
 					{
-						std::unique_ptr<Entity> tree = Prefab::InstantiatePrefab("tree01", Vector2(worldCursor->GetCellX() * CELL_WIDTH, worldCursor->GetCellY() * CELL_HEIGHT));
+						std::unique_ptr<Entity> tree = Prefab::InstantiatePrefab("tree01", Vector2(m_worldCursor->GetCellX() * CELL_WIDTH, m_worldCursor->GetCellY() * CELL_HEIGHT));
 						if (tree)
 							AddEntity(std::move(tree));
 					}
@@ -191,12 +191,12 @@ namespace Client
 			// Handle PlayMode interaction
 			else if (engine.GetGame().GetCurMode() == GameMode::PLAY_MODE)
 			{
-				canInteract = false;
-				if (worldCursor->GetEntitiesPtrSize() != 0)
+				m_canInteract = false;
+				if (m_worldCursor->GetEntitiesPtrSize() != 0)
 				{
 					// TODO_ make proper entity selection instead of selecting the first one,
 					// If we end up with possible multiple interactable entities on the same cell, we can have an UI box that allows us to select which one we want to interact with
-					Entity* e = worldCursor->GetEntityPtrAt(0);
+					Entity* e = m_worldCursor->GetEntityPtrAt(0);
 					if (e->HasInteractable())
 					{
 						// Check if the player is closer enough to interact with this interactable
@@ -205,10 +205,10 @@ namespace Client
 
 						// If player is valid
 						if (p)
-							if (NECRO_MAX(abs(p->gridPosX - e->gridPosX), abs(p->gridPosY - e->gridPosY)) <= i->gridDistanceInteraction || // check distance
-								i->gridDistanceInteraction == 0) // 0 means interact from any distance
+							if (NECRO_MAX(abs(p->m_gridPosX - e->m_gridPosX), abs(p->m_gridPosY - e->m_gridPosY)) <= i->m_gridDistanceInteraction || // check distance
+								i->m_gridDistanceInteraction == 0) // 0 means interact from any distance
 							{
-								canInteract = true;
+								m_canInteract = true;
 
 								if (engine.GetInput().GetMouseDown(static_cast<SDL_Scancode>(SDL_BUTTON_LEFT)))
 								{
@@ -222,7 +222,7 @@ namespace Client
 			}
 		}
 		else
-			worldCursor = nullptr;
+			m_worldCursor = nullptr;
 	}
 
 	//------------------------------------------------------------
@@ -242,12 +242,12 @@ namespace Client
 
 		// Draw selected cell
 		std::string textSelCell = "Selected Cell: ";
-		if (worldCursor)
-			textSelCell = textSelCell + "(" + std::to_string(worldCursor->GetCellX()) + ", " + std::to_string(worldCursor->GetCellY()) + ")";
+		if (m_worldCursor)
+			textSelCell = textSelCell + "(" + std::to_string(m_worldCursor->GetCellX()) + ", " + std::to_string(m_worldCursor->GetCellY()) + ")";
 		renderer.DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), textSelCell.c_str(), 10, 50, colorRed);
 
 		// Draw current mode
-		std::string textCurrentMode = "Mode: " + GameModeMap[static_cast<int>(engine.GetGame().GetCurMode())];
+		std::string textCurrentMode = "Mode: " + g_GameModeMap[static_cast<int>(engine.GetGame().GetCurMode())];
 		renderer.DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), textCurrentMode.c_str(), SCREEN_WIDTH - 300, 10, colorRed);
 
 		// Draw player Z layer
@@ -266,7 +266,7 @@ namespace Client
 	Cell* World::GetCellAt(int x, int y)
 	{
 		if (x >= 0 && x < WORLD_WIDTH && y >= 0 && y < WORLD_HEIGHT)
-			return &worldmap[x][y];
+			return &m_worldmap[x][y];
 		else
 			return nullptr;
 	}
@@ -277,17 +277,17 @@ namespace Client
 	void World::AddEntity(std::unique_ptr<Entity>&& e)
 	{
 		// Calculate grid position
-		e->gridPosX = e->pos.x / CELL_WIDTH;
-		e->gridPosY = e->pos.y / CELL_HEIGHT;
+		e->m_gridPosX = e->m_pos.x / CELL_WIDTH;
+		e->m_gridPosY = e->m_pos.y / CELL_HEIGHT;
 
 		// Check if it is in bound
-		if (e->gridPosX >= 0 && e->gridPosX < WORLD_WIDTH && e->gridPosY >= 0 && e->gridPosY < WORLD_HEIGHT)
+		if (e->m_gridPosX >= 0 && e->m_gridPosX < WORLD_WIDTH && e->m_gridPosY >= 0 && e->m_gridPosY < WORLD_HEIGHT)
 		{
 			// Add a ptr into the Cell
-			worldmap[e->gridPosX][e->gridPosY].AddEntityPtr(e.get());
+			m_worldmap[e->m_gridPosX][e->m_gridPosY].AddEntityPtr(e.get());
 
 			// Add entity in the world map
-			allEntities.insert({ e->GetID(), std::move(e) });
+			m_allEntities.insert({ e->GetID(), std::move(e) });
 		}
 		else
 		{
@@ -297,33 +297,33 @@ namespace Client
 
 	void World::RemoveEntity(uint32_t atID)
 	{
-		allEntities.at(atID)->GetOwner()->RemoveEntityPtr(atID);
-		allEntities.erase(atID);
+		m_allEntities.at(atID)->GetOwner()->RemoveEntityPtr(atID);
+		m_allEntities.erase(atID);
 	}
 
 	void World::TransferPendingEntities()
 	{
-		for (int i = 0; i < entitiesWaitingForTransfer.size(); i++)
+		for (int i = 0; i < m_entitiesWaitingForTransfer.size(); i++)
 		{
 			// nullptr as argument means Entity->nextOwner
-			entitiesWaitingForTransfer[i]->TransferToCellImmediately(nullptr);
+			m_entitiesWaitingForTransfer[i]->TransferToCellImmediately(nullptr);
 		}
 	}
 
 	void World::AddPendingEntityToTransfer(Entity* e)
 	{
-		entitiesWaitingForTransfer.push_back(e);
+		m_entitiesWaitingForTransfer.push_back(e);
 	}
 
 	void World::ResetLighting()
 	{
-		for (int x = visibleMinX; x < visibleMaxX; x++)
-			for (int y = visibleMinY; y < visibleMaxY; y++)
+		for (int x = m_visibleMinX; x < m_visibleMaxX; x++)
+			for (int y = m_visibleMinY; y < m_visibleMaxY; y++)
 			{
 				// Reset lighting for the visible world to the world base light and color
-				Cell& currentCell = worldmap[x][y];
-				currentCell.SetLightingIntensity(baseLight);
-				currentCell.SetLightingColor(baseLightColor.r, baseLightColor.g, baseLightColor.b);
+				Cell& currentCell = m_worldmap[x][y];
+				currentCell.SetLightingIntensity(m_baseLight);
+				currentCell.SetLightingColor(m_baseLightColor.r, m_baseLightColor.g, m_baseLightColor.b);
 			}
 	}
 

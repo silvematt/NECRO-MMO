@@ -80,7 +80,7 @@ namespace Client
 		Image img(LoadSDLTexture(fullPath.c_str()), xOffset, yOffset);
 		if (img.GetSrc() != NULL)
 		{
-			images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
+			m_images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
 			return true;
 		}
 
@@ -98,7 +98,7 @@ namespace Client
 		Image img(LoadSDLTexture(fullPath.c_str()), xOffset, yOffset, tWidth, tHeight, tNumX, tNumY);
 		if (img.GetSrc() != NULL)
 		{
-			images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
+			m_images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
 			return true;
 		}
 
@@ -117,7 +117,7 @@ namespace Client
 		Image img(LoadSDLTexture(fullPath.c_str()), filename);
 		if (img.GetSrc() != NULL)
 		{
-			images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
+			m_images.insert({ shortname.empty() ? filename : shortname, std::move(img) });
 			return true;
 		}
 
@@ -138,7 +138,7 @@ namespace Client
 
 		if (font != nullptr)
 		{
-			fonts.insert({ shortname.empty() ? filename : shortname, std::move(font) });
+			m_fonts.insert({ shortname.empty() ? filename : shortname, std::move(font) });
 			return true;
 		}
 		else
@@ -160,7 +160,7 @@ namespace Client
 		Animator a; // animators.insert makes a copy, that's why we can define this here as a local member
 		if (a.LoadFromFile(fullPath))
 		{
-			animators.insert({ shortname.empty() ? filename : shortname, std::move(a) });
+			m_animators.insert({ shortname.empty() ? filename : shortname, std::move(a) });
 			return true;
 		}
 
@@ -178,7 +178,7 @@ namespace Client
 		Prefab p;
 		if (p.LoadFromFile(fullPath))
 		{
-			prefabs.insert({ p.GetName(), std::move(p) });
+			m_prefabs.insert({ p.GetName(), std::move(p) });
 			return true;
 		}
 
@@ -193,10 +193,10 @@ namespace Client
 		// Check if an entity initialized is without any image by choice
 		// This allows us to skip the search and avoid the LogWarn
 		if (filename == "NULL")
-			return &images.at("null_img.png");
+			return &m_images.at("null_img.png");
 
-		auto it = images.find(filename);
-		if (it != images.end())
+		auto it = m_images.find(filename);
+		if (it != m_images.end())
 		{
 			return &it->second;
 		}
@@ -206,14 +206,14 @@ namespace Client
 		if (LoadImageWithDefinition(filename))
 		{
 			// Return it
-			it = images.find(filename);
-			if (it != images.end())
+			it = m_images.find(filename);
+			if (it != m_images.end())
 			{
 				return &it->second;
 			}
 		}
 
-		return &images.at("null_img.png");
+		return &m_images.at("null_img.png");
 	}
 
 
@@ -222,8 +222,8 @@ namespace Client
 	//-------------------------------------------------
 	TTF_Font* AssetsManager::GetFont(const std::string& filename)
 	{
-		auto it = fonts.find(filename);
-		if (it != fonts.end())
+		auto it = m_fonts.find(filename);
+		if (it != m_fonts.end())
 		{
 			return it->second;
 		}
@@ -238,8 +238,8 @@ namespace Client
 	Prefab* AssetsManager::GetPrefab(const std::string& prefabName)
 	{
 		// Search for the prefab
-		auto it = prefabs.find(prefabName);
-		if (it != prefabs.end())
+		auto it = m_prefabs.find(prefabName);
+		if (it != m_prefabs.end())
 		{
 			return &it->second;
 		}
@@ -249,8 +249,8 @@ namespace Client
 		if (LoadPrefab(prefabName + ".nprfb"))
 		{
 			// Try the search again
-			it = prefabs.find(prefabName);
-			if (it != prefabs.end())
+			it = m_prefabs.find(prefabName);
+			if (it != m_prefabs.end())
 			{
 				return &it->second;
 			}
@@ -264,8 +264,8 @@ namespace Client
 	//-------------------------------------------------------------------------------
 	Animator* AssetsManager::GetAnimator(const std::string& animName)
 	{
-		auto it = animators.find(animName);
-		if (it != animators.end())
+		auto it = m_animators.find(animName);
+		if (it != m_animators.end())
 		{
 			return &it->second;
 		}
@@ -275,8 +275,8 @@ namespace Client
 		if (LoadAnimator(animName))
 		{
 			// Try the search again
-			it = animators.find(animName);
-			if (it != animators.end())
+			it = m_animators.find(animName);
+			if (it != m_animators.end())
 			{
 				return &it->second;
 			}

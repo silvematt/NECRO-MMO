@@ -21,8 +21,8 @@ namespace Client
 	class RenderTarget
 	{
 	private:
-		SDL_Renderer* context;
-		SDL_Texture* texture;
+		SDL_Renderer*	m_context;
+		SDL_Texture*	m_texture;
 
 	public:
 		void	CreateMain(SDL_Renderer* cntx, int w, int h);
@@ -34,7 +34,7 @@ namespace Client
 
 	inline SDL_Texture* RenderTarget::GetTargetTexture() const
 	{
-		return texture;
+		return m_texture;
 	}
 
 }

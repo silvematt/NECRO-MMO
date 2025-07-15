@@ -13,10 +13,10 @@ namespace Client
 	//--------------------------------------
 	Cell::Cell()
 	{
-		world = nullptr;
-		cellX = cellY = 0;
-		isoX = isoY = 0,
-			dstRect = { 0,0,0,0 };
+		m_world = nullptr;
+		m_cellX = m_cellY = 0;
+		m_isoX = m_isoY = 0,
+		m_dstRect = { 0,0,0,0 };
 	}
 
 	//--------------------------------------
@@ -25,20 +25,20 @@ namespace Client
 	//--------------------------------------
 	void Cell::SetCellCoordinates(const int x, const int y)
 	{
-		cellX = x;
-		cellY = y;
+		m_cellX = x;
+		m_cellY = y;
 
-		NMath::CartToIso(cellX, cellY, isoX, isoY);
+		NMath::CartToIso(m_cellX, m_cellY, m_isoX, m_isoY);
 
 		// Adjust isoX so that the top of the image becomes the origin
-		isoX -= HALF_CELL_WIDTH;
+		m_isoX -= HALF_CELL_WIDTH;
 
 		// Adjust isoX and isoY to the world offset
-		isoX += engine.GetGame().GetMainCamera()->pos.x;
-		isoY += engine.GetGame().GetMainCamera()->pos.y;
-		isoY -= dstRect.h; // bottom-left origin
+		m_isoX += engine.GetGame().GetMainCamera()->m_pos.x;
+		m_isoY += engine.GetGame().GetMainCamera()->m_pos.y;
+		m_isoY -= m_dstRect.h; // bottom-left origin
 
-		dstRect = { isoX, isoY, CELL_WIDTH, CELL_HEIGHT };
+		m_dstRect = { m_isoX, m_isoY, CELL_WIDTH, CELL_HEIGHT };
 	}
 
 	//--------------------------------------
@@ -46,13 +46,13 @@ namespace Client
 	//--------------------------------------
 	void Cell::SetWorld(World* w)
 	{
-		world = w;
+		m_world = w;
 
-		baseColor = w->GetBaseLightColor();
-		baseIntensity = w->GetBaseLightIntensity();
+		m_baseColor = w->GetBaseLightColor();
+		m_baseIntensity = w->GetBaseLightIntensity();
 
-		lColor = baseColor;
-		lIntensity = baseIntensity;
+		m_lColor = m_baseColor;
+		m_lIntensity = m_baseIntensity;
 	}
 
 	//--------------------------------------
@@ -60,19 +60,19 @@ namespace Client
 	//--------------------------------------
 	void Cell::Update()
 	{
-		NMath::CartToIso(cellX, cellY, isoX, isoY);
+		NMath::CartToIso(m_cellX, m_cellY, m_isoX, m_isoY);
 
 		// Adjust isoX so that the top of the image becomes the origin
-		isoX -= HALF_CELL_WIDTH;
+		m_isoX -= HALF_CELL_WIDTH;
 
 		// Adjust isoX and isoY to the world offset
-		isoX += engine.GetGame().GetMainCamera()->pos.x;
-		isoY += engine.GetGame().GetMainCamera()->pos.y;
-		isoY -= dstRect.h; // bottom-left origin
+		m_isoX += engine.GetGame().GetMainCamera()->m_pos.x;
+		m_isoY += engine.GetGame().GetMainCamera()->m_pos.y;
+		m_isoY -= m_dstRect.h; // bottom-left origin
 
-		dstRect = { isoX, isoY, CELL_WIDTH, CELL_HEIGHT };
+		m_dstRect = { m_isoX, m_isoY, CELL_WIDTH, CELL_HEIGHT };
 
-		for (auto& ent : entities)
+		for (auto& ent : m_entities)
 			if (ent)
 				ent->Update();
 	}
@@ -83,11 +83,11 @@ namespace Client
 	void Cell::AddEntityPtr(Entity* e)
 	{
 		e->SetOwner(this); // TODO: make sure adding the entityptr should set ownership, in the future one entity may occupy more than one cell
-		entities.push_back(e);
+		m_entities.push_back(e);
 
 		// If the entity modifies the cell Z modifier, apply it to the cell now
 		float eMod = e->GetZCellModifier();
-		if (eMod > 0 && eMod > zModifier)
+		if (eMod > 0 && eMod > m_zModifier)
 			SetZModifier(eMod);
 	}
 
@@ -96,9 +96,9 @@ namespace Client
 	//--------------------------------------
 	void Cell::RemoveEntityPtr(uint32_t remID)
 	{
-		for (size_t i = 0; i < entities.size(); i++)
+		for (size_t i = 0; i < m_entities.size(); i++)
 		{
-			if (entities[i]->GetID() == remID)
+			if (m_entities[i]->GetID() == remID)
 			{
 				RemoveEntityPtr(i);
 				return;
@@ -111,16 +111,16 @@ namespace Client
 	//--------------------------------------
 	void Cell::RemoveEntityPtr(size_t idx)
 	{
-		entities.at(idx)->ClearOwner();
-		ClientUtility::RemoveFromVector(entities, idx);
+		m_entities.at(idx)->ClearOwner();
+		ClientUtility::RemoveFromVector(m_entities, idx);
 	}
 
 
 	Entity* Cell::GetEntityPtr(uint32_t atID)
 	{
-		for (size_t i = 0; i < entities.size(); i++)
+		for (size_t i = 0; i < m_entities.size(); i++)
 		{
-			if (entities[i]->GetID() == atID)
+			if (m_entities[i]->GetID() == atID)
 			{
 				return GetEntityPtrAt(i);
 			}
@@ -131,8 +131,8 @@ namespace Client
 
 	Entity* Cell::GetEntityPtrAt(size_t indx)
 	{
-		if (indx < entities.size())
-			return entities.at(indx);
+		if (indx < m_entities.size())
+			return m_entities.at(indx);
 
 		return nullptr;
 	}
@@ -142,7 +142,7 @@ namespace Client
 	//--------------------------------------
 	void Cell::DrawEntities()
 	{
-		for (auto& ent : entities)
+		for (auto& ent : m_entities)
 			if (ent)
 				ent->Draw();
 	}
@@ -152,7 +152,7 @@ namespace Client
 	//------------------------------------------------------------------
 	bool Cell::BlocksLight()
 	{
-		for (auto& ent : entities)
+		for (auto& ent : m_entities)
 			if (ent && ent->BlocksLight()) // if an entity that blocks light sits in this cell, then this cell blocks light
 				return true;
 
@@ -164,7 +164,7 @@ namespace Client
 	//------------------------------------------------------------------
 	float Cell::GetLightBlockPercent()
 	{
-		for (auto& ent : entities)
+		for (auto& ent : m_entities)
 			if (ent && ent->BlocksLight()) // TODO: may accumulate light block value for all entites instead of just picking the first found
 				return ent->GetLightBlockValue();
 
@@ -180,21 +180,21 @@ namespace Client
 			dropoff = 1;
 
 		// If the light is dropping off by far, accentuate it so we don't create a barely lit square
-		if (dropoff > l->farDropoffThreshold)
-			dropoff *= l->farDropoffMultiplier;
+		if (dropoff > l->m_farDropoffThreshold)
+			dropoff *= l->m_farDropoffMultiplier;
 
-		dropoff *= l->dropoffMultiplier + occlusion;
+		dropoff *= l->m_dropoffMultiplier + occlusion;
 
-		SetLightingIntensity(lIntensity + (l->intensity / dropoff));
-		SetLightingColor(lColor.r + ((l->color.r / dropoff) * l->intensity),
-			lColor.g + ((l->color.g / dropoff) * l->intensity),
-			lColor.b + ((l->color.b / dropoff) * l->intensity));
+		SetLightingIntensity(m_lIntensity + (l->m_intensity / dropoff));
+		SetLightingColor(m_lColor.r + ((l->m_color.r / dropoff) * l->m_intensity),
+			m_lColor.g + ((l->m_color.g / dropoff) * l->m_intensity),
+			m_lColor.b + ((l->m_color.b / dropoff) * l->m_intensity));
 	}
 
 	void Cell::AddEntitiesAsVisible()
 	{
 		Camera* curCam = engine.GetGame().GetMainCamera();
-		for (auto& ent : entities)
+		for (auto& ent : m_entities)
 		{
 			if (ent)
 			{

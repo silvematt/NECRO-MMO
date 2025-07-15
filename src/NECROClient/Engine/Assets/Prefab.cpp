@@ -64,123 +64,123 @@ namespace Client
 		int curValInt;
 
 		// Prefab Name
-		GetStringFromFile(&pName, &stream, &curLine, &curValStr);
+		GetStringFromFile(&m_pName, &stream, &curLine, &curValStr);
 
 		// Prefab Img
-		GetStringFromFile(&pImgFile, &stream, &curLine, &curValStr);
+		GetStringFromFile(&m_pImgFile, &stream, &curLine, &curValStr);
 
 		// toRender
-		GetBoolFromFile(&toRender, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_toRender, &stream, &curLine, &curValStr);
 
 		// isStatic
-		GetBoolFromFile(&isStatic, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_isStatic, &stream, &curLine, &curValStr);
 
 		// PosOffsetX
-		GetFloatFromFile(&posOffset.x, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_posOffset.x, &stream, &curLine, &curValStr);
 
 		// PosOffsetY
-		GetFloatFromFile(&posOffset.y, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_posOffset.y, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// ColliderEnabled
-		GetBoolFromFile(&hasCollider, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_hasCollider, &stream, &curLine, &curValStr);
 
 		// colliderRectX
-		GetIntFromFile(&collRect.x, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collRect.x, &stream, &curLine, &curValStr);
 
 		// colliderRectY
-		GetIntFromFile(&collRect.y, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collRect.y, &stream, &curLine, &curValStr);
 
 		// colliderRectW
-		GetIntFromFile(&collRect.w, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collRect.w, &stream, &curLine, &curValStr);
 
 		// colliderRectH
-		GetIntFromFile(&collRect.h, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collRect.h, &stream, &curLine, &curValStr);
 
 		// collOffsetX
-		GetIntFromFile(&collOffsetX, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collOffsetX, &stream, &curLine, &curValStr);
 
 		// collOffsetY
-		GetIntFromFile(&collOffsetY, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_collOffsetY, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// occlCheck
-		GetBoolFromFile(&occlCheck, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_occlCheck, &stream, &curLine, &curValStr);
 
 		// occlModX
-		GetIntFromFile(&occlModX, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_occlModX, &stream, &curLine, &curValStr);
 
 		// occlModY
-		GetIntFromFile(&occlModY, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_occlModY, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// BlocksLight
-		GetBoolFromFile(&blocksLight, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_blocksLight, &stream, &curLine, &curValStr);
 
 		// blocksLightValue
-		GetFloatFromFile(&blocksLightValue, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_blocksLightValue, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// EmitsLight
-		GetBoolFromFile(&emitsLight, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_emitsLight, &stream, &curLine, &curValStr);
 
 		// lightPropagationType
-		GetIntFromFile(&lightPropagationType, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_lightPropagationType, &stream, &curLine, &curValStr);
 
 		// LightRadius
-		GetFloatFromFile(&lightRadius, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightRadius, &stream, &curLine, &curValStr);
 
 		// Light Intensity
-		GetFloatFromFile(&lightIntensity, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightIntensity, &stream, &curLine, &curValStr);
 
 		// Dropoff multiplier
-		GetFloatFromFile(&lightDropoffMultiplier, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightDropoffMultiplier, &stream, &curLine, &curValStr);
 
 		// lightFarDropoffThreshold
-		GetFloatFromFile(&lightFarDropoffThreshold, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightFarDropoffThreshold, &stream, &curLine, &curValStr);
 
 		// lightFarDropoffMultiplier
-		GetFloatFromFile(&lightFarDropoffMultiplier, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightFarDropoffMultiplier, &stream, &curLine, &curValStr);
 
 		// LightR
-		GetIntFromFile(&lightR, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_lightR, &stream, &curLine, &curValStr);
 
 		// LightG
-		GetIntFromFile(&lightG, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_lightG, &stream, &curLine, &curValStr);
 
 		// LightB
-		GetIntFromFile(&lightB, &stream, &curLine, &curValStr);
+		GetIntFromFile(&m_lightB, &stream, &curLine, &curValStr);
 
 		// lightAnimated
-		GetBoolFromFile(&lightAnimated, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_lightAnimated, &stream, &curLine, &curValStr);
 
 		// lightMinIntensityDivider
-		GetFloatFromFile(&lightMinIntensityDivider, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightMinIntensityDivider, &stream, &curLine, &curValStr);
 
 		// lightAnimSpeed
-		GetFloatFromFile(&lightAnimSpeed, &stream, &curLine, &curValStr);
+		GetFloatFromFile(&m_lightAnimSpeed, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// HasAnim
-		GetBoolFromFile(&hasAnimator, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_hasAnimator, &stream, &curLine, &curValStr);
 
 		// Anim File name
-		GetStringFromFile(&animFile, &stream, &curLine, &curValStr);
+		GetStringFromFile(&m_animFile, &stream, &curLine, &curValStr);
 
 		std::getline(stream, curLine); // line break
 
 		// Interactable
-		GetBoolFromFile(&interactable, &stream, &curLine, &curValStr);
+		GetBoolFromFile(&m_interactable, &stream, &curLine, &curValStr);
 
-		if (interactable)
+		if (m_interactable)
 		{
 			// gridDistanceInteraction
-			GetIntFromFile(&gridDistanceInteraction, &stream, &curLine, &curValStr);
+			GetIntFromFile(&m_gridDistanceInteraction, &stream, &curLine, &curValStr);
 
 
 
@@ -223,7 +223,7 @@ namespace Client
 					data.parFloat2 = ClientUtility::TryParseFloat(curLine.substr(startPos + 1, endPos - startPos - 1));
 
 					// Add to vector
-					interactablesData.push_back(data);
+					m_interactablesData.push_back(data);
 				}
 			}
 		}
@@ -242,72 +242,72 @@ namespace Client
 		if (p)
 		{
 			// Create the entity
-			std::unique_ptr<Entity> e(new Entity(Vector2(static_cast<float>(pos.x + p->posOffset.x), static_cast<float>(pos.y + p->posOffset.y)), engine.GetAssetsManager().GetImage(p->pImgFile)));
+			std::unique_ptr<Entity> e(new Entity(Vector2(static_cast<float>(pos.x + p->m_posOffset.x), static_cast<float>(pos.y + p->m_posOffset.y)), engine.GetAssetsManager().GetImage(p->m_pImgFile)));
 
-			e->toRender = p->toRender;
+			e->m_toRender = p->m_toRender;
 
 			// Check if the prefab has a collider
-			if (p->hasCollider)
+			if (p->m_hasCollider)
 			{
 				// If so, create and set it
 				e->CreateCollider();
-				e->GetCollider()->Init(true, e.get(), p->collRect.x, p->collRect.y, p->collRect.w, p->collRect.h);
-				e->GetCollider()->SetOffset(p->collOffsetX, p->collOffsetY);
+				e->GetCollider()->Init(true, e.get(), p->m_collRect.x, p->m_collRect.y, p->m_collRect.w, p->m_collRect.h);
+				e->GetCollider()->SetOffset(p->m_collOffsetX, p->m_collOffsetY);
 			}
 
 			// Check occlusion
-			if (p->occlCheck)
+			if (p->m_occlCheck)
 				e->SetFlag(Entity::Flags::FCanOccludePlayer);
 
-			e->SetOcclusionModifierValues(p->occlModX, p->occlModY);
+			e->SetOcclusionModifierValues(p->m_occlModX, p->m_occlModY);
 
 			// Light block
-			if (p->blocksLight)
+			if (p->m_blocksLight)
 				e->SetFlag(Entity::Flags::FBlocksLight);
 
-			e->blocksLightValue = p->blocksLightValue;
+			e->m_blocksLightValue = p->m_blocksLightValue;
 
 			// Check Lighting
-			if (p->emitsLight)
+			if (p->m_emitsLight)
 			{
 				e->CreateLight();
 
 				Light* thisLight = e->GetLight();
 
-				thisLight->SetPropagationSetting(static_cast<Light::PropagationSetting>(p->lightPropagationType));
+				thisLight->SetPropagationSetting(static_cast<Light::PropagationSetting>(p->m_lightPropagationType));
 
-				thisLight->color.r = p->lightR;
-				thisLight->color.g = p->lightG;
-				thisLight->color.b = p->lightB;
-				thisLight->intensity = p->lightIntensity;
-				thisLight->radius = p->lightRadius;
-				thisLight->dropoffMultiplier = p->lightDropoffMultiplier;
-				thisLight->farDropoffThreshold = p->lightFarDropoffThreshold;
-				thisLight->farDropoffMultiplier = p->lightFarDropoffMultiplier;
+				thisLight->m_color.r = p->m_lightR;
+				thisLight->m_color.g = p->m_lightG;
+				thisLight->m_color.b = p->m_lightB;
+				thisLight->m_intensity = p->m_lightIntensity;
+				thisLight->m_radius = p->m_lightRadius;
+				thisLight->m_dropoffMultiplier = p->m_lightDropoffMultiplier;
+				thisLight->m_farDropoffThreshold = p->m_lightFarDropoffThreshold;
+				thisLight->m_farDropoffMultiplier = p->m_lightFarDropoffMultiplier;
 
 				// Pos relative to entity
-				thisLight->pos.x = 0;
-				thisLight->pos.y = 0;
+				thisLight->m_pos.x = 0;
+				thisLight->m_pos.y = 0;
 
 				// Animated
-				thisLight->SetAnim(p->lightAnimated);
-				thisLight->minIntensityDivider = p->lightMinIntensityDivider;
-				thisLight->animSpeed = p->lightAnimSpeed;
+				thisLight->SetAnim(p->m_lightAnimated);
+				thisLight->m_minIntensityDivider = p->m_lightMinIntensityDivider;
+				thisLight->m_animSpeed = p->m_lightAnimSpeed;
 
 				// Init
 				thisLight->Init(e.get());
 			}
 
 			// Check Animator
-			if (p->hasAnimator)
+			if (p->m_hasAnimator)
 			{
 				e->CreateAnimator();
 				e->GetAnimator()->Init(e.get());
 
-				if (!p->animFile.empty() && p->animFile.compare("NULL") != 0)
+				if (!p->m_animFile.empty() && p->m_animFile.compare("NULL") != 0)
 				{
 					Animator* anim = e->GetAnimator();
-					Animator* other = engine.GetAssetsManager().GetAnimator(p->animFile);
+					Animator* other = engine.GetAssetsManager().GetAnimator(p->m_animFile);
 					if (other)
 					{
 						*anim = *other; // Sets *anim to be equal to the one in the asset manager (copy-assignment)
@@ -316,26 +316,26 @@ namespace Client
 				}
 				else
 				{
-					SDL_LogWarn(SDL_LOG_PRIORITY_WARN, "Prefab %s has Animator enabled, but no Animator file was specified.", p->pName.c_str());
+					SDL_LogWarn(SDL_LOG_PRIORITY_WARN, "Prefab %s has Animator enabled, but no Animator file was specified.", p->m_pName.c_str());
 				}
 			}
 
 			// Check Interactable
-			if (p->interactable)
+			if (p->m_interactable)
 			{
-				for (int i = 0; i < p->interactablesData.size(); i++)
+				for (int i = 0; i < p->m_interactablesData.size(); i++)
 				{
 					e->CreateInteractable();
 
-					InteractableData* data = &p->interactablesData[i];
+					InteractableData* data = &p->m_interactablesData[i];
 					if (data->interactType >= 0 && data->interactType < static_cast<int>(Interactable::InteractType::LAST_VAL))
 					{
 						Interactable* thisIn = e->GetInteractable(i);
-						thisIn->gridDistanceInteraction = p->gridDistanceInteraction;
-						thisIn->type = static_cast<Interactable::InteractType>(data->interactType);
-						thisIn->parStr = data->parStr;
-						thisIn->parFloat1 = data->parFloat1;
-						thisIn->parFloat2 = data->parFloat2;
+						thisIn->m_gridDistanceInteraction = p->m_gridDistanceInteraction;
+						thisIn->m_type = static_cast<Interactable::InteractType>(data->interactType);
+						thisIn->m_parStr = data->parStr;
+						thisIn->m_parFloat1 = data->parFloat1;
+						thisIn->m_parFloat2 = data->parFloat2;
 					}
 					else
 					{
@@ -356,29 +356,29 @@ namespace Client
 	void Prefab::Log()
 	{
 		SDL_Log("LOGGING PREFAB:");
-		SDL_Log("Prefab Name: %s", pName.c_str());
-		SDL_Log("Prefab File: %s", pImgFile.c_str());
-		SDL_Log("IsStatic:    %d", isStatic);
-		SDL_Log("CollEnabled: %d", hasCollider);
-		SDL_Log("CollRect.x:  %d", collRect.x);
-		SDL_Log("CollRect.y:  %d", collRect.y);
-		SDL_Log("CollRect.w:  %d", collRect.w);
-		SDL_Log("CollRect.h:  %d", collRect.h);
-		SDL_Log("CollOff.x:   %d", collOffsetX);
-		SDL_Log("CollOff.y:   %d", collOffsetY);
-		SDL_Log("OcclCheck:   %d", occlCheck);
-		SDL_Log("OcclModX:	  %d", occlModX);
-		SDL_Log("OcclModY:	  %d", occlModY);
-		SDL_Log("EmitsLight:  %d", emitsLight);
-		SDL_Log("LPropagation:%d", lightPropagationType);
-		SDL_Log("LightRadius: %f", lightRadius);
-		SDL_Log("LIntensity:  %f", lightIntensity);
-		SDL_Log("LightColorR: %d", lightR);
-		SDL_Log("LightColorG: %d", lightG);
-		SDL_Log("LightColorB: %d", lightB);
-		SDL_Log("LightAnim:   %d", lightAnimated);
-		SDL_Log("LMinIntDivid:%f", lightMinIntensityDivider);
-		SDL_Log("LAnimSpeed:  %f", lightAnimSpeed);
+		SDL_Log("Prefab Name: %s", m_pName.c_str());
+		SDL_Log("Prefab File: %s", m_pImgFile.c_str());
+		SDL_Log("IsStatic:    %d", m_isStatic);
+		SDL_Log("CollEnabled: %d", m_hasCollider);
+		SDL_Log("CollRect.x:  %d", m_collRect.x);
+		SDL_Log("CollRect.y:  %d", m_collRect.y);
+		SDL_Log("CollRect.w:  %d", m_collRect.w);
+		SDL_Log("CollRect.h:  %d", m_collRect.h);
+		SDL_Log("CollOff.x:   %d", m_collOffsetX);
+		SDL_Log("CollOff.y:   %d", m_collOffsetY);
+		SDL_Log("OcclCheck:   %d", m_occlCheck);
+		SDL_Log("OcclModX:	  %d", m_occlModX);
+		SDL_Log("OcclModY:	  %d", m_occlModY);
+		SDL_Log("EmitsLight:  %d", m_emitsLight);
+		SDL_Log("LPropagation:%d", m_lightPropagationType);
+		SDL_Log("LightRadius: %f", m_lightRadius);
+		SDL_Log("LIntensity:  %f", m_lightIntensity);
+		SDL_Log("LightColorR: %d", m_lightR);
+		SDL_Log("LightColorG: %d", m_lightG);
+		SDL_Log("LightColorB: %d", m_lightB);
+		SDL_Log("LightAnim:   %d", m_lightAnimated);
+		SDL_Log("LMinIntDivid:%f", m_lightMinIntensityDivider);
+		SDL_Log("LAnimSpeed:  %f", m_lightAnimSpeed);
 		SDL_Log("END");
 	}
 

@@ -12,22 +12,22 @@ namespace Client
 	class Input
 	{
 	private:
-		int				mouseX;
-		int				mouseY;
-		int				oldMouseX;
-		int				oldMouseY;
-		int				mouseButtons[3];
-		int				prevMouseButtons[3];
-		int				mouseScroll;
+		int				m_mouseX;
+		int				m_mouseY;
+		int				m_oldMouseX;
+		int				m_oldMouseY;
+		int				m_mouseButtons[3];
+		int				m_prevMouseButtons[3];
+		int				m_mouseScroll;
+						
+		int				m_mouseMotionX;
+		int				m_mouseMotionY;
 
-		int				mouseMotionX;
-		int				mouseMotionY;
+		Uint8*		m_keys;
+		Uint8*		m_prevKeys;
+		int			m_numKeys;
 
-		Uint8* keys;
-		Uint8* prevKeys;
-		int				numKeys;
-
-		InputField* curInputField;
+		InputField* m_curInputField;
 
 	public:
 		~Input();
@@ -50,24 +50,24 @@ namespace Client
 
 	inline int Input::GetMouseX() const
 	{
-		return mouseX;
+		return m_mouseX;
 	}
 
 	inline int Input::GetMouseY() const
 	{
-		return mouseY;
+		return m_mouseY;
 	}
 
 	inline int Input::GetMouseScroll() const
 	{
-		return mouseScroll;
+		return m_mouseScroll;
 	}
 
 	inline void Input::SetCurInputField(InputField* i)
 	{
-		curInputField = i;
+		m_curInputField = i;
 
-		if (curInputField)
+		if (m_curInputField)
 			SDL_StartTextInput();
 		else
 			SDL_StopTextInput();

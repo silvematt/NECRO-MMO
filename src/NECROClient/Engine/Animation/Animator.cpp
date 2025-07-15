@@ -19,9 +19,9 @@ namespace Client
             return *this;
 
         // Copy the data from the other Animator
-        name = other.name;
-        defaultStateName = other.defaultStateName;
-        states = other.states;
+        m_name = other.m_name;
+        m_defaultStateName = other.m_defaultStateName;
+        m_states = other.m_states;
 
         // Return the current object
         return *this;
@@ -32,8 +32,8 @@ namespace Client
     //------------------------------------------------------------------
     void Animator::Init(Entity* pOwner)
     {
-        owner = pOwner;
-        animTime = SDL_GetTicks();
+        m_owner = pOwner;
+        m_animTime = SDL_GetTicks();
     }
 
     //------------------------------------------------------------------
@@ -42,7 +42,7 @@ namespace Client
     void Animator::AddState(const std::string& sName, Image* sImg, float sSpeed)
     {
         // Add a new state in the states map
-        states.emplace(sName, AnimState(sName, sImg, sSpeed));
+        m_states.emplace(sName, AnimState(sName, sImg, sSpeed));
     }
 
     //-------------------------------------------------------------------------------------
@@ -50,8 +50,8 @@ namespace Client
     //-------------------------------------------------------------------------------------
     void Animator::Update()
     {
-        if (owner && curStatePlaying && curStatePlaying->GetImg()->IsTileset())
-            owner->tilesetXOff = ((int)floor((SDL_GetTicks() - animTime) / curStatePlaying->GetSpeed()) % curStatePlaying->GetImg()->GetTileset()->tileXNum);
+        if (m_owner && m_curStatePlaying && m_curStatePlaying->GetImg()->IsTileset())
+            m_owner->m_tilesetXOff = ((int)floor((SDL_GetTicks() - m_animTime) / m_curStatePlaying->GetSpeed()) % m_curStatePlaying->GetImg()->GetTileset()->tileXNum);
     }
 
     //------------------------------------------------------------------
@@ -60,18 +60,18 @@ namespace Client
     void Animator::Play(const std::string& sName)
     {
         // Check if the state exists in the map
-        if (states.find(sName) != states.end())
+        if (m_states.find(sName) != m_states.end())
         {
             // Check if the img pointer is not null
-            if (states.at(sName).GetImg() != nullptr)
+            if (m_states.at(sName).GetImg() != nullptr)
             {
                 // Set state
-                curStatePlaying = &states.at(sName);
-                curStateNamePlaying = sName;
+                m_curStatePlaying = &m_states.at(sName);
+                m_curStateNamePlaying = sName;
 
                 // Set anim
-                owner->SetImg(curStatePlaying->GetImg()); // Set IMG of the entity
-                animTime = SDL_GetTicks();
+                m_owner->SetImg(m_curStatePlaying->GetImg()); // Set IMG of the entity
+                m_animTime = SDL_GetTicks();
             }
             else
                 SDL_LogError(SDL_LOG_CATEGORY_ERROR, "ANIMATOR Error: Img PTR is null for state: %s ", sName.c_str());
@@ -85,8 +85,8 @@ namespace Client
     //------------------------------------------------------------------
     void Animator::PlayDefaultIfNotNull()
     {
-        if (!defaultStateName.empty() && defaultStateName.compare("NULL") != 0)
-            Play(defaultStateName);
+        if (!m_defaultStateName.empty() && m_defaultStateName.compare("NULL") != 0)
+            Play(m_defaultStateName);
     }
 
     //--------------------------------------------------------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ namespace Client
     bool Animator::LoadFromFile(const std::string& fullPath, bool clear)
     {
         if (clear)
-            states.clear();
+            m_states.clear();
 
         SDL_Log("Loading Animator: '%s'\n", fullPath.c_str());
 
@@ -114,13 +114,13 @@ namespace Client
         std::getline(stream, curLine);
         curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
         curValStr = curValStr.substr(0, curValStr.find(";"));
-        name = curValStr;
+        m_name = curValStr;
 
         // Default State
         std::getline(stream, curLine);
         curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
         curValStr = curValStr.substr(0, curValStr.find(";"));
-        defaultStateName = curValStr;
+        m_defaultStateName = curValStr;
 
         // Load Animator States
         bool doneLoadingStates = false;

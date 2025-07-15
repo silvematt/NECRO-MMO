@@ -5,7 +5,7 @@ namespace NECRO
 {
 namespace Client
 {
-	std::string GameModeMap[] =
+	std::string g_GameModeMap[] =
 	{
 		"EDIT_MODE",
 		"PLAY_MODE"
@@ -16,7 +16,7 @@ namespace Client
 	//--------------------------------------
 	void Game::Init()
 	{
-		currentWorld.InitializeWorld();
+		m_currentWorld.InitializeWorld();
 	}
 
 	//--------------------------------------
@@ -28,11 +28,11 @@ namespace Client
 
 		HandleInput();
 
-		mainCamera.Update();
-		currentWorld.Update();
-		currentWorld.Draw();
+		m_mainCamera.Update();
+		m_currentWorld.Update();
+		m_currentWorld.Draw();
 
-		mainCamera.RenderVisibleEntities();
+		m_mainCamera.RenderVisibleEntities();
 
 		engine.GetConsole().Update();
 	}
@@ -56,7 +56,7 @@ namespace Client
 		// Switch game mode
 		if (input.GetKeyDown(SDL_SCANCODE_TAB))
 		{
-			switch (curMode)
+			switch (m_curMode)
 			{
 			case GameMode::EDIT_MODE:
 				SetCurMode(GameMode::PLAY_MODE);

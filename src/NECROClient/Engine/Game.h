@@ -20,7 +20,7 @@ namespace Client
 		EDIT_MODE = 0,
 		PLAY_MODE
 	};
-	extern std::string GameModeMap[];
+	extern std::string g_GameModeMap[];
 
 	enum class IsoDirection
 	{
@@ -40,11 +40,11 @@ namespace Client
 	class Game
 	{
 	private:
-		GameMode curMode = GameMode::EDIT_MODE;
+		GameMode	m_curMode = GameMode::EDIT_MODE;
 
-		World currentWorld;
-		Camera mainCamera;
-		Player* curPlayer;
+		World		m_currentWorld;
+		Camera		m_mainCamera;
+		Player*		m_curPlayer;
 
 	private:
 		void		HandleInput();
@@ -58,39 +58,39 @@ namespace Client
 		void		SetCurPlayer(Player* p);
 
 		GameMode	GetCurMode() const;
-		Camera* GetMainCamera();
-		World* GetCurrentWorld();
-		Player* GetCurPlayer();
+		Camera*		GetMainCamera();
+		World*		GetCurrentWorld();
+		Player*		GetCurPlayer();
 	};
 
 	inline void Game::SetCurMode(GameMode m)
 	{
-		curMode = m;
+		m_curMode = m;
 	}
 
 	inline GameMode Game::GetCurMode() const
 	{
-		return curMode;
+		return m_curMode;
 	}
 
 	inline void Game::SetCurPlayer(Player* p)
 	{
-		curPlayer = p;
+		m_curPlayer = p;
 	}
 
 	inline Camera* Game::GetMainCamera()
 	{
-		return &mainCamera;
+		return &m_mainCamera;
 	}
 
 	inline World* Game::GetCurrentWorld()
 	{
-		return &currentWorld;
+		return &m_currentWorld;
 	}
 
 	inline Player* Game::GetCurPlayer()
 	{
-		return curPlayer;
+		return m_curPlayer;
 	}
 
 }

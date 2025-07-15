@@ -10,6 +10,7 @@ namespace NECRO
 {
 namespace Client
 {
+	// TODO variable resolution
 	const int SCREEN_WIDTH = 1920;
 	const int SCREEN_HEIGHT = 1080;
 
@@ -17,11 +18,11 @@ namespace Client
 	const int HALF_SCREEN_HEIGHT = 540;
 
 	// The distance in terms of gridpos of entity->player to know when to start checking for occlusion tests
-	const int	ENTITY_OCCLUSION_TEST_X_DIFF = 6;
-	const int	ENTITY_OCCLUSION_TEST_Y_DIFF = 6;
+	constexpr int	ENTITY_OCCLUSION_TEST_X_DIFF = 6;
+	constexpr int	ENTITY_OCCLUSION_TEST_Y_DIFF = 6;
 
-	const Uint8 NOT_OCCLUDED_SPRITE_ALPHA_VALUE = 255;
-	const Uint8 OCCLUDED_SPRITE_ALPHA_VALUE = 80;
+	constexpr Uint8 NOT_OCCLUDED_SPRITE_ALPHA_VALUE = 255;
+	constexpr Uint8 OCCLUDED_SPRITE_ALPHA_VALUE = 80;
 
 	class Renderer
 	{
@@ -35,27 +36,27 @@ namespace Client
 
 	private:
 		// Main elements
-		SDL_Window* window;
-		SDL_Renderer* innerRenderer;
+		SDL_Window*		m_window;
+		SDL_Renderer*	m_innerRenderer;
 
 		// Targets
-		RenderTarget	mainTarget;
-		RenderTarget	overlayTarget;
-		RenderTarget	debugTarget;
+		RenderTarget	m_mainTarget;
+		RenderTarget	m_overlayTarget;
+		RenderTarget	m_debugTarget;
 
-		RenderTarget* curTarget;
-		ETargets	curERenTarget; // current enum value
+		RenderTarget*	m_curTarget;
+		ETargets		m_curERenTarget; // current enum value
 
-		bool			exportThisFrame = false; // if true, in the next renderer.Update render targets and final image will be exported as .png
+		bool			m_exportThisFrame = false; // if true, in the next renderer.Update render targets and final image will be exported as .png
 		void			SaveTexture(const char* file_name, SDL_Renderer* renderer, SDL_Texture* texture);
 
 	public:
 
-		SDL_Window* const	GetWindow() const;
-		SDL_Renderer* const	GetInnerRenderer() const;
+		SDL_Window* const		GetWindow() const;
+		SDL_Renderer* const		GetInnerRenderer() const;
 		int						GetWidth();
 		int						GetHeight();
-		ETargets			GetCurrentERenderTargetVal();
+		ETargets				GetCurrentERenderTargetVal();
 
 		int						Init();
 		int						Shutdown();
@@ -73,7 +74,7 @@ namespace Client
 
 		void					SetScale(float scaleX, float scaleY);
 
-		void					SetExportThisFrame() { exportThisFrame = true; };
+		void					SetExportThisFrame() { m_exportThisFrame = true; };
 		void					ExportTargetsSeparate();
 		void					ExportComposedFinalImage();
 	};
@@ -89,12 +90,12 @@ namespace Client
 
 	inline SDL_Window* const Renderer::GetWindow() const
 	{
-		return window;
+		return m_window;
 	}
 
 	inline SDL_Renderer* const Renderer::GetInnerRenderer() const
 	{
-		return innerRenderer;
+		return m_innerRenderer;
 	}
 
 	inline int Renderer::GetWidth()
@@ -109,7 +110,7 @@ namespace Client
 
 	inline Renderer::ETargets Renderer::GetCurrentERenderTargetVal()
 	{
-		return curERenTarget;
+		return m_curERenTarget;
 	}
 
 }

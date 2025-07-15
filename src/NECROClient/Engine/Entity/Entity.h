@@ -14,7 +14,7 @@ namespace NECRO
 {
 namespace Client
 {
-	#define LAYER_Z_COEFFICIENT 100 // A layer counts as 100 Z pos unit for entities
+	constexpr int LAYER_Z_COEFFICIENT = 100; // A layer counts as 100 Z pos unit for entities
 
 	class Interactable;
 	class Cell;
@@ -35,58 +35,61 @@ namespace Client
 		};
 
 		friend class Prefab;
-		friend class Animator; // Animator is a friend class of Entity
+		friend class Animator;
 
 	private:
 		static uint32_t ENT_NEXT_ID; // EntityID static track
 	public:
 		static bool DEBUG_COLLIDER_ENABLED;
-		static int	DEBUG_COLLIDER_LAYER; // -1 to debug all layers, otherwise debug only layer value
+		static int	DEBUG_COLLIDER_LAYER;		// -1 to debug all layers, otherwise debug only layer value
 		static bool DEBUG_OCCLUSION_ENABLED;
 
 	protected:
-		uint32_t ID;				// EntityID
-		Image* img;
-		uint32_t layer = 0;
-		Cell* owner;				// Owner of this entity
-		Cell* nextOwner;			// Used to TransferToCellQueue()
+		uint32_t	m_ID;				// EntityID
+		Image*		m_img;
+		uint32_t	m_layer = 0;
+		Cell*		m_owner;				// Owner of this entity
+		Cell*		m_nextOwner;			// Used to TransferToCellQueue()
 
-		bool toRender = true;
+		bool		m_toRender = true;
 
-		uint16_t eFlags = 0;		// this entityflags value
+		uint16_t	m_eFlags = 0;		// this entityflags value
 
 		// Used for entities that uses tilesets, index of X and Y, they will be multiplied by img->GetTileset().tileWidth and img->GetTileset().tileHeight
-		int tilesetXOff, tilesetYOff;
+		int m_tilesetXOff;
+		int m_tilesetYOff;
 
-		int occlModifierX, occlModifierY; // used to help shape the occlusion box starting from the dst rect
-		SDL_Rect occlusionRect;
-		bool occludes = false;		// if true, it will be drawn with OCCLUDED_SPRITE_ALPHA_VALUE
+		int			m_occlModifierX;
+		int			m_occlModifierY; // used to help shape the occlusion box starting from the dst rect
+		SDL_Rect	m_occlusionRect;
+		bool		m_occludes = false;		// if true, it will be drawn with OCCLUDED_SPRITE_ALPHA_VALUE
 
-		SDL_Color lightingColor;	// Calculated in UpdateLighting(), it is the color the entity when drawn (not the color of the light it emits)
+		SDL_Color	m_lightingColor;	// Calculated in UpdateLighting(), it is the color the entity when drawn (not the color of the light it emits)
 
-		float blocksLightValue = 0.0f;
+		float		m_blocksLightValue = 0.0f;
 
 		// "Components", they are created or not in base of prefab options. An alternative could be std::optional
-		std::unique_ptr<Collider> coll;
-		std::unique_ptr<Light> emittingLight;
-		std::unique_ptr<Animator> anim;
-		std::vector<std::unique_ptr<Interactable>> interactables;
+		std::unique_ptr<Collider>	m_coll;
+		std::unique_ptr<Light>		m_emittingLight;
+		std::unique_ptr<Animator>	m_anim;
+		std::vector<std::unique_ptr<Interactable>> m_interactables;
 
 		// How much this entity affects the zModifier of the cell it sits in
-		float zModifierValue = 0.0;
+		float m_zModifierValue = 0.0;
 
 	public:
 		virtual ~Entity();
 		Entity();
 		Entity(Vector2 pInitialPos, Image* pImg);
 
-		Vector2 pos;				// orthographic pos
-		float	zPos;				// Z is up
-		float depth;				// For isometric sorting
+		Vector2 m_pos;			// orthographic pos
+		float	m_zPos;			// Z is up
+		float	m_depth;		// For isometric sorting
 
-		int gridPosX, gridPosY;		// Position in the gridmap
+		int		m_gridPosX;
+		int		m_gridPosY;			// Position in the gridmap
 
-		Vector2 isoPos;				// isometric pos (used only for rendering)
+		Vector2 m_isoPos;			// isometric pos (used only for rendering)
 
 	public:
 		const uint32_t	GetID() const;
@@ -145,131 +148,131 @@ namespace Client
 
 	inline const uint32_t Entity::GetID() const
 	{
-		return ID;
+		return m_ID;
 	}
 
 	inline Cell* Entity::GetOwner()
 	{
-		return owner;
+		return m_owner;
 	}
 
 	inline void Entity::SetTilesetOffset(int x, int y)
 	{
-		tilesetXOff = x;
-		tilesetYOff = y;
+		m_tilesetXOff = x;
+		m_tilesetYOff = y;
 	}
 
 	inline int Entity::GetLayerFromZPos() const
 	{
-		return std::floor(zPos / LAYER_Z_COEFFICIENT);
+		return std::floor(m_zPos / LAYER_Z_COEFFICIENT);
 	}
 
 	inline void Entity::CreateCollider()
 	{
 		if (!HasCollider())
-			coll = std::make_unique<Collider>();
+			m_coll = std::make_unique<Collider>();
 	}
 
 	inline bool Entity::HasCollider() const
 	{
-		return coll != nullptr;
+		return m_coll != nullptr;
 	}
 
 	inline Collider* Entity::GetCollider() const
 	{
-		return coll.get();
+		return m_coll.get();
 	}
 
 	inline void Entity::CreateLight()
 	{
 		if (!HasLight())
-			emittingLight = std::make_unique<Light>();
+			m_emittingLight = std::make_unique<Light>();
 	}
 
 	inline bool Entity::HasLight() const
 	{
-		return emittingLight != nullptr;
+		return m_emittingLight != nullptr;
 	}
 
 	inline Light* Entity::GetLight() const
 	{
-		return emittingLight.get();
+		return m_emittingLight.get();
 	}
 
 	inline void Entity::CreateAnimator()
 	{
 		if (!HasAnimator())
-			anim = std::make_unique<Animator>();
+			m_anim = std::make_unique<Animator>();
 	}
 
 	inline bool Entity::HasAnimator() const
 	{
-		return anim != nullptr;
+		return m_anim != nullptr;
 	}
 
 	inline Animator* Entity::GetAnimator() const
 	{
-		return anim.get();
+		return m_anim.get();
 	}
 
 	inline void Entity::CreateInteractable()
 	{
-		interactables.push_back(std::make_unique<Interactable>(this));
+		m_interactables.push_back(std::make_unique<Interactable>(this));
 	}
 
 	inline bool Entity::HasInteractable() const
 	{
-		return interactables.size() > 0;
+		return m_interactables.size() > 0;
 	}
 
 	inline Interactable* Entity::GetInteractable(int indx) const
 	{
-		if (interactables.at(indx))
-			return interactables[indx].get();
+		if (m_interactables.at(indx))
+			return m_interactables[indx].get();
 		else
 			return nullptr;
 	}
 
 	inline int Entity::GetInteractablesSize() const
 	{
-		return interactables.size();
+		return m_interactables.size();
 	}
 
 
 	// Called if InteractableType is out of bounds, to prevent destructive behaviors
 	inline void Entity::DestroyInteractables()
 	{
-		for (int i = 0; i < interactables.size(); i++)
+		for (int i = 0; i < m_interactables.size(); i++)
 		{
-			interactables[i].reset();
+			m_interactables[i].reset();
 		}
 
-		interactables.clear();
+		m_interactables.clear();
 	}
 
 	inline void Entity::SetFlag(Flags flag)
 	{
-		eFlags |= flag;
+		m_eFlags |= flag;
 	}
 
 	inline void Entity::ClearFlag(Flags flag)
 	{
-		eFlags &= ~flag;
+		m_eFlags &= ~flag;
 	}
 
 	inline bool Entity::TestFlag(Flags flag)
 	{
-		return ((eFlags & flag) > 0) ? true : false;
+		return ((m_eFlags & flag) > 0) ? true : false;
 	}
 
 	inline void Entity::SetOccludes(bool val)
 	{
-		occludes = val;
+		m_occludes = val;
 	}
 
 	inline bool Entity::Occludes()
 	{
-		return occludes;
+		return m_occludes;
 	}
 
 	inline bool Entity::BlocksLight()
@@ -279,33 +282,33 @@ namespace Client
 
 	inline float Entity::GetLightBlockValue()
 	{
-		return blocksLightValue;
+		return m_blocksLightValue;
 	}
 
 	inline void Entity::SetLayer(uint32_t newLayer)
 	{
-		layer = newLayer;
+		m_layer = newLayer;
 	}
 
 	inline uint32_t Entity::GetLayer()
 	{
-		return layer;
+		return m_layer;
 	}
 
 	inline void Entity::SetOcclusionModifierValues(int x, int y)
 	{
-		occlModifierX = x;
-		occlModifierY = y;
+		m_occlModifierX = x;
+		m_occlModifierY = y;
 	}
 
 	inline float Entity::GetZCellModifier() const
 	{
-		return zModifierValue;
+		return m_zModifierValue;
 	}
 
 	inline void Entity::SetZCellModifier(float v)
 	{
-		zModifierValue = v;
+		m_zModifierValue = v;
 	}
 
 }

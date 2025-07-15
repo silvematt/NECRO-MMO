@@ -12,12 +12,12 @@ namespace Client
 	// ----------------------------------------------------------------------------------------------------
 	void Camera::SetZoom(float newZoom)
 	{
-		zoomLevel = newZoom;
-		zoomLevel = SDL_clamp(zoomLevel, MIN_ZOOM, MAX_ZOOM);
+		m_zoomLevel = newZoom;
+		m_zoomLevel = SDL_clamp(m_zoomLevel, MIN_ZOOM, MAX_ZOOM);
 
-		zoomSizeX = SCREEN_WIDTH / zoomLevel;
-		zoomSizeY = SCREEN_HEIGHT / zoomLevel;
-		engine.GetRenderer().SetScale(zoomLevel, zoomLevel);
+		m_zoomSizeX = SCREEN_WIDTH / m_zoomLevel;
+		m_zoomSizeY = SCREEN_HEIGHT / m_zoomLevel;
+		engine.GetRenderer().SetScale(m_zoomLevel, m_zoomLevel);
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -25,12 +25,12 @@ namespace Client
 	// ----------------------------------------------------------------------------------------------------
 	void Camera::ResetZoom()
 	{
-		zoomLevel = CAMERA_DEFAULT_ZOOM;
-		zoomLevel = SDL_clamp(zoomLevel, MIN_ZOOM, MAX_ZOOM);
+		m_zoomLevel = CAMERA_DEFAULT_ZOOM;
+		m_zoomLevel = SDL_clamp(m_zoomLevel, MIN_ZOOM, MAX_ZOOM);
 
-		zoomSizeX = SCREEN_WIDTH / zoomLevel;
-		zoomSizeY = SCREEN_HEIGHT / zoomLevel;
-		engine.GetRenderer().SetScale(zoomLevel, zoomLevel);
+		m_zoomSizeX = SCREEN_WIDTH / m_zoomLevel;
+		m_zoomSizeY = SCREEN_HEIGHT / m_zoomLevel;
+		engine.GetRenderer().SetScale(m_zoomLevel, m_zoomLevel);
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -41,8 +41,8 @@ namespace Client
 		Vector2 worldPoint;
 
 		// Adjust for offset and zoom level
-		worldPoint.x = (point.x - pos.x * zoomLevel) / zoomLevel;
-		worldPoint.y = (point.y - pos.y * zoomLevel) / zoomLevel;
+		worldPoint.x = (point.x - m_pos.x * m_zoomLevel) / m_zoomLevel;
+		worldPoint.y = (point.y - m_pos.y * m_zoomLevel) / m_zoomLevel;
 		worldPoint.y += CELL_HEIGHT; // account for bottom-left origin
 
 		// Convert to world coordinates
@@ -56,13 +56,13 @@ namespace Client
 	// ----------------------------------------------------------------------------------------------------
 	void Camera::Update()
 	{
-		visibleEntities.clear();
-		visibleStaticEntities.clear();
+		m_visibleEntities.clear();
+		m_visibleStaticEntities.clear();
 
 		if (engine.GetInput().GetKeyDown(SDL_SCANCODE_C) && !engine.GetConsole().IsOpen())
-			freeCamera = !freeCamera;
+			m_freeCamera = !m_freeCamera;
 
-		if (freeCamera)
+		if (m_freeCamera)
 			FreeMove();
 		else
 			LockPlayerMove();
@@ -71,17 +71,17 @@ namespace Client
 	void Camera::LockPlayerMove()
 	{
 		// Keep camera centered
-		float oldX = HALF_SCREEN_WIDTH / zoomLevel;
-		float oldY = HALF_SCREEN_HEIGHT / zoomLevel;
+		float oldX = HALF_SCREEN_WIDTH / m_zoomLevel;
+		float oldY = HALF_SCREEN_HEIGHT / m_zoomLevel;
 
 		// Hold the zoom size before zoom change
-		float oldZoomSizeX = zoomSizeX;
-		float oldZoomSizeY = zoomSizeY;
+		float oldZoomSizeX = m_zoomSizeX;
+		float oldZoomSizeY = m_zoomSizeY;
 
 		if (engine.GetInput().GetMouseScroll() > 0)			// Zoom in		
-			SetZoom(zoomLevel + zoomSpeed);
+			SetZoom(m_zoomLevel + m_zoomSpeed);
 		else if (engine.GetInput().GetMouseScroll() < 0)	// Zoom out
-			SetZoom(zoomLevel - zoomSpeed);
+			SetZoom(m_zoomLevel - m_zoomSpeed);
 
 		// Camera movement
 		float deltaX = 0.0f;
@@ -92,36 +92,36 @@ namespace Client
 		if (player)
 		{
 			float sx, sy;
-			NMath::CartToIso(player->pos.x / CELL_WIDTH, player->pos.y / CELL_HEIGHT, sx, sy);
+			NMath::CartToIso(player->m_pos.x / CELL_WIDTH, player->m_pos.y / CELL_HEIGHT, sx, sy);
 
 			deltaX = sx;
 			deltaY = sy - HALF_PLAYER_HEIGHT;
 		}
 		else
 		{
-			freeCamera = true; // if the player is not there, go in free camera
+			m_freeCamera = true; // if the player is not there, go in free camera
 			return;
 		}
 
 		// Update position, subtracting ((oldZoomSizeX / 2) - (zoomSizeX / 2)) allows us to keep the camera centered after zooming
 		// It adjusts the camera position by half of the difference in each dimension to keep the view centered.
-		pos.x = oldX - ((oldZoomSizeX / 2) - (zoomSizeX / 2)) - deltaX;
-		pos.y = oldY - ((oldZoomSizeY / 2) - (zoomSizeY / 2)) - deltaY;
+		m_pos.x = oldX - ((oldZoomSizeX / 2) - (m_zoomSizeX / 2)) - deltaX;
+		m_pos.y = oldY - ((oldZoomSizeY / 2) - (m_zoomSizeY / 2)) - deltaY;
 	}
 
 	void Camera::FreeMove()
 	{
-		float oldX = pos.x;
-		float oldY = pos.y;
+		float oldX = m_pos.x;
+		float oldY = m_pos.y;
 
 		// Hold the zoom size before zoom change
-		float oldZoomSizeX = zoomSizeX;
-		float oldZoomSizeY = zoomSizeY;
+		float oldZoomSizeX = m_zoomSizeX;
+		float oldZoomSizeY = m_zoomSizeY;
 
 		if (engine.GetInput().GetMouseScroll() > 0)			// Zoom in		
-			SetZoom(zoomLevel + zoomSpeed);
+			SetZoom(m_zoomLevel + m_zoomSpeed);
 		else if (engine.GetInput().GetMouseScroll() < 0)	// Zoom out
-			SetZoom(zoomLevel - zoomSpeed);
+			SetZoom(m_zoomLevel - m_zoomSpeed);
 
 		// Camera movement
 		float deltaX = 0.0f;
@@ -131,38 +131,38 @@ namespace Client
 		{
 			// TODO: fix mouseMotion at different framerates
 			Vector2 mouseMotion = engine.GetInput().GetMouseMotionThisFrame();
-			deltaX += mouseMotion.x * panSpeed * engine.GetDeltaTime();
-			deltaY += mouseMotion.y * panSpeed * engine.GetDeltaTime();
+			deltaX += mouseMotion.x * m_panSpeed * engine.GetDeltaTime();
+			deltaY += mouseMotion.y * m_panSpeed * engine.GetDeltaTime();
 		}
 
 		// Update position, subtracting ((oldZoomSizeX / 2) - (zoomSizeX / 2)) allows us to keep the camera centered after zooming
 		// It adjusts the camera position by half of the difference in each dimension to keep the view centered.
-		pos.x = oldX - ((oldZoomSizeX / 2) - (zoomSizeX / 2)) + deltaX;
-		pos.y = oldY - ((oldZoomSizeY / 2) - (zoomSizeY / 2)) + deltaY;
+		m_pos.x = oldX - ((oldZoomSizeX / 2) - (m_zoomSizeX / 2)) + deltaX;
+		m_pos.y = oldY - ((oldZoomSizeY / 2) - (m_zoomSizeY / 2)) + deltaY;
 	}
 
 
 	void Camera::AddToVisibleEntities(Entity* e)
 	{
-		visibleEntities.push_back(e);
+		m_visibleEntities.push_back(e);
 	}
 
 	void Camera::AddToVisibleStaticEntities(Entity* e)
 	{
-		visibleStaticEntities.push_back(e);
+		m_visibleStaticEntities.push_back(e);
 	}
 
 	// TODO make this a template in Utility class
 	void QuickSort(std::vector<Entity*>& entities, int left, int right)
 	{
 		int i = left, j = right;
-		float pivot = entities[(left + right) / 2]->depth;
+		float pivot = entities[(left + right) / 2]->m_depth;
 
 		while (i <= j)
 		{
-			while (entities[i]->depth < pivot)
+			while (entities[i]->m_depth < pivot)
 				i++;
-			while (entities[j]->depth > pivot)
+			while (entities[j]->m_depth > pivot)
 				j--;
 			if (i <= j)
 			{
@@ -186,12 +186,12 @@ namespace Client
 		RenderVisibleStaticEntities();
 
 		// Sort and draw the visibleEntities list
-		if (!visibleEntities.empty())
+		if (!m_visibleEntities.empty())
 		{
-			QuickSort(visibleEntities, 0, visibleEntities.size() - 1);
+			QuickSort(m_visibleEntities, 0, m_visibleEntities.size() - 1);
 
 			// Draw them
-			for (auto& ent : visibleEntities)
+			for (auto& ent : m_visibleEntities)
 				if (ent)
 					ent->Draw();
 		}
@@ -201,7 +201,7 @@ namespace Client
 	{
 		// We should be already on the main rendering target here
 
-		for (auto& ent : visibleStaticEntities)
+		for (auto& ent : m_visibleStaticEntities)
 			if (ent)
 				ent->Draw();
 	}

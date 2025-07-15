@@ -17,17 +17,17 @@ namespace Client
 	class Animator
 	{
 	private:
-		std::string name;
-		std::string defaultStateName = "NULL";	// if specified and different than 'NULL' in the .nanim file, after loading the animator from the file we can call Animator.PlayDefaultIfNotNull()
+		std::string m_name;
+		std::string m_defaultStateName = "NULL";	// if specified and different than 'NULL' in the .nanim file, after loading the animator from the file we can call Animator.PlayDefaultIfNotNull()
 												// this is done to allow automatic animation play from file definition for simple entities.
 
-		float animTime = 0;
+		float m_animTime = 0;
 
-		Entity* owner;
-		std::map<std::string, AnimState> states;
+		Entity* m_owner;
+		std::map<std::string, AnimState> m_states;
 
-		AnimState* curStatePlaying = nullptr;			// Keeps the state of the currently active state
-		std::string curStateNamePlaying = "NULL";
+		AnimState*	m_curStatePlaying = nullptr;			// Keeps the state of the currently active state
+		std::string m_curStateNamePlaying = "NULL";
 
 	public:
 		Animator& operator=(const Animator& other); //copy-assignment
@@ -48,7 +48,7 @@ namespace Client
 
 	inline std::string Animator::GetCurStateNamePlaying() const
 	{
-		return curStateNamePlaying;
+		return m_curStateNamePlaying;
 	}
 
 }

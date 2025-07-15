@@ -7,8 +7,8 @@ namespace Client
 {
 	Input::~Input()
 	{
-		delete[] keys;
-		delete[] prevKeys;
+		delete[] m_keys;
+		delete[] m_prevKeys;
 	}
 
 	//--------------------------------------
@@ -16,24 +16,24 @@ namespace Client
 	//--------------------------------------
 	int Input::Init()
 	{
-		oldMouseX = oldMouseY = 0;
+		m_oldMouseX = m_oldMouseY = 0;
 
-		const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-		const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
+		const Uint32 mouseState = SDL_GetMouseState(&m_mouseX, &m_mouseY);
+		const Uint8* keyboard = SDL_GetKeyboardState(&m_numKeys);
 
-		keys = new Uint8[numKeys];
-		prevKeys = new Uint8[numKeys];
+		m_keys = new Uint8[m_numKeys];
+		m_prevKeys = new Uint8[m_numKeys];
 
 		// Set mouse buttons
 		for (int i = 1; i <= 3; i++)
 		{
-			prevMouseButtons[i - 1] = 0;
-			mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
+			m_prevMouseButtons[i - 1] = 0;
+			m_mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
 		}
 
 		// Initialize key state
-		memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
-		memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
+		memcpy(m_keys, keyboard, sizeof(m_keys[0]) * m_numKeys);
+		memcpy(m_prevKeys, m_keys, sizeof(m_prevKeys[0]) * m_numKeys);
 
 		return 0;
 	}
@@ -43,7 +43,7 @@ namespace Client
 	//--------------------------------------
 	void Input::Handle()
 	{
-		mouseScroll = 0; // Mouse scroll must be reset
+		m_mouseScroll = 0; // Mouse scroll must be reset
 
 		SDL_Event e;
 
@@ -57,44 +57,44 @@ namespace Client
 				break;
 
 			case SDL_MOUSEWHEEL:
-				mouseScroll = e.wheel.y;
+				m_mouseScroll = e.wheel.y;
 				break;
 
 			case SDL_MOUSEMOTION:
 				SDL_SetRelativeMouseMode(SDL_TRUE);
-				mouseMotionX = e.motion.xrel;
-				mouseMotionY = e.motion.yrel;
+				m_mouseMotionX = e.motion.xrel;
+				m_mouseMotionY = e.motion.yrel;
 				SDL_SetRelativeMouseMode(SDL_FALSE);
 				break;
 
 			case SDL_TEXTINPUT:
-				if (curInputField)
+				if (m_curInputField)
 				{
 					// Check length and append text
-					if (curInputField->GetTextLimit() == 0 ||
-						curInputField->str.size() < curInputField->GetTextLimit())
-						curInputField->str += e.text.text;
+					if (m_curInputField->GetTextLimit() == 0 ||
+						m_curInputField->m_str.size() < m_curInputField->GetTextLimit())
+						m_curInputField->m_str += e.text.text;
 				}
 				break;
 
 			case SDL_KEYDOWN:
-				if (curInputField)
+				if (m_curInputField)
 				{
 					// Backspace
-					if (e.key.keysym.sym == SDLK_BACKSPACE && curInputField->str.length() > 0)
+					if (e.key.keysym.sym == SDLK_BACKSPACE && m_curInputField->m_str.length() > 0)
 					{
-						curInputField->str.pop_back();
+						m_curInputField->m_str.pop_back();
 					}
 					// CTRL + c
 					else if (e.key.keysym.sym == SDLK_c && SDL_GetModState() & KMOD_CTRL)
 					{
-						SDL_SetClipboardText(curInputField->str.c_str());
+						SDL_SetClipboardText(m_curInputField->m_str.c_str());
 					}
 					// CTRL + v
 					else if (e.key.keysym.sym == SDLK_v && SDL_GetModState() & KMOD_CTRL)
 					{
 						char* tempText = SDL_GetClipboardText();
-						curInputField->str = tempText;
+						m_curInputField->m_str = tempText;
 						SDL_free(tempText);
 					}
 				}
@@ -108,20 +108,20 @@ namespace Client
 			}
 		}
 
-		oldMouseX = mouseX;
-		oldMouseY = mouseY;
+		m_oldMouseX = m_mouseX;
+		m_oldMouseY = m_mouseY;
 
-		const Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
-		const Uint8* keyboard = SDL_GetKeyboardState(&numKeys);
+		const Uint32 mouseState = SDL_GetMouseState(&m_mouseX, &m_mouseY);
+		const Uint8* keyboard = SDL_GetKeyboardState(&m_numKeys);
 
-		memcpy(prevKeys, keys, sizeof(prevKeys[0]) * numKeys);
-		memcpy(keys, keyboard, sizeof(keys[0]) * numKeys);
+		memcpy(m_prevKeys, m_keys, sizeof(m_prevKeys[0]) * m_numKeys);
+		memcpy(m_keys, keyboard, sizeof(m_keys[0]) * m_numKeys);
 
 		// Set mouse buttons
 		for (int i = 1; i <= 3; i++)
 		{
-			prevMouseButtons[i - 1] = mouseButtons[i - 1];
-			mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
+			m_prevMouseButtons[i - 1] = m_mouseButtons[i - 1];
+			m_mouseButtons[i - 1] = mouseState & SDL_BUTTON(i);
 		}
 	}
 
@@ -130,7 +130,7 @@ namespace Client
 		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
 			return -1;
 
-		return (mouseButtons[button - 1] & ~prevMouseButtons[button - 1]);
+		return (m_mouseButtons[button - 1] & ~m_prevMouseButtons[button - 1]);
 	}
 
 	int Input::GetMouseUp(SDL_Scancode button) const
@@ -138,31 +138,31 @@ namespace Client
 		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
 			return -1;
 
-		return (~mouseButtons[button - 1] & prevMouseButtons[button - 1]);
+		return (~m_mouseButtons[button - 1] & m_prevMouseButtons[button - 1]);
 	}
 
 	int Input::GetKeyHeld(SDL_Scancode key) const
 	{
-		if (key < 0 || key > numKeys)
+		if (key < 0 || key > m_numKeys)
 			return -1;
 
-		return keys[key];
+		return m_keys[key];
 	}
 
 	int Input::GetKeyDown(SDL_Scancode key) const
 	{
-		if (key < 0 || key > numKeys)
+		if (key < 0 || key > m_numKeys)
 			return -1;
 
-		return (keys[key] & ~prevKeys[key]);
+		return (m_keys[key] & ~m_prevKeys[key]);
 	}
 
 	int Input::GetKeyUp(SDL_Scancode key) const
 	{
-		if (key < 0 || key >= numKeys)
+		if (key < 0 || key >= m_numKeys)
 			return -1;
 
-		return (!keys[key] & prevKeys[key]);
+		return (!m_keys[key] & m_prevKeys[key]);
 	}
 
 	int Input::GetMouseHeld(SDL_Scancode button) const
@@ -170,13 +170,13 @@ namespace Client
 		if (button < SDL_BUTTON_LEFT || button > SDL_BUTTON_RIGHT)
 			return -1;
 
-		return mouseButtons[button - 1];
+		return m_mouseButtons[button - 1];
 	}
 
 	Vector2 Input::GetMouseMotionThisFrame()
 	{
-		Vector2 mm(mouseMotionX, mouseMotionY);
-		mouseMotionX = mouseMotionY = 0;
+		Vector2 mm(m_mouseMotionX, m_mouseMotionY);
+		m_mouseMotionX = m_mouseMotionY = 0;
 		return mm;
 	}
 

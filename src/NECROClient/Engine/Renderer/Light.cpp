@@ -11,10 +11,10 @@ namespace Client
     //-----------------------------------------------------------------
     void Light::Init(Entity* pOwner)
     {
-        maxIntensity = intensity;
-        minIntensity = maxIntensity / minIntensityDivider;
+        m_maxIntensity = m_intensity;
+        m_minIntensity = m_maxIntensity / m_minIntensityDivider;
 
-        owner = pOwner;
+        m_owner = pOwner;
     }
 
     //-----------------------------------------------------------------
@@ -22,18 +22,18 @@ namespace Client
     //-----------------------------------------------------------------
     void Light::Update()
     {
-        if (!enabled)
+        if (!m_enabled)
             return;
 
-        if (doAnim)
+        if (m_doAnim)
             Animate();
 
         if (engine.GetInput().GetKeyDown(SDL_SCANCODE_X))
         {
-            if (curPropagation == PropagationSetting::Raycast)
-                curPropagation = PropagationSetting::Flat;
+            if (m_curPropagation == PropagationSetting::Raycast)
+                m_curPropagation = PropagationSetting::Flat;
             else
-                curPropagation = PropagationSetting::Raycast;
+                m_curPropagation = PropagationSetting::Raycast;
         }
 
         PropagateLight();
@@ -44,7 +44,7 @@ namespace Client
     //----------------------------------------------------------------------
     void Light::PropagateLight()
     {
-        switch (curPropagation)
+        switch (m_curPropagation)
         {
         case PropagationSetting::Flat:
             FlatLightPropagation();
@@ -69,14 +69,14 @@ namespace Client
     void Light::RaycastLightPropagation()
     {
         // X and Y of the cell where the light is
-        int lightCellX = owner->GetOwner()->GetCellX();
-        int lightCellY = owner->GetOwner()->GetCellY();
-        World* world = owner->GetOwner()->GetWorld();
+        int lightCellX = m_owner->GetOwner()->GetCellX();
+        int lightCellY = m_owner->GetOwner()->GetCellY();
+        World* world = m_owner->GetOwner()->GetWorld();
 
         // TODO: Instead of having matrix allocation every frame for every light, we can keep a global matrix "touched" that has the size of the biggest light used (dynamically resize) or a predetermined max size
         // Touched is used to know which cells have already been hit by a ray of this light, so two rays cannot add up light in the same cell
         std::vector<std::vector<char>> touched;
-        touched.resize(2 * radius + 1, std::vector<char>(2 * radius + 1, 0)); // 2 * radius + 1 so it covers the whole square area + the center cell
+        touched.resize(2 * m_radius + 1, std::vector<char>(2 * m_radius + 1, 0)); // 2 * radius + 1 so it covers the whole square area + the center cell
 
         // Propagate light through world using Raycasting
         // This is done every frame for visible every light, we can surely optimize this
@@ -95,15 +95,15 @@ namespace Client
 
             // Step through the propagation for each angle
             float curBlock = 0.0f;
-            for (int step = 0; step < radius; step++)
+            for (int step = 0; step < m_radius; step++)
             {
                 // Calculate the grid position of the ray
                 int curGridX = rayX / CELL_WIDTH;
                 int curGridY = rayY / CELL_HEIGHT;
 
                 // Calculate the touched position
-                int touchedX = curGridX - (lightCellX - radius);
-                int touchedY = curGridY - (lightCellY - radius);
+                int touchedX = curGridX - (lightCellX - m_radius);
+                int touchedY = curGridY - (lightCellY - m_radius);
 
                 // Get the cell
                 Cell* curCell = world->GetCellAt(curGridX, curGridY);
@@ -134,15 +134,15 @@ namespace Client
     //---------------------------------------------------------------------------
     void Light::FlatLightPropagation()
     {
-        int lightCellX = owner->GetOwner()->GetCellX();
-        int lightCellY = owner->GetOwner()->GetCellY();
-        World* world = owner->GetOwner()->GetWorld();
+        int lightCellX = m_owner->GetOwner()->GetCellX();
+        int lightCellY = m_owner->GetOwner()->GetCellY();
+        World* world = m_owner->GetOwner()->GetWorld();
 
-        for (int i = -radius; i < radius; i++)
-            for (int j = -radius; j < radius; j++)
+        for (int i = -m_radius; i < m_radius; i++)
+            for (int j = -m_radius; j < m_radius; j++)
             {
                 // Do lighting in a circle instead of a square, so it looks beter and not so much different from raycasting method
-                if (i * i + j * j <= radius * radius)
+                if (i * i + j * j <= m_radius * m_radius)
                     if (world->IsInWorldBounds(lightCellX + i, lightCellY + j))
                         world->GetCellAt(lightCellX + i, lightCellY + j)->SetLightingInfluence(this, std::abs(i) + std::abs(j), 0.0f); // No occlusion supported for flat lights
             }
@@ -155,21 +155,21 @@ namespace Client
     {
         float dTime = engine.GetDeltaTime();
 
-        float direction = goUp ? 1.0f : -1.0f;
-        intensity += direction * animSpeed * dTime;
+        float direction = m_goUp ? 1.0f : -1.0f;
+        m_intensity += direction * m_animSpeed * dTime;
 
         // Toggle directions (pulse light)
-        if (intensity <= minIntensity)
+        if (m_intensity <= m_minIntensity)
         {
-            intensity = minIntensity;
-            goUp = true;
-            goDown = false;
+            m_intensity = m_minIntensity;
+            m_goUp = true;
+            m_goDown = false;
         }
-        else if (intensity >= maxIntensity)
+        else if (m_intensity >= m_maxIntensity)
         {
-            intensity = maxIntensity;
-            goUp = false;
-            goDown = true;
+            m_intensity = m_maxIntensity;
+            m_goUp = false;
+            m_goDown = true;
         }
     }
 
@@ -178,7 +178,7 @@ namespace Client
     //-----------------------------------------------------------------
     void Light::SetAnim(bool v)
     {
-        doAnim = v;
+        m_doAnim = v;
     }
 
 }

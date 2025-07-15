@@ -13,11 +13,11 @@ namespace NECRO
 {
 namespace Client
 {
-	const int CELL_WIDTH = 64;
-	const int CELL_HEIGHT = 32;
+	constexpr int CELL_WIDTH = 64;
+	constexpr int CELL_HEIGHT = 32;
 
-	const int HALF_CELL_WIDTH = 32;
-	const int HALF_CELL_HEIGHT = 16;
+	constexpr int HALF_CELL_WIDTH = 32;
+	constexpr int HALF_CELL_HEIGHT = 16;
 
 	// Forward Declaration
 	class World;
@@ -35,29 +35,31 @@ namespace Client
 	{
 
 	private:
-		World* world; // refers to this cell's world
+		World* m_world; // refers to this cell's world
 
-		int cellX, cellY;
-		int isoX, isoY;
+		int m_cellX;
+		int m_cellY;
+		int m_isoX;
+		int m_isoY;
 
-		SDL_Rect dstRect;				// dstRect used to DrawImageDirectly
+		SDL_Rect m_dstRect;				// dstRect used to DrawImageDirectly
 
 		// Entity ptrs logically owned by this cell
-		std::vector<Entity*> entities;
+		std::vector<Entity*> m_entities;
 
 		// Lighting
 		// Base
-		SDL_Color baseColor;
-		float baseIntensity;
+		SDL_Color	m_baseColor;
+		float		m_baseIntensity;
 
 		// Actual color and intensity, calculated every frame, used to render 
-		SDL_Color lColor;
-		float lIntensity;
+		SDL_Color	m_lColor;
+		float		m_lIntensity;
 
 		// ZModifier is used to modify the Z position of dynamic entities.
 		// When an entity enters in a cell with a ZModifier != 0, his Z position (and therefore layer) becomes the one of the Z modifier
 		// Used to allow entities to travel layers
-		float zModifier = 0.0f;
+		float		m_zModifier = 0.0f;
 
 	public:
 		Cell();
@@ -100,37 +102,37 @@ namespace Client
 
 	inline int Cell::GetCellX() const
 	{
-		return cellX;
+		return m_cellX;
 	}
 
 	inline int Cell::GetCellY() const
 	{
-		return cellY;
+		return m_cellY;
 	}
 
 	inline SDL_Rect& Cell::GetDstRect()
 	{
-		return dstRect;
+		return m_dstRect;
 	}
 
 	inline World* Cell::GetWorld()
 	{
-		return world;
+		return m_world;
 	}
 
 	inline size_t Cell::GetEntitiesPtrSize() const
 	{
-		return entities.size();
+		return m_entities.size();
 	}
 
 	inline SDL_Color* Cell::GetLightingColor()
 	{
-		return &lColor;
+		return &m_lColor;
 	}
 
 	inline float& Cell::GetLightingIntensity()
 	{
-		return lIntensity;
+		return m_lIntensity;
 	}
 
 	inline void Cell::SetLightingColor(int r, int g, int b)
@@ -139,25 +141,25 @@ namespace Client
 		g = SDL_clamp(g, 0, 255);
 		b = SDL_clamp(b, 0, 255);
 
-		lColor.r = r;
-		lColor.g = g;
-		lColor.b = b;
+		m_lColor.r = r;
+		m_lColor.g = g;
+		m_lColor.b = b;
 	}
 
 	inline void Cell::SetLightingIntensity(float i)
 	{
 		i = ClientUtility::Clampf(i, 0.0f, 1.0f);
-		lIntensity = i;
+		m_lIntensity = i;
 	}
 
 	inline float Cell::GetZModifier() const
 	{
-		return zModifier;
+		return m_zModifier;
 	}
 
 	inline void Cell::SetZModifier(float v)
 	{
-		zModifier = v;
+		m_zModifier = v;
 	}
 
 }
