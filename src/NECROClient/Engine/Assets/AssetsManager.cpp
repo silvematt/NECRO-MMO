@@ -296,7 +296,7 @@ namespace Client
 		}
 		else
 		{
-			LOG_ERROR("AssetsManager: Failed to LoadImage(%s)", filename);
+			LOG_ERROR("AssetsManager: Failed to LoadImage({})", filename);
 			return NULL;
 		}
 	}

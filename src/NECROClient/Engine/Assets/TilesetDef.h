@@ -94,7 +94,7 @@ namespace Client
 		if (indx < m_tiles.size())
 			return m_tiles[indx];
 
-		LOG_WARNING("Warning! Accessing TileDef '%s' resources_end_map was out of bound!", m_name.c_str());
+		LOG_WARNING("Warning! Accessing TileDef '{}' resources_end_map was out of bound!", m_name.c_str());
 
 		return std::make_pair<int, int>(0, 0);
 	}
@@ -104,7 +104,7 @@ namespace Client
 		if (indx < m_tiles.size())
 			return m_tiles[indx];
 
-		LOG_WARNING("Warning! Accessing TileDef '%s' resources_end_map was out of bound!", m_name.c_str());
+		LOG_WARNING("Warning! Accessing TileDef '{}' resources_end_map was out of bound!", m_name.c_str());
 
 		return std::make_pair<int, int>(0, 0);
 	}
@@ -116,7 +116,7 @@ namespace Client
 	{
 		if (!m_loaded)
 		{
-			LOG_WARNING("Warning! Called GetResourceIndexFromID on TileDef: '%s' but it was not loaded!", m_name.c_str());
+			LOG_WARNING("Warning! Called GetResourceIndexFromID on TileDef: '{}' but it was not loaded!", m_name.c_str());
 			return -1;
 		}
 

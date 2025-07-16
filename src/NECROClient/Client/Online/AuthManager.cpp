@@ -159,7 +159,7 @@ namespace Client
 			}
 			else
 			{
-				LOG_ERROR("getsockopt failed! [%d]", SocketUtility::GetLastError());
+				LOG_ERROR("getsockopt failed! [{}]", SocketUtility::GetLastError());
 				c.Log("Connection lost! Server may have crashed or kicked you.");
 			}
 
@@ -174,12 +174,12 @@ namespace Client
 			int len = sizeof(error);
 			if (getsockopt(poll_fds[0].fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) < 0)
 			{
-				LOG_ERROR("getsockopt failed! [%d]", SocketUtility::GetLastError());
+				LOG_ERROR("getsockopt failed! [{}]", SocketUtility::GetLastError());
 				return -1;
 			}
 			else if (error != 0)
 			{
-				LOG_ERROR("Socket error after connect! [%d]", error);
+				LOG_ERROR("Socket error after connect! [{}]", error);
 
 				// Handle connection error
 				if (error == WSAECONNREFUSED)
@@ -248,7 +248,7 @@ namespace Client
 			}
 			else
 			{
-				LOG_ERROR("getsockopt failed! [%d]", SocketUtility::GetLastError());
+				LOG_ERROR("getsockopt failed! [{}]", SocketUtility::GetLastError());
 				c.Log("Connection lost! Server may have crashed or kicked you.");
 			}
 

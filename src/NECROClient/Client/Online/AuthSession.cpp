@@ -88,7 +88,7 @@ namespace Client
             // Check if the current cmd matches our state
             if (status != it->second.status)
             {
-                LOG_WARNING("Status mismatch. Status is: '" + std::to_string(static_cast<int>(status)) + "' but should have been '" + std::to_string(static_cast<int>(it->second.status)) + "'. Closing the connection.");
+                LOG_WARNING("Status mismatch. Status is: '{}' but should have been '{}'. Closing the connection.", static_cast<int>(status), static_cast<int>(it->second.status));
 
                 Shutdown();
                 Close();
@@ -234,8 +234,8 @@ namespace Client
             }
             std::string greetStr = greetCodeStrStream.str();
 
-            LOG_DEBUG("My session key is: " + sessionStr);
-            LOG_DEBUG("Greetcode is : " + greetStr);
+            LOG_DEBUG("My session key is: {}", sessionStr);
+            LOG_DEBUG("Greetcode is : {}", greetStr);
 
             // Close connection to auth server
             LOG_DEBUG("Authentication completed! Closing Auth Socket...");

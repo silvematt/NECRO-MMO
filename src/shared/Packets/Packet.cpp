@@ -35,7 +35,7 @@ namespace NECRO
 	//--------------------------------------------------------------------------------------------
 	void Packet::Print() const
 	{
-		LOG_INFO("Packet size %d", Size());
+		LOG_INFO("Packet size {}", Size());
 
 		// Hex print of the packet content
 		std::ostringstream oss;  // Output string stream
@@ -54,7 +54,7 @@ namespace NECRO
 
 		oss << std::endl;
 
-		LOG_INFO("Packet content: \n%s", oss.str().c_str());
+		LOG_INFO("Packet content: \n{}", oss.str().c_str());
 	}
 
 }

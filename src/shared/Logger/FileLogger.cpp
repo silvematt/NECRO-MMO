@@ -38,8 +38,8 @@ namespace NECRO
         va_list args;
         va_start(args, line); // 'line' is the last argument before variadic ones
 
-        // Format the message (parse variadic arguments)
-        std::string formattedMessage = FormatString(message.c_str(), args);
+        // Format the message (parse variadic arguments) (not used anymore since FMT)
+        // std::string formattedMessage = FormatString(message.c_str(), args);
 
         std::lock_guard<std::mutex> guard(m_logMutex);
 
@@ -62,7 +62,7 @@ namespace NECRO
             m_logFile << "[" << file << ":" << line << "] ";
 
         // Write the formatted message
-        m_logFile << formattedMessage << std::endl;
+        m_logFile << message << std::endl;
 
         va_end(args);
     }

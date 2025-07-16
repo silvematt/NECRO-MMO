@@ -224,7 +224,7 @@ namespace NECRO
 		// Make sure to update the write pos
 		m_inBuffer.WriteCompleted(bytesReceived);
 
-		LOG_INFO("Received %d bytes of something!", bytesReceived);
+		LOG_INFO("Received {} bytes of something!", bytesReceived);
 
 		ReadCallback();	// this will handle the data we've received
 
@@ -376,7 +376,7 @@ namespace NECRO
 
 			if (err == SSL_ERROR_SYSCALL)
 			{
-				LOG_ERROR("System call error during TLS handshake. Ret: %d.", ret);
+				LOG_ERROR("System call error during TLS handshake. Ret: {}.", ret);
 				success = false;
 				break;
 			}
@@ -386,7 +386,7 @@ namespace NECRO
 			if (err == SSL_ERROR_SSL)
 			{
 				if (SSL_get_verify_result(m_ssl) != X509_V_OK)
-					LOG_ERROR("Verify error: %s\n", X509_verify_cert_error_string(SSL_get_verify_result(m_ssl)));
+					LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(m_ssl)));
 
 				success = false;
 			}

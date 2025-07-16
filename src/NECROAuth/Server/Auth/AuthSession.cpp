@@ -7,9 +7,6 @@
 #include <sstream>
 #include <iomanip>
 
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
-
 namespace NECRO
 {
 namespace Auth
@@ -47,7 +44,7 @@ namespace Auth
             // Check if the current cmd matches our state
             if (m_status != it->second.status)
             {
-                LOG_WARNING(fmt::format("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status)));
+                LOG_WARNING("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status));
 
                 Shutdown();
                 Close();
@@ -108,7 +105,7 @@ namespace Auth
 
         std::string login((char const*)pcktData->username, pcktData->usernameSize);
 
-        LOG_DEBUG(fmt::format("Handling AuthLoginInfo for user: {}", login));
+        LOG_DEBUG("Handling AuthLoginInfo for user: {}", login);
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
 
@@ -139,7 +136,7 @@ namespace Auth
 
                 m_data.username = login;
                 m_data.accountID = row[0];
-                LOG_INFO(fmt::format("Account {} has DB AccountID: {}.", login, m_data.accountID));
+                LOG_INFO("Account {} has DB AccountID: {}.", login, m_data.accountID);
                 m_status = SocketStatus::LOGIN_ATTEMPT;
 
                 // Done, will wait for client's proof packet
@@ -170,7 +167,7 @@ namespace Auth
     {
         SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(m_inBuffer.GetReadPointer());
 
-        LOG_OK(fmt::format("Handling AuthLoginProof for user {}", m_data.username));
+        LOG_OK("Handling AuthLoginProof for user {}", m_data.username);
 
         // Reply to the client
         Packet packet;
@@ -192,7 +189,7 @@ namespace Auth
         auto& dbWorker = g_server.GetDBWorker();
         if (!authenticated)
         {
-            LOG_INFO(fmt::format("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort()));
+            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
@@ -219,7 +216,7 @@ namespace Auth
 
             m_data.iv.ResetCounter();
 
-            LOG_INFO(fmt::format("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", pcktData->clientsIVRandomPrefix, m_data.iv.prefix));
+            LOG_INFO("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", pcktData->clientsIVRandomPrefix, m_data.iv.prefix);
 
             // Calculate a random session key
             m_data.sessionKey = AES::GenerateSessionKey();
@@ -232,7 +229,7 @@ namespace Auth
             }
             std::string sessionStr = sessionStrStream.str();
 
-            LOG_DEBUG(fmt::format("Session key for user {} is {}.", m_data.username, sessionStr));
+            LOG_DEBUG("Session key for user {} is {}.", m_data.username, sessionStr);
 
             // Write session key to packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
