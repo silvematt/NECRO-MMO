@@ -212,7 +212,7 @@ namespace Client
 		if (input.size() > 0)
 		{
 			// Input[0] is the function name, transform it to lowercase
-			std::transform(input[0].begin(), input[0].end(), input[0].begin(), std::tolower);
+			std::transform(input[0].begin(), input[0].end(), input[0].begin(), [](unsigned char c) { return std::tolower(c); });
 
 			auto it = m_cmds.find(input[0]);
 			if (it != m_cmds.end())
