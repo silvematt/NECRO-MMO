@@ -56,7 +56,7 @@ namespace Auth
             return m_data;
         }
 
-        void ReadCallback() override;
+        int ReadCallback() override;
 
         // Handlers functions
         bool HandleAuthLoginGatherInfoPacket();

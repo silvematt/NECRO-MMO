@@ -35,7 +35,7 @@ namespace Client
         static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 
         void OnConnectedCallback() override;
-        void ReadCallback() override;
+        int ReadCallback() override;
 
         // Handlers functions
         bool HandlePacketAuthLoginGatherInfoResponse();

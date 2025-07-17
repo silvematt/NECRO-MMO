@@ -27,6 +27,7 @@ namespace Auth
 
 		// Connections container
 		std::vector<std::shared_ptr<AuthSession>> m_list;
+		std::vector<std::shared_ptr<AuthSession>> m_toClose;
 
 		std::vector<pollfd> m_poll_fds;
 

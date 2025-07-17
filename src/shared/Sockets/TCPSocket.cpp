@@ -16,11 +16,12 @@ namespace NECRO
 {
 	TCPSocket::TCPSocket(SocketAddressesFamily family)
 	{
+		shutdownState = TLSShutdownState::PHASE_1;
 		m_ssl = nullptr;
 		m_bio = nullptr;
 
 		m_usesTLS = false;
-		m_closed = false;
+		m_ShutDown = false;
 
 		m_socket = socket(static_cast<int>(family), SOCK_STREAM, IPPROTO_TCP);
 
@@ -33,11 +34,12 @@ namespace NECRO
 
 	TCPSocket::TCPSocket(sock_t inSocket)
 	{
+		shutdownState = TLSShutdownState::PHASE_1;
 		m_ssl = nullptr;
 		m_bio = nullptr;
 
 		m_usesTLS = false;
-		m_closed = false;
+		m_ShutDown = false;
 
 		m_socket = inSocket;
 
@@ -48,14 +50,15 @@ namespace NECRO
 		}
 	}
 
-	TCPSocket::~TCPSocket()
+
+	bool TCPSocket::IsShutDown()
 	{
-		Close();
+		return m_ShutDown;
 	}
 
 	bool TCPSocket::IsOpen()
 	{
-		return (!m_closed);
+		return !m_Closed;
 	}
 
 	int TCPSocket::Bind(const SocketAddress& addr)
@@ -127,10 +130,8 @@ namespace NECRO
 				if (SocketUtility::ErrorIsWouldBlock())
 					return 0;
 
-				Shutdown();
-
 				LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(SocketUtility::GetLastError()) + "]");
-				return SocketUtility::GetLastError();
+				return -1;
 			}
 		}
 		else
@@ -143,10 +144,8 @@ namespace NECRO
 				if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
 					return 0;
 
-				Shutdown();
-				LOG_ERROR(std::string("Error during TCPSocket::Send() [") +
-					std::to_string(sslError) + "]");
-				return sslError;
+				LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(sslError) + "]");
+				return -1;
 			}
 		}
 
@@ -188,7 +187,6 @@ namespace NECRO
 				if (SocketUtility::ErrorIsWouldBlock())
 					return 0;
 
-				Shutdown();
 				LOG_ERROR(std::string("Error during TCPSocket::Receive() [") + std::to_string(SocketUtility::GetLastError()) + "]");
 				return -1;
 			}
@@ -200,20 +198,19 @@ namespace NECRO
 			if (ret <= 0)
 			{
 				int sslError = SSL_get_error(m_ssl, ret);
+
 				if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
 					return 0;
 				else if (sslError == SSL_ERROR_ZERO_RETURN)
 				{
 					// Shutdown gracefully
 					LOG_DEBUG("Received SSL_ERROR_ZERO_RETURN. Shutting down socket gracefully.");
-					Shutdown();
-					return 0;
+					return -1;
 				}
 				else
 				{
-					Shutdown();
 					LOG_ERROR(std::string("Error during TCPSocket::Receive() [") + std::to_string(SocketUtility::GetLastError()) + "]");
-					return sslError;
+					return -1;
 				}
 			}
 		}
@@ -226,7 +223,8 @@ namespace NECRO
 
 		LOG_INFO("Received {} bytes of something!", bytesReceived);
 
-		ReadCallback();	// this will handle the data we've received
+		if(ReadCallback() == -1)	// this will handle the data we've received, unless it returns -1 (error)
+			return -1;
 
 		return bytesReceived;
 	}
@@ -282,17 +280,11 @@ namespace NECRO
 
 	int TCPSocket::Shutdown()
 	{
-		if (m_closed)
+		if (m_ShutDown) 
 			return 0;
 
-		m_closed = true;
+		m_ShutDown = true;
 
-		// Free OpenSSL data
-		if (m_ssl != nullptr)
-		{
-			SSL_free(m_ssl);
-			m_ssl = nullptr;
-		}
 #ifdef _WIN32
 		int result = shutdown(m_socket, SD_SEND);
 
@@ -312,20 +304,34 @@ namespace NECRO
 
 	int TCPSocket::Close()
 	{
-		// Free OpenSSL data
-		if (m_ssl != nullptr)
-		{
-			SSL_free(m_ssl);
-			m_ssl = nullptr;
-		}
-#ifdef _WIN32
+		if (m_Closed)
+			return 0;
 
-		int result = closesocket(m_socket);
-		return result;
+		m_Closed = true;
+
+		int result = 0;
+
+		try
+		{
+			// Free OpenSSL data, SSL_free also frees BIO
+			if (m_ssl != nullptr)
+			{
+				SSL_free(m_ssl);
+				m_ssl = nullptr;
+			}
+		}
+		catch(...)
+		{
+			LOG_CRITICAL("Caught exception while trying to free OpenSSL data.");
+		}
+
+#ifdef _WIN32
+		result = closesocket(m_socket);
 #else
-		int result = close(m_socket);
-		return result;
+		result = close(m_socket);
 #endif
+
+		return result;
 	}
 
 	// OpenSSL
@@ -395,6 +401,47 @@ namespace NECRO
 
 		// Handshake performed!
 		return (success) ? 1 : 0;
+	}
+
+	// Performs a full TLS Shutdown
+	int TCPSocket::TLSShutdown() 
+	{
+		if (shutdownState == TLSShutdownState::DONE || !m_usesTLS)
+			return 0;
+
+		int ret = SSL_shutdown(m_ssl);
+
+		if (ret == 1) 
+		{
+			// Got 1: full bidirectional shutdown complete
+			shutdownState = TLSShutdownState::DONE;
+			return 0; // completed
+		}
+		if (ret == 0) 
+		{
+			// We sent our close_notify but haven't seen theirs yet
+			if (shutdownState == TLSShutdownState::PHASE_1)
+			{
+				shutdownState = TLSShutdownState::PHASE_2;
+				return 1;
+			}
+			else 
+			{
+				// Already in phase2 and still got 0: try again later
+				return 1;
+			}
+		}
+
+		if (ret < 0) 
+		{
+			int err = SSL_get_error(m_ssl, ret);
+			
+			if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE) // wait for fd to be readable/writable then retry TLSShutdown()
+				return 1;
+		}
+
+		// Should never get here unless we have an error (socket on the other end closed abruptly
+		return -1;
 	}
 
 }

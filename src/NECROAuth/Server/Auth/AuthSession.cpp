@@ -23,7 +23,7 @@ namespace Auth
     std::unordered_map<uint8_t, AuthHandler> const Handlers = AuthSession::InitHandlers();
 
 
-    void AuthSession::ReadCallback()
+    int AuthSession::ReadCallback()
     {
         LOG_DEBUG("AuthSession ReadCallback");
 
@@ -46,9 +46,7 @@ namespace Auth
             {
                 LOG_WARNING("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status));
 
-                Shutdown();
-                Close();
-                return;
+                return -1;
             }
 
             // Check if the passed packet sizes matches the handler's one, otherwise we're not ready to process this yet
@@ -65,9 +63,7 @@ namespace Auth
                 // Check for size
                 if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
                 {
-                    Shutdown();
-                    Close();
-                    return;
+                    return -1;
                 }
             }
             else if (cmd == static_cast<int>(PacketIDs::LOGIN_ATTEMPT))
@@ -78,9 +74,7 @@ namespace Auth
                 // Check for size
                 if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
                 {
-                    Shutdown();
-                    Close();
-                    return;
+                    return - 1;
                 }
             }
 
@@ -91,12 +85,13 @@ namespace Auth
             // Call the Handler's function and ensure it returns true
             if (!(*this.*it->second.handler)())
             {
-                Close();
-                return;
+                return -1;
             }
 
             packet.ReadCompleted(size); // Flag the read as completed, the while will look for remaining packets
         }
+
+        return 0;
     }
 
     bool AuthSession::HandleAuthLoginGatherInfoPacket()

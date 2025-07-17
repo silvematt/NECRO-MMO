@@ -65,7 +65,7 @@ namespace Client
         //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
     }
 
-    void AuthSession::ReadCallback()
+    int AuthSession::ReadCallback()
     {
         LOG_OK("AuthSession ReadCallback");
 
@@ -92,7 +92,7 @@ namespace Client
 
                 Shutdown();
                 Close();
-                return;
+                return -1;
             }
 
             // Check if the passed packet sizes matches the handler's one, otherwise we're not ready to process this yet
@@ -111,7 +111,7 @@ namespace Client
                 {
                     Shutdown();
                     Close();
-                    return;
+                    return -1;
                 }
             }
 
@@ -124,11 +124,13 @@ namespace Client
             if (!(*this.*it->second.handler)())
             {
                 Close();
-                return;
+                return-1;
             }
 
             packet.ReadCompleted(size); // Flag the read as completed, the while will look for remaining packets
         }
+
+        return 0;
     }
 
     bool AuthSession::HandlePacketAuthLoginGatherInfoResponse()

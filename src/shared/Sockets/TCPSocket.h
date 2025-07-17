@@ -53,12 +53,22 @@ namespace NECRO
 		NetworkMessage				m_inBuffer;
 		std::queue<NetworkMessage>	m_outQueue;
 
-		bool m_closed = false;
+		bool m_ShutDown = false;
+		bool m_Closed = false;
 
 		// OpenSSL support
+		enum class TLSShutdownState
+		{
+			PHASE_1 = 0,
+			PHASE_2,
+			DONE
+		};
+
 		bool m_usesTLS = false;
-		SSL* m_ssl;
-		BIO* m_bio;
+		SSL* m_ssl = nullptr;
+		BIO* m_bio = nullptr;
+
+		TLSShutdownState shutdownState = TLSShutdownState::PHASE_1;
 
 		// Used for dynamic POLLIN | POLLOUT behavior, save the pfd and we'll update the events to look for in base of the content of the outQueue
 		// If the outqueue is empty, only poll for POLLIN events, otherwise, also POLLOUT events
@@ -70,13 +80,12 @@ namespace NECRO
 		TCPSocket(SocketAddressesFamily family);
 		TCPSocket(sock_t inSocket);
 
-		~TCPSocket();
-
-		virtual void OnConnectedCallback() {};
-		virtual void ReadCallback() {};
-		virtual void SendCallback() {};
+		virtual void	OnConnectedCallback() {};
+		virtual int		ReadCallback() { return 0; };
+		virtual void	SendCallback() {};
 
 		bool						IsOpen();
+		bool						IsShutDown();
 
 		int							Bind(const SocketAddress& addr);
 		int							Listen(int backlog = TCP_LISTEN_DEFUALT_BACKLOG);
@@ -150,9 +159,11 @@ namespace NECRO
 		SSL* GetSSL() { return m_ssl; }
 
 		// OpenSSL
-		void ServerTLSSetup(const char* hostname);
-		void ClientTLSSetup(const char* hostname);
-		int TLSPerformHandshake();
+		void		ServerTLSSetup(const char* hostname);
+		void		ClientTLSSetup(const char* hostname);
+		int			TLSPerformHandshake();
+		int			TLSShutdown();
+
 	};
 
 }

@@ -12,9 +12,11 @@ namespace NECRO
 {
 namespace Auth
 {
-	constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
-	constexpr uint8_t CLIENT_VERSION_MINOR = 0;
-	constexpr uint8_t CLIENT_VERSION_REVISION = 0;
+	inline constexpr uint16_t MAX_CLIENTS_CONNECTED = 2000 +1; // +1 for listener
+
+	inline constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
+	inline constexpr uint8_t CLIENT_VERSION_MINOR = 0;
+	inline constexpr uint8_t CLIENT_VERSION_REVISION = 0;
 
 	class Server
 	{

@@ -1,5 +1,6 @@
 #include "TCPSocketManager.h"
 
+#include <NECROServer.h>
 #include "AuthSession.h"
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -25,6 +26,13 @@ namespace Auth
 		m_listener.Bind(localAddr);
 		m_listener.SetBlockingEnabled(false);
 		m_listener.Listen();
+
+		// Reserve m_poll_fds space for max amount of clients
+		// NEVER GO FURHTER! If an additional element is pushed back, alld the Pdfs pointers in the AuthSession will be broken
+		m_poll_fds.reserve(NECRO::Auth::MAX_CLIENTS_CONNECTED);
+
+		// This is not strictly needed, but it avoids reallocations for the list vector
+		m_list.reserve(NECRO::Auth::MAX_CLIENTS_CONNECTED);
 
 		// Initialize the pollfds vector
 		pollfd pfd;
@@ -66,69 +74,84 @@ namespace Auth
 			// If there's a reading event for the listener socket, it's a new connection
 			else if (m_poll_fds[0].revents & POLLIN)
 			{
-				SocketAddress otherAddr;
-				if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
+				// Check if there's space
+				if (m_poll_fds.size() < NECRO::Auth::MAX_CLIENTS_CONNECTED)
 				{
-					LOG_INFO("New connection! Setting up TLS and handshaking...");
-
-					inSock->ServerTLSSetup("localhost");
-
-					bool success = true;
-					int ret = 0;
-					// Perform the handshake
-					while ((ret = SSL_accept(inSock->GetSSL())) != 1)
+					SocketAddress otherAddr;
+					if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 					{
-						int err = SSL_get_error(inSock->GetSSL(), ret);
+						LOG_INFO("New connection! Setting up TLS and handshaking...");
 
-						// Keep trying
-						if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-							continue;
+						inSock->ServerTLSSetup("localhost");
 
-						if (err == SSL_ERROR_WANT_CONNECT || err == SSL_ERROR_WANT_ACCEPT)
-							continue;
-
-						if (err == SSL_ERROR_ZERO_RETURN)
+						bool success = true;
+						int ret = 0;
+						// Perform the handshake
+						while ((ret = SSL_accept(inSock->GetSSL())) != 1)
 						{
-							LOG_INFO("TLS connection closed by peer during handshake.");
+							int err = SSL_get_error(inSock->GetSSL(), ret);
+
+							// Keep trying
+							if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+								continue;
+
+							if (err == SSL_ERROR_WANT_CONNECT || err == SSL_ERROR_WANT_ACCEPT)
+								continue;
+
+							if (err == SSL_ERROR_ZERO_RETURN)
+							{
+								LOG_INFO("TLS connection closed by peer during handshake.");
+								success = false;
+								break;
+							}
+
+							if (err == SSL_ERROR_SYSCALL)
+							{
+								LOG_ERROR("System call error during TLS handshake. Ret: {}.", ret);
+								success = false;
+								break;
+							}
+
+							if (err == SSL_ERROR_SSL)
+							{
+								if (SSL_get_verify_result(inSock->GetSSL()) != X509_V_OK)
+									LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL())));
+							}
+
+							LOG_ERROR("TLSPerformHandshake failed!");
 							success = false;
 							break;
 						}
 
-						if (err == SSL_ERROR_SYSCALL)
+						if (success)
 						{
-							LOG_ERROR("System call error during TLS handshake. Ret: {}.", ret);
-							success = false;
-							break;
-						}
+							LOG_OK("TLSPerformHandshake succeeded!");
 
-						if (err == SSL_ERROR_SSL)
-						{
-							if (SSL_get_verify_result(inSock->GetSSL()) != X509_V_OK)
-								LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL())));
-						}
+							// Initialize status
+							inSock->m_status = SocketStatus::GATHER_INFO;
+							m_list.push_back(inSock); // save it in the active list
 
-						LOG_ERROR("TLSPerformHandshake failed!");
-						success = false;
-						break;
+							// Add the new connection to the pfds
+							pollfd newPfd;
+							newPfd.fd = inSock->GetSocketFD();
+							newPfd.events = POLLIN;
+							newPfd.revents = 0;
+							m_poll_fds.push_back(newPfd);
+
+							// Set inSock PFD pointer with the one we've just created and put in the vector
+							inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
+						}
 					}
-
-					if (success)
+				} 
+				else
+				{
+					// if max_client_connected, just let the client timeout
+					SocketAddress otherAddr;
+					if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 					{
-						LOG_OK("TLSPerformHandshake succeeded!");
-
-						// Initialize status
-						inSock->m_status = SocketStatus::GATHER_INFO;
-						m_list.push_back(inSock); // save it in the active list
-
-						// Add the new connection to the pfds
-						pollfd newPfd;
-						newPfd.fd = inSock->GetSocketFD();
-						newPfd.events = POLLIN;
-						newPfd.revents = 0;
-						m_poll_fds.push_back(newPfd);
-
-						// Set inSock PFD pointer with the one we've just created and put in the vector
-						inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
+						LOG_WARNING("Client arrived, but there's no space for him.");
+						inSock->Shutdown();
+						inSock->Close();
 					}
 				}
 			}
@@ -182,14 +205,54 @@ namespace Auth
 			std::sort(toRemove.begin(), toRemove.end(), std::greater<int>());
 			for (int idx : toRemove)
 			{
-				LOG_DEBUG("Removing {}.", idx);
+				m_toClose.push_back(m_list[idx - 1]); // m_list contains shared_pointers, so it's ok to not std::move
 
-				m_list[idx - 1]->Close();
+				// Swap the element that we want to delete with the item at the back of the vector
+				// Then, we make sure to update the Pfd of the element that was swapped and doesn't have to be deleted
+				std::swap(m_poll_fds[idx], m_poll_fds.back());
+				std::swap(m_list[idx - 1], m_list.back());
 
-				m_poll_fds.erase(m_poll_fds.begin() + idx);
-				m_list.erase(m_list.begin() + (idx - 1));
+				m_list[idx - 1]->SetPfd(&m_poll_fds[idx]);
+
+				m_poll_fds.pop_back();
+				m_list.pop_back();
 			}
 		}
+		toRemove.clear();
+
+		// Cycle check on closing sockets
+		for (int i = (int)m_toClose.size() - 1; i >= 0; i--) 
+		{
+			int rc = m_toClose[i]->TLSShutdown();
+			if (rc == 0) 
+			{
+				// Done shutting down at TLS layer
+				m_toClose[i]->Shutdown();  // Shutdown
+				m_toClose[i]->Close();     // Close FD & free SSL
+				toRemove.push_back(i);
+
+				LOG_OK("TLS shutdown completed.");
+			}
+			else if (rc < 0) 
+			{
+				LOG_WARNING("TLSShutdown error idx on socket {}. Shutting it down and removing it...", m_toClose[i]->GetSocketFD());
+				m_toClose[i]->Shutdown();  // Shutdown
+				m_toClose[i]->Close();     // Close FD & free SSL
+				toRemove.push_back(i);
+			}
+		}
+
+		if (toRemove.size() > 0)
+		{
+			// Remove sockets marked for deletion (from end to beginning)
+			std::sort(toRemove.begin(), toRemove.end(), std::greater<int>());
+
+			for (int idx : toRemove) 
+			{
+				m_toClose.erase(m_toClose.begin() + idx);
+			}
+		}
+		LOG_DEBUG("Size to close: {}", m_toClose.size());
 
 		return 0;
 	}
