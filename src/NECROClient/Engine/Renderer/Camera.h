@@ -35,7 +35,7 @@ namespace Client
 		float m_zoomLevel = 1.0f;
 		float m_zoomSpeed = 0.2f;
 
-		float m_panSpeed = 50.0f;
+		float m_panSpeed = 2.0f;
 
 		bool  m_freeCamera = false;
 
