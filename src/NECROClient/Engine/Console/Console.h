@@ -41,7 +41,7 @@ namespace Client
 		std::map<std::string, Cmd>	m_cmds;			// registered commands
 		std::fstream				m_cmdsLogFile;	// used to write/read commands from file, so we can save and retrieve the history of last application launch. file is CMDS_LOG_FILENAME
 
-	private:
+	public:
 		int			SendCmd(const std::string& cmd);
 
 	public:

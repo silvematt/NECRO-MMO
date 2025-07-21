@@ -15,7 +15,7 @@ namespace Client
     #pragma pack(push, 1)
     struct AuthHandler
     {
-        NECRO::Auth::SocketStatus status;
+        NECRO::Auth::SocketStatus status = NECRO::Auth::SocketStatus::GATHER_INFO;
         size_t packetSize;
         bool (AuthSession::* handler)();
     };
