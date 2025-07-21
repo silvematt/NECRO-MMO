@@ -2,6 +2,7 @@
 #define NECRO_DATABASE_H
 
 #include "DBConnection.h"
+#include "DBConnectionPool.h"
 
 namespace NECRO
 {
@@ -17,14 +18,15 @@ namespace NECRO
 		};
 
 
-	protected:
-		DBConnection m_conn;
+	public:
+		//DBConnection m_conn;
+		DBConnectionPool m_pool;
 
 
 	public:
 		virtual int Init() = 0;
-		virtual mysqlx::SqlStatement Prepare(int enum_val) = 0;
-		virtual mysqlx::SqlResult Execute(mysqlx::SqlStatement& statement) = 0;
+
+		virtual mysqlx::SqlStatement Prepare(mysqlx::Session& sess, int enum_val) = 0;
 		virtual int Close() = 0;
 	};
 

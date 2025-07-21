@@ -19,8 +19,14 @@
     <ClInclude Include="DB\LoginDatabase.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DB\DBRequest.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib.cpp" />
+    <ClCompile Include="DB\DBConnectionPool.h">
+      <Filter>DB</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

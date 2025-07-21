@@ -37,9 +37,7 @@ namespace Auth
 		std::unique_ptr<TCPSocketManager> m_sockManager;
 
 		// directdb will be used for queries that run (and block) on the main thread
-		// to use only with data-critical code, for example, while making a response packet where an information in the database is needed to go further
-		// for "fire-and-forget" operations like updating logs, fields, etc we can use the dbworker
-		LoginDatabase	m_directdb;
+		//LoginDatabase	m_directdb;
 		DatabaseWorker	m_dbworker;
 
 	public:
@@ -47,7 +45,7 @@ namespace Auth
 		FileLogger&			GetFileLogger();
 		TCPSocketManager&	GetSocketManager();
 
-		LoginDatabase&	GetDirectDB();
+		//LoginDatabase&	GetDirectDB();
 		DatabaseWorker&	GetDBWorker();
 
 		int						Init();
@@ -76,10 +74,12 @@ namespace Auth
 		return *m_sockManager.get();
 	}
 
+	/*
 	inline LoginDatabase& Server::GetDirectDB()
 	{
 		return m_directdb;
 	}
+	*/
 
 	inline DatabaseWorker& Server::GetDBWorker()
 	{

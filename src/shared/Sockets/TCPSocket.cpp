@@ -167,6 +167,26 @@ namespace NECRO
 		return bytesSent;
 	}
 
+	int TCPSocket::SysSend(const char* buf, int len)
+	{
+		int bytesSent = 0;
+		bytesSent = send(m_socket, buf, len, 0);
+
+		if (bytesSent < 0)
+		{
+			if (SocketUtility::ErrorIsWouldBlock())
+				return 0;
+
+			//Shutdown();
+			Close();
+
+			LOG_ERROR(std::string("Error during TCPSocket::SysSend() [") + std::to_string(SocketUtility::GetLastError()) + "]");
+			return -1;
+		}
+
+		return bytesSent;
+	}
+
 	int TCPSocket::Receive()
 	{
 		if (!IsOpen())
@@ -225,6 +245,26 @@ namespace NECRO
 
 		if(ReadCallback() == -1)	// this will handle the data we've received, unless it returns -1 (error)
 			return -1;
+
+		return bytesReceived;
+	}
+
+	int TCPSocket::SysReceive(char* buf, int len)
+	{
+		int bytesReceived = 0;
+		bytesReceived = recv(m_socket, buf, len, 0);
+
+		if (bytesReceived < 0)
+		{
+			if (SocketUtility::ErrorIsWouldBlock())
+				return 0;
+
+			//Shutdown();
+			Close();
+
+			LOG_ERROR(std::string("Error during TCPSocket::Receive() [") + std::to_string(SocketUtility::GetLastError()) + "]");
+			return -1;
+		}
 
 		return bytesReceived;
 	}

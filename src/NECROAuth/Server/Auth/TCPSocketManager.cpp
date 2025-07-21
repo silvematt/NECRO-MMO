@@ -14,7 +14,7 @@ namespace Auth
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
 	//-----------------------------------------------------------------------------------------------------
-	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family)
+	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family), m_wakeListen(_family), m_wakeWrite(_family)
 	{
 		uint16_t inPort = 61531;
 		SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
@@ -40,6 +40,46 @@ namespace Auth
 		pfd.events = POLLIN;
 		pfd.revents = 0;
 		m_poll_fds.push_back(pfd);
+
+		pollfd wakefd = SetupWakeup();
+		m_poll_fds.push_back(wakefd);
+	}
+
+	pollfd TCPSocketManager::SetupWakeup()
+	{
+		// Make the wake up read listen
+		int flag = 1;
+
+		m_wakeListen.Bind(SocketAddress(AF_INET, htonl(INADDR_LOOPBACK), 0));
+		m_wakeListen.Listen(1);
+
+		sockaddr_in wakeReadAddr;
+		int len = sizeof(wakeReadAddr);
+		if (getsockname(m_wakeListen.GetSocketFD(), (sockaddr*)&wakeReadAddr, &len) == SOCKET_ERROR)
+		{
+			LOG_ERROR("getsockname() failed with error: {}", WSAGetLastError());
+			throw std::runtime_error("Failed to get socket address.");
+		}
+
+		// Connect on the Write side
+		m_wakeWrite.Connect(SocketAddress(*reinterpret_cast<sockaddr*>(&wakeReadAddr)));
+
+		m_wakeWrite.SetBlockingEnabled(false);
+		m_wakeWrite.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+
+		// Accept the connection on the read side
+		sock_t accepted = m_wakeListen.AcceptSys();
+		m_wakeRead = std::make_unique<TCPSocket>(accepted);
+
+		m_wakeListen.SetBlockingEnabled(false);
+		m_wakeListen.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+
+		pollfd wakefd;
+		wakefd.fd = m_wakeRead->GetSocketFD();
+		wakefd.events = POLLIN;
+		wakefd.revents = 0;
+
+		return wakefd;
 	}
 
 	int TCPSocketManager::Poll()
@@ -145,7 +185,7 @@ namespace Auth
 				} 
 				else
 				{
-					// if max_client_connected, just let the client timeout
+					// if max_client_connected, kick the new client
 					SocketAddress otherAddr;
 					if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 					{
@@ -157,11 +197,49 @@ namespace Auth
 			}
 		}
 
+		// Check for WakeUp from DBWorker
+		if (m_poll_fds[1].revents != 0)
+		{
+			if (m_poll_fds[1].revents & (POLLERR | POLLHUP | POLLNVAL))
+			{
+				LOG_ERROR("WakeUp encountered an error.");
+				// TODO handle errors
+				// May need to re-do the loopback 
+				return -1;
+			}
+			else if (m_poll_fds[1].revents & POLLIN)
+			{
+				// We gotten waken up by the DBWorker
+
+				// Consume what was sent
+				char buf[128];
+				m_wakeRead->SysReceive(buf, sizeof(buf));
+				// TODO handle errors on receive as well
+				// May need to re-do the loopback 
+
+				LOG_DEBUG("Waken up!!! Acquiring mutex and response queue....");
+				// Execute the callbacks
+				std::queue<DBRequest> requests = g_server.GetDBWorker().GetResponseQueue();
+				LOG_DEBUG("Response Queue acquired!");
+
+				while (requests.size() > 0)
+				{
+					LOG_DEBUG("Executing a callback!");
+					DBRequest r = std::move(requests.front());
+					requests.pop();
+					if(r.m_callback)
+						r.m_callback(r.m_sqlRes);
+				}
+
+				LOG_DEBUG("Leaving wake up logic!");
+			}
+		}
+
 		// Vector of indexes of invalid sockets we'll remove after the client check
 		std::vector<int> toRemove;
 
 		// Check for clients
-		for (size_t i = 1; i < m_poll_fds.size(); i++)
+		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_poll_fds.size(); i++)
 		{
 			if (m_poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
@@ -173,7 +251,7 @@ namespace Auth
 				// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
 				if (m_poll_fds[i].revents & POLLOUT)
 				{
-					int r = m_list[i - 1]->Send();
+					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
 
 					// If send failed
 					if (r < 0)
@@ -186,7 +264,7 @@ namespace Auth
 
 				if (m_poll_fds[i].revents & POLLIN)
 				{
-					int r = m_list[i - 1]->Receive();
+					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
 
 					// If receive failed, 
 					if (r < 0)
@@ -205,14 +283,14 @@ namespace Auth
 			std::sort(toRemove.begin(), toRemove.end(), std::greater<int>());
 			for (int idx : toRemove)
 			{
-				m_toClose.push_back(m_list[idx - 1]); // m_list contains shared_pointers, so it's ok to not std::move
+				m_toClose.push_back(m_list[idx - SOCK_MANAGER_RESERVED_FDS]); // m_list contains shared_pointers, so it's ok to not std::move
 
 				// Swap the element that we want to delete with the item at the back of the vector
 				// Then, we make sure to update the Pfd of the element that was swapped and doesn't have to be deleted
 				std::swap(m_poll_fds[idx], m_poll_fds.back());
-				std::swap(m_list[idx - 1], m_list.back());
+				std::swap(m_list[idx - SOCK_MANAGER_RESERVED_FDS], m_list.back());
 
-				m_list[idx - 1]->SetPfd(&m_poll_fds[idx]);
+				m_list[idx - SOCK_MANAGER_RESERVED_FDS]->SetPfd(&m_poll_fds[idx]);
 
 				m_poll_fds.pop_back();
 				m_list.pop_back();
@@ -255,6 +333,15 @@ namespace Auth
 		LOG_DEBUG("Size to close: {}", m_toClose.size());
 
 		return 0;
+	}
+
+	void TCPSocketManager::WakeUp()
+	{
+		std::lock_guard guard(m_writeMutex);
+
+		LOG_DEBUG("TCPSocketManager::WakeUp() called!");
+		char dummy = 0;
+		m_wakeWrite.SysSend(&dummy, sizeof(dummy));
 	}
 
 }

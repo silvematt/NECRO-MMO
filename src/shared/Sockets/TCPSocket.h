@@ -116,11 +116,23 @@ namespace NECRO
 			}
 		}
 
+		sock_t AcceptSys()
+		{
+			sockaddr_in otherAddress;
+			int otherAddressLength = sizeof(otherAddress);
+			sock_t acceptedSocket = accept(m_socket, (struct sockaddr*)&otherAddress, &otherAddressLength);
+			return acceptedSocket;
+		}
+
 		int							Connect(const SocketAddress& addr);
 
 		void						QueuePacket(NetworkMessage&& pckt);
 		int							Send();
+		int							SysSend(const char* buf, int len);
+
 		int							Receive();
+		int							SysReceive(char* buf, int len);
+
 
 		std::string GetRemoteAddressAndPort()
 		{
@@ -136,6 +148,11 @@ namespace NECRO
 		{
 			m_remoteAddress = s;
 			m_remotePort = p;
+		}
+
+		uint16_t GetPort()
+		{
+			return m_remotePort;
 		}
 
 		void SetPfd(pollfd* fd)

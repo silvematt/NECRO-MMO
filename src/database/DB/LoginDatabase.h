@@ -28,34 +28,41 @@ namespace NECRO
 	public:
 		int Init() override
 		{
+			if (m_pool.Init("localhost", 33060, "root", "root", "necroauth") == 0)
+				return 0;
+			else
+				return -1;
+
+			/*
 			if (m_conn.Init("localhost", 33060, "root", "root") == 0)
 				return 0;
 			else
 				return -1;
+			*/
 		}
 
 
 		//-----------------------------------------------------------------------------------------------------
 		// Returns a mysqlx::SqlStatement, ready to be bound with parameters and executed by the caller
 		//-----------------------------------------------------------------------------------------------------
-		mysqlx::SqlStatement Prepare(int enum_value) override
+		mysqlx::SqlStatement Prepare(mysqlx::Session& sess, int enum_value) override
 		{
 			switch (enum_value)
 			{
 			case static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME):
-				return m_conn.m_session->sql("SELECT id FROM necroauth.users WHERE username = ?;");
-				
+				return sess.sql("SELECT id FROM necroauth.users WHERE username = ?;");
+
 			case static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD):
-				return m_conn.m_session->sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
+				return sess.sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
 
 			case static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD):
-				return m_conn.m_session->sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
+				return sess.sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
 
 			case static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS):
-				return m_conn.m_session->sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
+				return sess.sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
 
 			case static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION):
-				return m_conn.m_session->sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
+				return sess.sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
 
 			case static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN):
 				// TODO
@@ -67,33 +74,10 @@ namespace NECRO
 			}
 		}
 
-
-		//-----------------------------------------------------------------------------------------------------
-		// Executes a SqlStatement in a try-catch block and returns a SqlResult
-		//-----------------------------------------------------------------------------------------------------
-		mysqlx::SqlResult Execute(mysqlx::SqlStatement& statement) override
-		{
-			try
-			{
-				return statement.execute();
-			}
-			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
-			{
-				std::cerr << "MySQL error: " << err.what() << std::endl;
-			}
-			catch (const std::exception& ex)  // catches standard exceptions
-			{
-				std::cerr << "Standard exception: " << ex.what() << std::endl;
-			}
-			catch (...)
-			{
-				std::cerr << "Unknown exception caught!" << std::endl;
-			}
-		}
-
 		int Close() override
 		{
-			m_conn.Close();
+			//m_conn.Close();
+			m_pool.Close();
 
 			return 0;
 		}

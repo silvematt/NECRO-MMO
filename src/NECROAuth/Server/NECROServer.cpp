@@ -41,11 +41,13 @@ namespace Auth
 		if (OpenSSLManager::ServerInit() != 0)
 			return -1;
 
+		/*
 		if (m_directdb.Init() != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 			return -2;
 		}
+		*/
 
 		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
 		{
@@ -98,7 +100,7 @@ namespace Auth
 		// Shutdown
 		LOG_OK("Shutting down NECROAuth...");
 
-		m_directdb.Close();
+		//m_directdb.Close();
 
 		m_dbworker.Stop();
 		m_dbworker.Join();
