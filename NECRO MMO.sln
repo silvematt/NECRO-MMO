@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROWorld", "src\NECROWorl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "database", "src\database\database.vcxproj", "{933DF94F-47AC-41C8-9B5E-BFB2C529962E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NECROHammer", "src\NECROHammer\NECROHammer.vcxproj", "{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{933DF94F-47AC-41C8-9B5E-BFB2C529962E}.Release|x64.Build.0 = Release|x64
 		{933DF94F-47AC-41C8-9B5E-BFB2C529962E}.Release|x86.ActiveCfg = Release|Win32
 		{933DF94F-47AC-41C8-9B5E-BFB2C529962E}.Release|x86.Build.0 = Release|Win32
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Debug|x64.ActiveCfg = Debug|x64
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Debug|x64.Build.0 = Debug|x64
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Debug|x86.ActiveCfg = Debug|Win32
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Debug|x86.Build.0 = Debug|Win32
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Release|x64.ActiveCfg = Release|x64
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Release|x64.Build.0 = Release|x64
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Release|x86.ActiveCfg = Release|Win32
+		{BDAD1F66-2FBC-4993-BFD3-2244BA8EBBEA}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
