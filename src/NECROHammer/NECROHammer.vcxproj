@@ -122,16 +122,23 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\NECROHammer\NECROHammer;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>..\..\x64\Release\shared.lib;Ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NECROHammer\NECROHammer.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NECROHammer\NECROHammer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
