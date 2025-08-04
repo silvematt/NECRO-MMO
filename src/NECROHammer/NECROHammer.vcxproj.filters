@@ -6,5 +6,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NECROHammer\NECROHammer.h" />
+    <ClInclude Include="NECROHammer\Manager\SocketManager.h" />
+    <ClInclude Include="NECROHammer\Manager\HammerSocket.h" />
   </ItemGroup>
 </Project>

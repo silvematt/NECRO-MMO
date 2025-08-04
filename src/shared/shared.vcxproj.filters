@@ -63,6 +63,7 @@
     <ClInclude Include="OpenSSL\OpenSSLManager.h">
       <Filter>OpenSSL</Filter>
     </ClInclude>
+    <ClInclude Include="Sockets\NetworkThread.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">

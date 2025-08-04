@@ -1,10 +1,12 @@
 #include "NECROHammer.h"
 
+#include "boost/asio.hpp"
+
 namespace NECRO
 {
 namespace Hammer
 {
-	Client g_client;
+	Client g_client(std::thread::hardware_concurrency());
 
 	int Client::Init()
 	{
@@ -16,11 +18,9 @@ namespace Hammer
 	void Client::Start()
 	{
 		m_isRunning = true;
-	}
 
-	void Client::Update()
-	{
-
+		m_sockManager.Start();
+		m_sockManager.Join();
 	}
 
 	void Client::Stop()

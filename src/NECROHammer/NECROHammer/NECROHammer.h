@@ -4,6 +4,8 @@
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 
+#include "SocketManager.h"
+
 namespace NECRO
 {
 namespace Hammer
@@ -11,7 +13,7 @@ namespace Hammer
 	class Client
 	{
 	public:
-		Client() : m_isRunning(false)
+		Client(uint32_t threadsCount) : m_isRunning(false), m_sockManager(threadsCount)
 		{
 
 		}
@@ -22,6 +24,8 @@ namespace Hammer
 		ConsoleLogger	m_cLogger;
 		FileLogger		m_fLogger;
 
+		SocketManager	m_sockManager;
+
 	public:
 		ConsoleLogger&		GetConsoleLogger()	{ return m_cLogger; }
 		FileLogger&			GetFileLogger()		{ return m_fLogger; }
@@ -29,7 +33,6 @@ namespace Hammer
 
 		int			Init();
 		void		Start();
-		void		Update();
 		void		Stop();
 		int			Shutdown();
 	};
