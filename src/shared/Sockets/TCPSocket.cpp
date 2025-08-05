@@ -158,7 +158,7 @@ namespace NECRO
 		if (out.GetActiveSize() == 0)
 			m_outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
 
-		// SendCallback(); needed?
+		SendCallback();
 
 		// Update pfd events
 		if (m_pfd)

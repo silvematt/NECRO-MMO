@@ -31,6 +31,7 @@ namespace NECRO
 		boost::asio::steady_timer					m_updateTimer;
 
 		std::vector<std::shared_ptr<SocketType>>	m_sockets;
+		std::atomic<int32_t>						m_socketsNumber; // tracks both m_sockets and m_queuedSockets size
 
 		std::vector<std::shared_ptr<SocketType>>	m_queuedSockets; // sockets queued up for insertion in the main m_sockets list
 		std::mutex									m_queuedSocketsMutex;
@@ -46,7 +47,7 @@ namespace NECRO
 		{
 			// Start the thread
 			m_updateTimer.expires_after(std::chrono::milliseconds(NETWORK_THREAD_UPDATE_WAIT_MILLISEC_VAL));
-			m_updateTimer.async_wait([this](boost::system::error_code const&) { Update(); });
+			m_updateTimer.async_wait([this](boost::system::error_code const& ec) { Update(); });
 
 			m_ioContext.run();
 
@@ -61,7 +62,7 @@ namespace NECRO
 				return;
 
 			m_updateTimer.expires_after(std::chrono::milliseconds(NETWORK_THREAD_UPDATE_WAIT_MILLISEC_VAL));
-			m_updateTimer.async_wait([this](boost::system::error_code const&) { Update(); });
+			m_updateTimer.async_wait([this](boost::system::error_code const& ec) { Update(); });
 
 			// Insert pending sockets
 			AddQueuedSocketsToMainList();
@@ -69,6 +70,20 @@ namespace NECRO
 			// Update the sockets
 			// for (auto& sock : m_sockets)
 			// sock->Update();
+
+			std::unique_lock lock(*m_printMutex);
+			std::cout << m_threadID << " called. " << m_socketsNumber << std::endl;
+			lock.unlock();
+		}
+
+		void AddQueuedSocketsToMainList()
+		{
+			std::lock_guard guard(m_queuedSocketsMutex);
+
+			for (std::shared_ptr<SocketType> s : m_queuedSockets)
+				m_sockets.push_back(s);
+
+			m_queuedSockets.clear();
 		}
 
 	public:
@@ -82,20 +97,16 @@ namespace NECRO
 			return 0;
 		}
 
+		void GetSocketsSize() const
+		{
+			return m_socketsNumber;
+		}
+
 		void QueueNewSocket(std::shared_ptr<SocketType> newSock)
 		{
 			std::lock_guard guard(m_queuedSocketsMutex);
 			m_queuedSockets.push_back(newSock);
-		}
-
-		void AddQueuedSocketsToMainList()
-		{
-			std::lock_guard guard(m_queuedSocketsMutex);
-
-			for (std::shared_ptr<SocketType> s : m_queuedSockets)
-				m_sockets.push_back(s);
-
-			m_queuedSockets.clear();
+			m_socketsNumber++;
 		}
 
 		void Stop()

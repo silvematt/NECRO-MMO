@@ -20,7 +20,14 @@ namespace Hammer
 		m_isRunning = true;
 
 		m_sockManager.Start();
-		m_sockManager.Join();
+	}
+
+	void Client::Update()
+	{
+		// Updating means injecting new sockets in each network thread
+		m_sockManager.Update();
+
+		m_ioContext.run();
 	}
 
 	void Client::Stop()

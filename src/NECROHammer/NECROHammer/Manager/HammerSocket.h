@@ -1,9 +1,39 @@
 #ifndef NECRO_HAMMER_SOCKET_H
 #define NECRO_HAMMER_SOCKET_H
 
+#include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
+
+using boost::asio::ip::tcp;
+using boost::asio::ssl::stream;
+using boost::asio::ssl::context;
+
 class HammerSocket
 {
+	typedef stream<tcp::socket> ssl_socket;
 
+private:
+	ssl_socket m_socket;
+
+public:
+	HammerSocket(boost::asio::io_context& io, context& ssl_ctx) : m_socket(io, ssl_ctx)
+	{
+		tcp::resolver resolver(io);
+		auto endpoints = resolver.resolve("127.0.0.1", "61531");
+
+		boost::asio::connect(m_socket.lowest_layer(), endpoints);
+		m_socket.lowest_layer().set_option(tcp::no_delay(true));
+
+		m_socket.set_verify_mode(boost::asio::ssl::verify_peer);
+		//m_socket.set_verify_callback(boost::asio::ssl::host_name_verification("host.name"));
+
+		m_socket.handshake(boost::asio::ssl::stream<tcp::socket>::client);
+
+		// Send some trash
+		char x[100];
+		x[0] = 0;
+		m_socket.write_some(boost::asio::buffer(x));
+	}
 };
 
 #endif
