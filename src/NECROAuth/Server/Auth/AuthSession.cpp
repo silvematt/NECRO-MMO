@@ -38,8 +38,10 @@ namespace Auth
             if (it == Handlers.end())
             {
                 // Discard packet, nothing we should handle
+                LOG_DEBUG("Discarding the packet.");
                 packet.Clear();
-                break;
+                return -1;
+                //break; TODO, adding some kind of tolerance may be good for messages that gets corrupted in flight
             }
 
             // Check if the current cmd matches our state
@@ -107,7 +109,7 @@ namespace Auth
         m_data.versionMinor = pcktData->versionMinor;
         m_data.versionRevision = pcktData->versionRevision;
 
-        LOG_DEBUG("Handling AuthLoginInfo for user: {}", "123");
+        LOG_DEBUG("Handling AuthLoginInfo for user: {}", m_data.username);
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         auto& dbworker = g_server.GetDBWorker();
@@ -125,8 +127,14 @@ namespace Auth
                 return false; // AuthSession is destroyed (disconnect)
             };
 
-
-            req.m_noticeFunc = []() {return g_server.GetSocketManager().WakeUp(); };
+            req.m_cancelToken = weakSelf;
+            req.m_noticeFunc = [weakSelf]() 
+            {
+                if (auto self = weakSelf.lock()) 
+                {
+                    g_server.GetSocketManager().WakeUp();
+                }
+            };
             dbworker.Enqueue(std::move(req));
         }
 
@@ -146,6 +154,9 @@ namespace Auth
         if (!row)
         {
             LOG_INFO("User tried to login with an username that doesn't exist.");
+
+            m_closeAfterSend = true;
+
             packet << uint8_t(AuthResults::FAILED_UNKNOWN_ACCOUNT);
         }
         else
@@ -208,7 +219,14 @@ namespace Auth
                 return false; // AuthSession is destroyed (disconnect)
             };
 
-            req.m_noticeFunc = []() {return g_server.GetSocketManager().WakeUp(); };
+            req.m_cancelToken = weakSelf;
+            req.m_noticeFunc = [weakSelf]()
+                {
+                    if (auto self = weakSelf.lock())
+                    {
+                        g_server.GetSocketManager().WakeUp();
+                    }
+                };
             dbworker.Enqueue(std::move(req));
         }
 
@@ -245,6 +263,7 @@ namespace Auth
             }
 
             packet << uint8_t(LoginProofResults::FAILED);
+            m_closeAfterSend = true;
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
         }
         else
@@ -316,6 +335,15 @@ namespace Auth
         //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
 
         return true;
+    }
+
+    void AuthSession::SendCallback()
+    {
+        if (m_closeAfterSend && m_outQueue.size() == 0)
+        {
+            LOG_DEBUG("Send Callback called on m_closeAfterSend.");
+            closesocket(GetSocketFD()); // TODO, this doesn't work correctly. Client should receive the packet and then the termination signal, but it doesn't happen as of now
+        }
     }
 
 }

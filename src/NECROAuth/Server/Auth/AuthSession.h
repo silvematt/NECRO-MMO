@@ -50,9 +50,10 @@ namespace Auth
     {
     private:
         AccountData m_data;
+        bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
 
     public:
-        AuthSession(sock_t socket) : TCPSocket(socket), m_status(SocketStatus::GATHER_INFO) 
+        AuthSession(sock_t socket) : TCPSocket(socket), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
         {
         }
 
@@ -66,6 +67,7 @@ namespace Auth
         }
 
         int ReadCallback() override;
+        void SendCallback() override;
 
         // Handlers functions
         bool HandleAuthLoginGatherInfoPacket();

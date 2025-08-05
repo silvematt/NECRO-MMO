@@ -13,6 +13,7 @@ namespace NECRO
 namespace Auth
 {
 	inline constexpr uint8_t SOCK_MANAGER_RESERVED_FDS = 2;
+	inline constexpr uint16_t SOCK_MANAGER_SERVER_PORT = 61531;
 
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
@@ -40,6 +41,7 @@ namespace Auth
 		TCPSocket					m_wakeListen;
 		std::unique_ptr<TCPSocket>	m_wakeRead;
 		std::mutex					m_writeMutex;
+		std::atomic<bool>			m_writePending;
 		TCPSocket					m_wakeWrite;
 
 		pollfd SetupWakeup();

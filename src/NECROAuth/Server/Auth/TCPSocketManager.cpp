@@ -16,7 +16,7 @@ namespace Auth
 	//-----------------------------------------------------------------------------------------------------
 	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family), m_wakeListen(_family), m_wakeWrite(_family)
 	{
-		uint16_t inPort = 61531;
+		uint16_t inPort = SOCK_MANAGER_SERVER_PORT;
 		SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
 		int flag = 1;
 
@@ -78,6 +78,8 @@ namespace Auth
 		wakefd.fd = m_wakeRead->GetSocketFD();
 		wakefd.events = POLLIN;
 		wakefd.revents = 0;
+
+		m_writePending = false;
 
 		return wakefd;
 	}
@@ -231,6 +233,7 @@ namespace Auth
 						r.m_callback(r.m_sqlRes);
 				}
 
+				m_writePending = false;
 				LOG_DEBUG("Leaving wake up logic!");
 			}
 		}
@@ -318,6 +321,13 @@ namespace Auth
 				m_toClose[i]->Close();     // Close FD & free SSL
 				toRemove.push_back(i);
 			}
+			else // this skips the TLSShutdown (TODO: if connection wasn't meaningufl, we can abrupt disconnect, while if the client was legit, we may wait for the TLS shutdown)
+			{
+				LOG_WARNING("TLSShutdown error idx on socket {}. Shutting it down and removing it...", m_toClose[i]->GetSocketFD());
+				m_toClose[i]->Shutdown();  // Shutdown
+				m_toClose[i]->Close();     // Close FD & free SSL
+				toRemove.push_back(i);
+			}
 		}
 
 		if (toRemove.size() > 0)
@@ -339,9 +349,13 @@ namespace Auth
 	{
 		std::lock_guard guard(m_writeMutex);
 
-		LOG_DEBUG("TCPSocketManager::WakeUp() called!");
-		char dummy = 0;
-		m_wakeWrite.SysSend(&dummy, sizeof(dummy));
+		if (!m_writePending)
+		{
+			LOG_DEBUG("TCPSocketManager::WakeUp() called!");
+			char dummy = 0;
+			m_wakeWrite.SysSend(&dummy, sizeof(dummy));
+			m_writePending = true;
+		}
 	}
 
 }
