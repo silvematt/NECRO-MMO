@@ -152,46 +152,49 @@ namespace NECRO
 
 					lock.unlock();
 
-					// Do stuff
-					try
+					if (!req.m_cancelToken.expired())
 					{
-						// Get a session, prepare the statement and execute it
-						mysqlx::Session sess = m_db->m_pool.m_client->getSession();
-						mysqlx::SqlStatement stmt = m_db->Prepare(sess, req.m_enumVal);
-						for (auto& param : req.m_bindParams)
-							stmt.bind(param);
-
-						req.m_sqlRes = stmt.execute();
-
-						// If the request requires a callback, set things up
-						if (!req.m_fireAndForget)
+						// Do stuff
+						try
 						{
-							std::unique_lock<std::mutex> resGuard(m_respMutex);
+							// Get a session, prepare the statement and execute it
+							mysqlx::Session sess = m_db->m_pool.m_client->getSession();
+							mysqlx::SqlStatement stmt = m_db->Prepare(sess, req.m_enumVal);
+							for (auto& param : req.m_bindParams)
+								stmt.bind(param);
 
-							// Preserve the life of the m_noticeFunc in this scope before it gets moved
-							std::function<void()> func = std::move(req.m_noticeFunc);
-							m_respQueue.push(std::move(req));
+							req.m_sqlRes = stmt.execute();
 
-							resGuard.unlock();
+							// If the request requires a callback, set things up
+							if (!req.m_fireAndForget)
+							{
+								std::unique_lock<std::mutex> resGuard(m_respMutex);
 
-							// Call notice function if set
-							if (func)
-								func();
+								// Preserve the life of the m_noticeFunc in this scope before it gets moved
+								std::function<void()> func = std::move(req.m_noticeFunc);
+								m_respQueue.push(std::move(req));
+
+								resGuard.unlock();
+
+								// Call notice function if set
+								if (func)
+									func();
+							}
 						}
-					}
-					// TODO figure out what to do with failed requests, we can have a retry-queue and for requests with callback
-					// we may inform/timeout the client if enough tries fail
-					catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
-					{
-						std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
-					}
-					catch (const std::exception& ex)  // catches standard exceptions
-					{
-						std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
-					}
-					catch (...)
-					{
-						std::cerr << "DBWorker Unknown exception caught!" << std::endl;
+						// TODO figure out what to do with failed requests, we can have a retry-queue and for requests with callback
+						// we may inform/timeout the client if enough tries fail
+						catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
+						{
+							std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
+						}
+						catch (const std::exception& ex)  // catches standard exceptions
+						{
+							std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
+						}
+						catch (...)
+						{
+							std::cerr << "DBWorker Unknown exception caught!" << std::endl;
+						}
 					}
 				}
 			}
