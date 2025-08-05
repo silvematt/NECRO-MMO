@@ -5,6 +5,7 @@
 #include <AuthCodes.h>
 #include <unordered_map>
 #include <array>
+#include <chrono>
 
 #include <mysqlx/xdevapi.h>
 
@@ -52,6 +53,9 @@ namespace Auth
         AccountData m_data;
         bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
 
+
+        std::chrono::steady_clock::time_point m_lastActivity;
+
     public:
         AuthSession(sock_t socket) : TCPSocket(socket), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
         {
@@ -64,6 +68,19 @@ namespace Auth
         AccountData& GetAccountData()
         {
             return m_data;
+        }
+
+        //----------------------------------------------------------------------------------------------------
+        // Updates the internal time_point to now()
+        //----------------------------------------------------------------------------------------------------
+        void UpdateLastActivity()
+        {
+            m_lastActivity = std::chrono::steady_clock::now();
+        }
+
+        std::chrono::steady_clock::time_point GetLastActivity()
+        {
+            return m_lastActivity;
         }
 
         int ReadCallback() override;

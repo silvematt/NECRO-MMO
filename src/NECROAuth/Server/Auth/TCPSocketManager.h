@@ -15,6 +15,9 @@ namespace Auth
 	inline constexpr uint8_t SOCK_MANAGER_RESERVED_FDS = 2;
 	inline constexpr uint16_t SOCK_MANAGER_SERVER_PORT = 61531;
 
+	// The amout of time (in ms) that if passed will timeout the socket if TLS connection succeedes and no packet arrives
+	inline constexpr uint32_t SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 5000;
+
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
 	//-----------------------------------------------------------------------------------------------------

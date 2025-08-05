@@ -171,6 +171,7 @@ namespace Auth
 
 							// Initialize status
 							inSock->m_status = SocketStatus::GATHER_INFO;
+							inSock->UpdateLastActivity();
 							m_list.push_back(inSock); // save it in the active list
 
 							// Add the new connection to the pfds
@@ -241,6 +242,9 @@ namespace Auth
 		// Vector of indexes of invalid sockets we'll remove after the client check
 		std::vector<int> toRemove;
 
+		// Check for expired sockets
+		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+
 		// Check for clients
 		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_poll_fds.size(); i++)
 		{
@@ -255,6 +259,7 @@ namespace Auth
 				if (m_poll_fds[i].revents & POLLOUT)
 				{
 					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
+					m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
 
 					// If send failed
 					if (r < 0)
@@ -268,6 +273,7 @@ namespace Auth
 				if (m_poll_fds[i].revents & POLLIN)
 				{
 					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
+					m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
 
 					// If receive failed, 
 					if (r < 0)
@@ -276,6 +282,13 @@ namespace Auth
 						toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
 						continue;
 					}
+				}
+
+				if (now - m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetLastActivity() > std::chrono::milliseconds(SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS))
+				{
+					// Timeout the client
+					LOG_INFO("Will timeout a client for idling.");
+					toRemove.push_back(i);
 				}
 			}
 		}
