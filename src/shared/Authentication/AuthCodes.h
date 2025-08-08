@@ -8,7 +8,8 @@ namespace Auth
     // Status of the sockets during communication
     enum class SocketStatus
     {
-        GATHER_INFO = 0,
+        HANDSHAKING = 0,
+        GATHER_INFO,
         LOGIN_ATTEMPT,
         AUTHED,
         CLOSED
@@ -33,8 +34,7 @@ namespace Auth
         FAILED_UNKNOWN_ACCOUNT = 0x01,
         FAILED_ACCOUNT_BANNED = 0x02,
         FAILED_WRONG_PASSWORD = 0x03,
-        FAILED_WRONG_CLIENT_VERSION = 0x04,
-        FAILED_USERNAME_IN_USE = 0x05		// before we implement database and we'll just have username uniqueness per session
+        FAILED_WRONG_CLIENT_VERSION = 0x04
     };
 
 
@@ -46,13 +46,13 @@ namespace Auth
 
 
     // Packets
-#pragma pack(push, 1)
+    #pragma pack(push, 1)
 
-// -------------------------------------------------------------------------------------------------------
-// When defining packets: 
-// 1) S prefix means (for)Server, so it's a packet that the server will receive and the client will send
-// 2) C prefix means (for)Client, so it's a packet that the client will receive and the server will send
-// -------------------------------------------------------------------------------------------------------
+    // -------------------------------------------------------------------------------------------------------
+    // When defining packets: 
+    // 1) S prefix means (for)Server, so it's a packet that the server will receive and the client will send
+    // 2) C prefix means (for)Client, so it's a packet that the client will receive and the server will send
+    // -------------------------------------------------------------------------------------------------------
 
     struct SPacketAuthLoginGatherInfo
     {

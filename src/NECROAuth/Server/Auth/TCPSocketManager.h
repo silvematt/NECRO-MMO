@@ -17,6 +17,7 @@ namespace Auth
 
 	// The amout of time (in ms) that if passed will timeout the socket if TLS connection succeedes and no packet arrives
 	inline constexpr uint32_t SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 5000;
+	inline constexpr uint32_t SOCKET_MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS = 5000;
 
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections

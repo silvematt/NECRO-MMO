@@ -54,6 +54,7 @@ namespace Auth
         bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
 
 
+        std::chrono::steady_clock::time_point m_handshakeStartTime;
         std::chrono::steady_clock::time_point m_lastActivity;
 
     public:
@@ -78,9 +79,19 @@ namespace Auth
             m_lastActivity = std::chrono::steady_clock::now();
         }
 
+        void SetHandshakeStartTime()
+        {
+            m_handshakeStartTime = std::chrono::steady_clock::now();
+        }
+
         std::chrono::steady_clock::time_point GetLastActivity()
         {
             return m_lastActivity;
+        }
+
+        std::chrono::steady_clock::time_point GetHandshakeStartTime()
+        {
+            return m_handshakeStartTime;
         }
 
         int ReadCallback() override;

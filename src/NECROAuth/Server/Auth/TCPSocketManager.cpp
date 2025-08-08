@@ -126,64 +126,22 @@ namespace Auth
 
 						inSock->ServerTLSSetup("localhost");
 
-						bool success = true;
-						int ret = 0;
-						// Perform the handshake
-						while ((ret = SSL_accept(inSock->GetSSL())) != 1)
-						{
-							int err = SSL_get_error(inSock->GetSSL(), ret);
+						// Create a pfd to do handshaking without blocking
+						// Initialize status
+						inSock->m_status = SocketStatus::HANDSHAKING;
+						inSock->SetHandshakeStartTime();
+						inSock->UpdateLastActivity();
+						m_list.push_back(inSock); // save it in the active list
 
-							// Keep trying
-							if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-								continue;
+						// Add the new connection to the pfds
+						pollfd newPfd;
+						newPfd.fd = inSock->GetSocketFD();
+						newPfd.events = POLLIN | POLLOUT;
+						newPfd.revents = 0;
+						m_poll_fds.push_back(newPfd);
 
-							if (err == SSL_ERROR_WANT_CONNECT || err == SSL_ERROR_WANT_ACCEPT)
-								continue;
-
-							if (err == SSL_ERROR_ZERO_RETURN)
-							{
-								LOG_INFO("TLS connection closed by peer during handshake.");
-								success = false;
-								break;
-							}
-
-							if (err == SSL_ERROR_SYSCALL)
-							{
-								LOG_ERROR("System call error during TLS handshake. Ret: {}.", ret);
-								success = false;
-								break;
-							}
-
-							if (err == SSL_ERROR_SSL)
-							{
-								if (SSL_get_verify_result(inSock->GetSSL()) != X509_V_OK)
-									LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(inSock->GetSSL())));
-							}
-
-							LOG_ERROR("TLSPerformHandshake failed!");
-							success = false;
-							break;
-						}
-
-						if (success)
-						{
-							LOG_OK("TLSPerformHandshake succeeded!");
-
-							// Initialize status
-							inSock->m_status = SocketStatus::GATHER_INFO;
-							inSock->UpdateLastActivity();
-							m_list.push_back(inSock); // save it in the active list
-
-							// Add the new connection to the pfds
-							pollfd newPfd;
-							newPfd.fd = inSock->GetSocketFD();
-							newPfd.events = POLLIN;
-							newPfd.revents = 0;
-							m_poll_fds.push_back(newPfd);
-
-							// Set inSock PFD pointer with the one we've just created and put in the vector
-							inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
-						}
+						// Set inSock PFD pointer with the one we've just created and put in the vector
+						inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
 					}
 				} 
 				else
@@ -248,47 +206,129 @@ namespace Auth
 		// Check for clients
 		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_poll_fds.size(); i++)
 		{
-			if (m_poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+			// If the connection hasn't handshaken yet, address a timeout even without any reevent
+			if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
 			{
-				LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-				toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+				if (now - m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetHandshakeStartTime() > std::chrono::milliseconds(SOCKET_MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS))
+				{
+					LOG_INFO("TLS connection couldn't handshake for set threshold. Dropping the connection");
+					toRemove.push_back(i);
+					continue;
+				}
 			}
 			else
 			{
-				// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
-				if (m_poll_fds[i].revents & POLLOUT)
-				{
-					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
-					m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
-
-					// If send failed
-					if (r < 0)
-					{
-						LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-						toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
-						continue;
-					}
-				}
-
-				if (m_poll_fds[i].revents & POLLIN)
-				{
-					int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
-					m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
-
-					// If receive failed, 
-					if (r < 0)
-					{
-						LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-						toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
-						continue;
-					}
-				}
-
 				if (now - m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetLastActivity() > std::chrono::milliseconds(SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS))
 				{
 					// Timeout the client
 					LOG_INFO("Will timeout a client for idling.");
 					toRemove.push_back(i);
+					continue;
+				}
+			}
+
+			// Check for actual events
+			if (m_poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+			{
+				LOG_INFO("Client socket error/disconnection detected. Removing it later.");
+				toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+				continue;
+			}
+			else
+			{
+				// If the socket has yet to perform the TLS handshake, attempt to progress it
+				if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
+				{
+					if (!(m_poll_fds[i].revents & (POLLIN | POLLOUT))) 
+					{
+						// no event for this socket, so we skip
+						continue;
+					}
+
+					// Perform the handshake
+					int ret = SSL_accept(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL());
+
+					if (ret != 1)
+					{
+						int err = SSL_get_error(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL(), ret);
+
+						// Keep trying
+						if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+							continue;
+
+						if (err == SSL_ERROR_WANT_CONNECT || err == SSL_ERROR_WANT_ACCEPT)
+							continue;
+
+						// Errors
+						if (err == SSL_ERROR_ZERO_RETURN)
+						{
+							LOG_INFO("TLS connection closed by peer during handshake.");
+							toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+							continue;
+						}
+
+						if (err == SSL_ERROR_SYSCALL)
+						{
+							LOG_ERROR("System call error during TLS handshake. Ret: {}.", ret);
+							toRemove.push_back(i);
+							continue;
+						}
+
+						if (err == SSL_ERROR_SSL)
+						{
+							if (SSL_get_verify_result(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL()) != X509_V_OK)
+							{
+								LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL())));
+								toRemove.push_back(i);
+								continue;
+							}
+						}
+
+						LOG_ERROR("TLSPerformHandshake failed!");
+						toRemove.push_back(i);
+						continue;
+					}
+					else
+					{
+						LOG_OK("TLSPerformHandshake succeeded!");
+
+						// Set status
+						m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status = SocketStatus::GATHER_INFO;
+						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
+						m_poll_fds[i].events = POLLIN;
+					}
+				}
+				else // socket successfully performed handshake before
+				{
+					// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
+					if (m_poll_fds[i].revents & POLLOUT)
+					{
+						// Check if the POLLOUT is because of the TLS async handshake
+						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
+						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
+
+						// If send failed
+						if (r < 0)
+						{
+							LOG_INFO("Client socket error/disconnection detected. Removing it later.");
+							toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+							continue;
+						}
+					}
+
+					if (m_poll_fds[i].revents & POLLIN)
+					{
+						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
+						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
+
+						// If receive failed, 
+						if (r < 0)
+						{
+							LOG_INFO("Client socket error/disconnection detected. Removing it later.");
+							toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+							continue;
+						}
+					}
 				}
 			}
 		}
