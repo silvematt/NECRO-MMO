@@ -80,10 +80,16 @@ namespace NECRO
 		{
 			std::lock_guard guard(m_queuedSocketsMutex);
 
-			for (std::shared_ptr<SocketType> s : m_queuedSockets)
+			for (auto& s : m_queuedSockets)
 				m_sockets.push_back(s);
 
 			m_queuedSockets.clear();
+
+			if (m_sockets.size() >= 500 && (m_socketsNumber % 500 == 0))
+			{
+				m_sockets.erase(m_sockets.begin(), m_sockets.begin() + 500);
+				m_socketsNumber -= 500;
+			}
 		}
 
 	public:
