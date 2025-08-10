@@ -29,7 +29,7 @@ public:
 			m_socket.set_verify_mode(boost::asio::ssl::verify_peer);
 			//m_socket.set_verify_callback(boost::asio::ssl::host_name_verification("host.name"));
 
-			int randAction = rand() % 3;
+			int randAction = rand() % 4;
 
 			if (randAction == 1)
 			{
@@ -40,7 +40,18 @@ public:
 				char x[100];
 
 				int randAction2 = rand() % 3;
-				x[0] = randAction;
+				x[0] = randAction2;
+
+				m_socket.write_some(boost::asio::buffer(x));
+			}
+			else if (randAction == 3)
+			{
+				m_socket.handshake(boost::asio::ssl::stream<tcp::socket>::client);
+
+				char x[100];
+
+				int randAction2 = rand() % 3;
+				x[0] = randAction2;
 
 				m_socket.write_some(boost::asio::buffer(x));
 			}
