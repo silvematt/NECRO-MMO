@@ -36,11 +36,6 @@ namespace Auth
 		std::vector<std::shared_ptr<AuthSession>> m_list;
 		std::vector<std::shared_ptr<AuthSession>> m_toClose;
 
-		// m_listener has index 0
-		// m_WakeRead has index 1
-		// Clients go from SOCK_MANAGER_RESERVED_FDS to n
-		std::vector<pollfd> m_poll_fds;
-
 		// WakeUp socket loop
 		TCPSocket					m_wakeListen;
 		std::unique_ptr<TCPSocket>	m_wakeRead;
@@ -48,7 +43,7 @@ namespace Auth
 		std::atomic<bool>			m_writePending;
 		TCPSocket					m_wakeWrite;
 
-		pollfd SetupWakeup();
+		void SetupWakeup();
 
 	public:
 		int Poll();

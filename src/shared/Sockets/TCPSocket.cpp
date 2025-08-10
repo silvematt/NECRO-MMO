@@ -108,8 +108,7 @@ namespace NECRO
 		m_outQueue.push(std::move(pckt));
 
 		// Update pfd events
-		if (m_pfd)
-			m_pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
+		m_pfd.events = POLLIN | (HasPendingData() ? POLLOUT : 0);
 	}
 
 	int TCPSocket::Send()
@@ -161,8 +160,7 @@ namespace NECRO
 		SendCallback();
 
 		// Update pfd events
-		if (m_pfd)
-			m_pfd->events = POLLIN | (HasPendingData() ? POLLOUT : 0);
+		m_pfd.events = POLLIN | (HasPendingData() ? POLLOUT : 0);
 
 		return bytesSent;
 	}

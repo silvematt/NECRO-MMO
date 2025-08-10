@@ -70,13 +70,11 @@ namespace NECRO
 
 		TLSShutdownState shutdownState = TLSShutdownState::PHASE_1;
 
-		// Used for dynamic POLLIN | POLLOUT behavior, save the pfd and we'll update the events to look for in base of the content of the outQueue
+	public:
 		// If the outqueue is empty, only poll for POLLIN events, otherwise, also POLLOUT events
 		// This is better than the callback Send() approach because even if a Send fails because the socket was not writable at the time of the callback, we'll still try to send the packets later
-		pollfd* m_pfd;
+		pollfd m_pfd;
 
-
-	public:
 		TCPSocket(SocketAddressesFamily family);
 		TCPSocket(sock_t inSocket);
 
@@ -153,11 +151,6 @@ namespace NECRO
 		uint16_t GetPort()
 		{
 			return m_remotePort;
-		}
-
-		void SetPfd(pollfd* fd)
-		{
-			m_pfd = fd;
 		}
 
 		bool HasPendingData() const

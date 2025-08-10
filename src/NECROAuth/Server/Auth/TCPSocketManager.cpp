@@ -27,25 +27,19 @@ namespace Auth
 		m_listener.SetBlockingEnabled(false);
 		m_listener.Listen();
 
-		// Reserve m_poll_fds space for max amount of clients
-		// NEVER GO FURHTER! If an additional element is pushed back, alld the Pdfs pointers in the AuthSession will be broken
-		m_poll_fds.reserve(NECRO::Auth::MAX_CLIENTS_CONNECTED);
 
 		// This is not strictly needed, but it avoids reallocations for the list vector
 		m_list.reserve(NECRO::Auth::MAX_CLIENTS_CONNECTED);
 
 		// Initialize the pollfds vector
-		pollfd pfd;
-		pfd.fd = m_listener.GetSocketFD();
-		pfd.events = POLLIN;
-		pfd.revents = 0;
-		m_poll_fds.push_back(pfd);
+		m_listener.m_pfd.fd = m_listener.GetSocketFD();
+		m_listener.m_pfd.events = POLLIN;
+		m_listener.m_pfd.revents = 0;
 
-		pollfd wakefd = SetupWakeup();
-		m_poll_fds.push_back(wakefd);
+		SetupWakeup();
 	}
 
-	pollfd TCPSocketManager::SetupWakeup()
+	void TCPSocketManager::SetupWakeup()
 	{
 		// Make the wake up read listen
 		int flag = 1;
@@ -74,23 +68,32 @@ namespace Auth
 		m_wakeListen.SetBlockingEnabled(false);
 		m_wakeListen.SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
 
-		pollfd wakefd;
-		wakefd.fd = m_wakeRead->GetSocketFD();
-		wakefd.events = POLLIN;
-		wakefd.revents = 0;
+		m_wakeRead->m_pfd.fd = m_wakeRead->GetSocketFD();
+		m_wakeRead->m_pfd.events = POLLIN;
+		m_wakeRead->m_pfd.revents = 0;
 
 		m_writePending = false;
-
-		return wakefd;
 	}
 
 	int TCPSocketManager::Poll()
 	{
+		// Build up the poll_fds vector
+		// Remember that these are COPIES of the actual pfd, so changes to members such as m_pollList[i].events will NOT persist
+		// m_listener has index 0
+		// m_WakeRead has index 1
+		// Clients go from SOCK_MANAGER_RESERVED_FDS to n
+		std::vector<pollfd> m_pollList;
+		m_pollList.push_back(m_listener.m_pfd);
+		m_pollList.push_back(m_wakeRead->m_pfd);
+
+		for (auto& s : m_list)
+			m_pollList.push_back(s->m_pfd);
+
 		static int timeout = -1;	// wait forever until at least one socket has an event
 
 		LOG_DEBUG("Polling {}", m_list.size());
 
-		int res = WSAPoll(m_poll_fds.data(), m_poll_fds.size(), timeout);
+		int res = WSAPoll(m_pollList.data(), m_pollList.size(), timeout);
 
 		// Check for errors
 		if (res < 0)
@@ -106,22 +109,26 @@ namespace Auth
 		}
 
 		// Check for the listener (index 0)
-		if (m_poll_fds[0].revents != 0)
+		if (m_pollList[0].revents != 0)
 		{
-			if (m_poll_fds[0].revents & (POLLERR | POLLHUP | POLLNVAL))
+			if (m_pollList[0].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				LOG_ERROR("Listener encountered an error.");
 				return -1;
 			}
 			// If there's a reading event for the listener socket, it's a new connection
-			else if (m_poll_fds[0].revents & POLLIN)
+			else if (m_pollList[0].revents & POLLIN)
 			{
 				// Check if there's space
-				if (m_poll_fds.size() < NECRO::Auth::MAX_CLIENTS_CONNECTED)
+				if (m_list.size() < NECRO::Auth::MAX_CLIENTS_CONNECTED)
 				{
 					SocketAddress otherAddr;
 					if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 					{
+						// TODO, setup IP-based spam prevention
+						// Save the connections attempt in an unordered map <ip, numConnection> and if it exceedes a threshold immediately drop the connection
+						// The list should be cleared every once in a while
+
 						LOG_INFO("New connection! Setting up TLS and handshaking...");
 
 						inSock->ServerTLSSetup("localhost");
@@ -134,16 +141,14 @@ namespace Auth
 						m_list.push_back(inSock); // save it in the active list
 
 						// Add the new connection to the pfds
-						pollfd newPfd;
-						newPfd.fd = inSock->GetSocketFD();
-						newPfd.events = POLLIN | POLLOUT;
-						newPfd.revents = 0;
-						m_poll_fds.push_back(newPfd);
-
-						// Set inSock PFD pointer with the one we've just created and put in the vector
-						inSock->SetPfd(&m_poll_fds[m_poll_fds.size() - 1]);
+						// TODO, instead of attempting to TLS handshake with POLLOUT events for every socket, let's try to set a global poll timeout and we process TLS handshakes there
+						// POLLOUT check for many sockets could be actually slower
+						inSock->m_pfd.fd = inSock->GetSocketFD();
+						inSock->m_pfd.events = POLLIN | POLLOUT;
+						inSock->m_pfd.revents = 0;
+						m_pollList.push_back(inSock->m_pfd);
 					}
-				} 
+				}
 				else
 				{
 					// if max_client_connected, kick the new client
@@ -159,21 +164,21 @@ namespace Auth
 		}
 
 		// Check for WakeUp from DBWorker
-		if (m_poll_fds[1].revents != 0)
+		if (m_pollList[1].revents != 0)
 		{
-			if (m_poll_fds[1].revents & (POLLERR | POLLHUP | POLLNVAL))
+			if (m_pollList[1].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				LOG_ERROR("WakeUp encountered an error.");
 				// TODO handle errors
 				// May need to re-do the loopback 
 				return -1;
 			}
-			else if (m_poll_fds[1].revents & POLLIN)
+			else if (m_pollList[1].revents & POLLIN)
 			{
 				// We gotten waken up by the DBWorker
 
 				// Consume what was sent
-				char buf[128];
+				static char buf[128];
 				m_wakeRead->SysReceive(buf, sizeof(buf));
 				// TODO handle errors on receive as well
 				// May need to re-do the loopback 
@@ -188,7 +193,7 @@ namespace Auth
 					LOG_DEBUG("Executing a callback!");
 					DBRequest r = std::move(requests.front());
 					requests.pop();
-					if(r.m_callback)
+					if (r.m_callback)
 						r.m_callback(r.m_sqlRes);
 				}
 
@@ -204,7 +209,7 @@ namespace Auth
 		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 		// Check for clients
-		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_poll_fds.size(); i++)
+		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_pollList.size(); i++)
 		{
 			// If the connection hasn't handshaken yet, address a timeout even without any reevent
 			if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
@@ -228,10 +233,10 @@ namespace Auth
 			}
 
 			// Check for actual events
-			if (m_poll_fds[i].revents & (POLLERR | POLLHUP | POLLNVAL))
+			if (m_pollList[i].revents & (POLLERR | POLLHUP | POLLNVAL))
 			{
 				LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-				toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+				toRemove.push_back(i); // i is the fds index, but in connection list it's i-SOCK_MANAGER_RESERVED_FDS
 				continue;
 			}
 			else
@@ -239,7 +244,7 @@ namespace Auth
 				// If the socket has yet to perform the TLS handshake, attempt to progress it
 				if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
 				{
-					if (!(m_poll_fds[i].revents & (POLLIN | POLLOUT))) 
+					if (!(m_pollList[i].revents & (POLLIN | POLLOUT)))
 					{
 						// no event for this socket, so we skip
 						continue;
@@ -295,13 +300,14 @@ namespace Auth
 						// Set status
 						m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status = SocketStatus::GATHER_INFO;
 						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
-						m_poll_fds[i].events = POLLIN;
+						m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_pfd.events = POLLIN;
+						m_pollList[i].events = POLLIN;
 					}
 				}
 				else // socket successfully performed handshake before
 				{
 					// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
-					if (m_poll_fds[i].revents & POLLOUT)
+					if (m_pollList[i].revents & POLLOUT)
 					{
 						// Check if the POLLOUT is because of the TLS async handshake
 						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
@@ -311,12 +317,12 @@ namespace Auth
 						if (r < 0)
 						{
 							LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-							toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+							toRemove.push_back(i); // i is the fds index, but in connection list it's i-SOCK_MANAGER_RESERVED_FDS
 							continue;
 						}
 					}
 
-					if (m_poll_fds[i].revents & POLLIN)
+					if (m_pollList[i].revents & POLLIN)
 					{
 						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
 						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
@@ -325,7 +331,7 @@ namespace Auth
 						if (r < 0)
 						{
 							LOG_INFO("Client socket error/disconnection detected. Removing it later.");
-							toRemove.push_back(i); // i is the fds index, but in connection list it's i-1
+							toRemove.push_back(i); // i is the fds index, but in connection list it's i-SOCK_MANAGER_RESERVED_FDS
 							continue;
 						}
 					}
@@ -335,21 +341,12 @@ namespace Auth
 
 		if (toRemove.size() > 0)
 		{
-			// Remove socket from list and fds, in reverse order to avoid index shift
 			std::sort(toRemove.begin(), toRemove.end(), std::greater<int>());
+
 			for (int idx : toRemove)
 			{
 				m_toClose.push_back(m_list[idx - SOCK_MANAGER_RESERVED_FDS]); // m_list contains shared_pointers, so it's ok to not std::move
-
-				// Swap the element that we want to delete with the item at the back of the vector
-				// Then, we make sure to update the Pfd of the element that was swapped and doesn't have to be deleted
-				std::swap(m_poll_fds[idx], m_poll_fds.back());
-				std::swap(m_list[idx - SOCK_MANAGER_RESERVED_FDS], m_list.back());
-
-				m_list[idx - SOCK_MANAGER_RESERVED_FDS]->SetPfd(&m_poll_fds[idx]);
-
-				m_poll_fds.pop_back();
-				m_list.pop_back();
+				m_list.erase(m_list.begin() + (idx - SOCK_MANAGER_RESERVED_FDS));
 			}
 		}
 		toRemove.clear();
@@ -406,8 +403,12 @@ namespace Auth
 		{
 			LOG_DEBUG("TCPSocketManager::WakeUp() called!");
 			char dummy = 0;
-			m_wakeWrite.SysSend(&dummy, sizeof(dummy));
-			m_writePending = true;
+
+			// TODO This can be handled better, if SysSend returns EWOULDBLOCK we should attempt to re-send or make the m_wakeWrite block the main thread
+			int res = m_wakeWrite.SysSend(&dummy, sizeof(dummy));
+
+			if(res >= 0)
+				m_writePending = true;
 		}
 	}
 
