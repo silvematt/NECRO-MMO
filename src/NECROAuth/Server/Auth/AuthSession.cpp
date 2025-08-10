@@ -305,7 +305,7 @@ namespace Auth
 
             // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
             // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
-            // TODO transaction
+            // TODO transaction or new callback
             {
                 DBRequest req(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), true);
                 req.m_bindParams.push_back(m_data.accountID);

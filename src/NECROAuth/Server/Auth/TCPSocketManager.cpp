@@ -16,7 +16,7 @@ namespace Auth
 	//-----------------------------------------------------------------------------------------------------
 	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family), m_wakeListen(_family), m_wakeWrite(_family)
 	{
-		uint16_t inPort = SOCK_MANAGER_SERVER_PORT;
+		uint16_t inPort = MANAGER_SERVER_PORT;
 		SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
 		int flag = 1;
 
@@ -132,6 +132,7 @@ namespace Auth
 						auto now = std::chrono::steady_clock::now();
 
 						// Clean old IPs beyond time window
+						// TODO instead of checking every new connection attempt, we can wait a bit longer 
 						for(auto it = m_ipRequestMap.begin(); it != m_ipRequestMap.end();)
 						{
 							if (now - it->second.lastUpdate > std::chrono::minutes(CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN))
@@ -213,14 +214,12 @@ namespace Auth
 
 				// Consume what was sent
 				static char buf[128];
-				m_wakeRead->SysReceive(buf, sizeof(buf));
+				int res = m_wakeRead->SysReceive(buf, sizeof(buf));
 				// TODO handle errors on receive as well
 				// May need to re-do the loopback 
 
-				LOG_DEBUG("Waken up!!! Acquiring mutex and response queue....");
 				// Execute the callbacks
 				std::queue<DBRequest> requests = g_server.GetDBWorker().GetResponseQueue();
-				LOG_DEBUG("Response Queue acquired!");
 
 				while (requests.size() > 0)
 				{
@@ -232,7 +231,6 @@ namespace Auth
 				}
 
 				m_writePending = false;
-				LOG_DEBUG("Leaving wake up logic!");
 			}
 		}
 
@@ -243,12 +241,12 @@ namespace Auth
 		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 		// Check for clients
-		for (size_t i = SOCK_MANAGER_RESERVED_FDS; i < m_pollList.size(); i++)
+		for (size_t i = MANAGER_RESERVED_FDS; i < m_pollList.size(); i++)
 		{
 			// If the connection hasn't handshaken yet, address a timeout even without any reevent
-			if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
+			if (m_list[i - MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
 			{
-				if (now - m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetHandshakeStartTime() > std::chrono::milliseconds(SOCKET_MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS))
+				if (now - m_list[i - MANAGER_RESERVED_FDS]->GetHandshakeStartTime() > std::chrono::milliseconds(MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS))
 				{
 					LOG_INFO("TLS connection couldn't handshake for set threshold. Dropping the connection");
 					toRemove.push_back(i);
@@ -257,7 +255,7 @@ namespace Auth
 			}
 			else
 			{
-				if (now - m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetLastActivity() > std::chrono::milliseconds(SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS))
+				if (now - m_list[i - MANAGER_RESERVED_FDS]->GetLastActivity() > std::chrono::milliseconds(MANAGER_POST_TLS_IDLE_TIMEOUT_MS))
 				{
 					// Timeout the client
 					LOG_INFO("Will timeout a client for idling.");
@@ -276,7 +274,7 @@ namespace Auth
 			else
 			{
 				// If the socket has yet to perform the TLS handshake, attempt to progress it
-				if (m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
+				if (m_list[i - MANAGER_RESERVED_FDS]->m_status == SocketStatus::HANDSHAKING)
 				{
 					if (!(m_pollList[i].revents & (POLLIN | POLLOUT)))
 					{
@@ -285,11 +283,11 @@ namespace Auth
 					}
 
 					// Perform the handshake
-					int ret = SSL_accept(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL());
+					int ret = SSL_accept(m_list[i - MANAGER_RESERVED_FDS]->GetSSL());
 
 					if (ret != 1)
 					{
-						int err = SSL_get_error(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL(), ret);
+						int err = SSL_get_error(m_list[i - MANAGER_RESERVED_FDS]->GetSSL(), ret);
 
 						// Keep trying
 						if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
@@ -315,9 +313,9 @@ namespace Auth
 
 						if (err == SSL_ERROR_SSL)
 						{
-							if (SSL_get_verify_result(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL()) != X509_V_OK)
+							if (SSL_get_verify_result(m_list[i - MANAGER_RESERVED_FDS]->GetSSL()) != X509_V_OK)
 							{
-								LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(m_list[i - SOCK_MANAGER_RESERVED_FDS]->GetSSL())));
+								LOG_ERROR("Verify error: {}\n", X509_verify_cert_error_string(SSL_get_verify_result(m_list[i - MANAGER_RESERVED_FDS]->GetSSL())));
 								toRemove.push_back(i);
 								continue;
 							}
@@ -332,9 +330,9 @@ namespace Auth
 						LOG_OK("TLSPerformHandshake succeeded!");
 
 						// Set status
-						m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_status = SocketStatus::GATHER_INFO;
-						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
-						m_list[i - SOCK_MANAGER_RESERVED_FDS]->m_pfd.events = POLLIN;
+						m_list[i - MANAGER_RESERVED_FDS]->m_status = SocketStatus::GATHER_INFO;
+						m_list[i - MANAGER_RESERVED_FDS]->UpdateLastActivity();
+						m_list[i - MANAGER_RESERVED_FDS]->m_pfd.events = POLLIN;
 						m_pollList[i].events = POLLIN;
 					}
 				}
@@ -344,8 +342,8 @@ namespace Auth
 					if (m_pollList[i].revents & POLLOUT)
 					{
 						// Check if the POLLOUT is because of the TLS async handshake
-						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Send();
-						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
+						int r = m_list[i - MANAGER_RESERVED_FDS]->Send();
+						m_list[i - MANAGER_RESERVED_FDS]->UpdateLastActivity();
 
 						// If send failed
 						if (r < 0)
@@ -358,8 +356,8 @@ namespace Auth
 
 					if (m_pollList[i].revents & POLLIN)
 					{
-						int r = m_list[i - SOCK_MANAGER_RESERVED_FDS]->Receive();
-						m_list[i - SOCK_MANAGER_RESERVED_FDS]->UpdateLastActivity();
+						int r = m_list[i - MANAGER_RESERVED_FDS]->Receive();
+						m_list[i - MANAGER_RESERVED_FDS]->UpdateLastActivity();
 
 						// If receive failed, 
 						if (r < 0)
@@ -379,8 +377,8 @@ namespace Auth
 
 			for (int idx : toRemove)
 			{
-				m_toClose.push_back(m_list[idx - SOCK_MANAGER_RESERVED_FDS]); // m_list contains shared_pointers, so it's ok to not std::move
-				m_list.erase(m_list.begin() + (idx - SOCK_MANAGER_RESERVED_FDS));
+				m_toClose.push_back(m_list[idx - MANAGER_RESERVED_FDS]); // m_list contains shared_pointers, so it's ok to not std::move
+				m_list.erase(m_list.begin() + (idx - MANAGER_RESERVED_FDS));
 			}
 		}
 		toRemove.clear();
