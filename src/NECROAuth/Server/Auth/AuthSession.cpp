@@ -101,6 +101,16 @@ namespace Auth
     {
         SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(m_inBuffer.GetReadPointer());
 
+        // Pre-checks
+        // Check for username size
+        if (pcktData->usernameSize > Auth::MAX_USERNAME_LENGTH)
+            return false;
+
+        // Check for username value (input validation)
+        for(int i = 0; i < pcktData->usernameSize; i++)
+            if(!std::isalnum(pcktData->username[i]))
+                return false;
+
         // Fill data
         std::string login((char const*)pcktData->username, pcktData->usernameSize);
         m_data.username = login;
@@ -197,6 +207,16 @@ namespace Auth
     bool AuthSession::HandleAuthLoginProofPacket()
     {
         SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(m_inBuffer.GetReadPointer());
+
+        // Pre-checks
+        // Check for password size
+        if (pcktData->passwordSize > Auth::MAX_PASSWORD_LENGTH)
+            return false;
+
+        // Check for password value (input validation)
+        for (int i = 0; i < pcktData->passwordSize; i++)
+            if (!std::isalnum(pcktData->password[i]))
+                return false;
 
         LOG_OK("Handling AuthLoginProof for user {}", m_data.username);
 
