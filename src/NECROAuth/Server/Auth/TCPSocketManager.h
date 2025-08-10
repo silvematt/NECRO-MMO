@@ -19,6 +19,15 @@ namespace Auth
 	inline constexpr uint32_t SOCKET_MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 5000;
 	inline constexpr uint32_t SOCKET_MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS = 5000;
 
+	inline constexpr uint32_t CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
+	inline constexpr uint32_t MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
+
+	struct IPRequestData
+	{
+		std::chrono::steady_clock::time_point lastUpdate;
+		size_t tries;
+	};
+
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
 	//-----------------------------------------------------------------------------------------------------
@@ -42,6 +51,9 @@ namespace Auth
 		std::mutex					m_writeMutex;
 		std::atomic<bool>			m_writePending;
 		TCPSocket					m_wakeWrite;
+
+		// IP-based spam prevention <ip, last attempt>
+		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
 
 		void SetupWakeup();
 

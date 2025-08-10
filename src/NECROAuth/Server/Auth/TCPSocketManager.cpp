@@ -125,28 +125,62 @@ namespace Auth
 					SocketAddress otherAddr;
 					if (std::shared_ptr<AuthSession> inSock = m_listener.Accept<AuthSession>(otherAddr))
 					{
-						// TODO, setup IP-based spam prevention
-						// Save the connections attempt in an unordered map <ip, numConnection> and if it exceedes a threshold immediately drop the connection
-						// The list should be cleared every once in a while
+						// IP-based spam prevention
+						bool couldBeSpam = false;
+						std::string clientIP = inSock->GetRemoteAddress();
+						
+						auto now = std::chrono::steady_clock::now();
 
-						LOG_INFO("New connection! Setting up TLS and handshaking...");
+						// Clean old IPs beyond time window
+						for(auto it = m_ipRequestMap.begin(); it != m_ipRequestMap.end();)
+						{
+							if (now - it->second.lastUpdate > std::chrono::minutes(CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN))
+								it = m_ipRequestMap.erase(it);
+							else
+								it++;
+						}
 
-						inSock->ServerTLSSetup("localhost");
+						// Check if the requesting IP already made requests in the last time window
+						if (m_ipRequestMap.find(clientIP) != m_ipRequestMap.end())
+						{
+							// If so, update both activity and last try
+							m_ipRequestMap[clientIP].lastUpdate = now;
+							m_ipRequestMap[clientIP].tries++;
 
-						// Create a pfd to do handshaking without blocking
-						// Initialize status
-						inSock->m_status = SocketStatus::HANDSHAKING;
-						inSock->SetHandshakeStartTime();
-						inSock->UpdateLastActivity();
-						m_list.push_back(inSock); // save it in the active list
+							// If the number of tries exceed the limit, block this request
+							if (m_ipRequestMap[clientIP].tries > MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+								couldBeSpam = true;
+						}
+						else
+							m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
 
-						// Add the new connection to the pfds
-						// TODO, instead of attempting to TLS handshake with POLLOUT events for every socket, let's try to set a global poll timeout and we process TLS handshakes there
-						// POLLOUT check for many sockets could be actually slower
-						inSock->m_pfd.fd = inSock->GetSocketFD();
-						inSock->m_pfd.events = POLLIN | POLLOUT;
-						inSock->m_pfd.revents = 0;
-						m_pollList.push_back(inSock->m_pfd);
+						if (!couldBeSpam)
+						{
+							LOG_INFO("New connection! Setting up TLS and handshaking...");
+
+							inSock->ServerTLSSetup("localhost");
+
+							// Create a pfd to do handshaking without blocking
+							// Initialize status
+							inSock->m_status = SocketStatus::HANDSHAKING;
+							inSock->SetHandshakeStartTime();
+							inSock->UpdateLastActivity();
+							m_list.push_back(inSock); // save it in the active list
+
+							// Add the new connection to the pfds
+							// TODO, instead of attempting to TLS handshake with POLLOUT events for every socket, let's try to set a global poll timeout and we process TLS handshakes there
+							// POLLOUT check for many sockets could be actually slower
+							inSock->m_pfd.fd = inSock->GetSocketFD();
+							inSock->m_pfd.events = POLLIN | POLLOUT;
+							inSock->m_pfd.revents = 0;
+							m_pollList.push_back(inSock->m_pfd);
+						}
+						else
+						{
+							// Let inSock die
+							LOG_INFO("Prevented {} from connecting as it has made too many attempts.", clientIP);
+							inSock->Close();
+						}
 					}
 				}
 				else

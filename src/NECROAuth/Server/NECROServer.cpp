@@ -82,7 +82,10 @@ namespace Auth
 			int pollVal = m_sockManager->Poll();
 
 			if (pollVal == -1)
+			{
+				LOG_ERROR("Poll returned -1.");
 				Stop();
+			}
 		}
 
 		Shutdown();
