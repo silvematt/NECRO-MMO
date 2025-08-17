@@ -155,6 +155,9 @@ namespace Auth
 						else
 							m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
 
+						if (!ENABLE_SPAM_PREVENTION)
+							couldBeSpam = false;
+
 						if (!couldBeSpam)
 						{
 							LOG_INFO("New connection! Setting up TLS and handshaking...");

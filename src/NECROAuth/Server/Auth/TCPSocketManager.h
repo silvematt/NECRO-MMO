@@ -19,8 +19,10 @@ namespace Auth
 	inline constexpr uint32_t MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 5000;
 	inline constexpr uint32_t MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS = 5000;
 
-	inline constexpr uint32_t CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
-	inline constexpr uint32_t MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
+	// Spam prevention
+	inline constexpr bool		ENABLE_SPAM_PREVENTION = 1;
+	inline constexpr uint32_t	CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
+	inline constexpr uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
 
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
