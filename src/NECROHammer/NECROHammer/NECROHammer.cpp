@@ -6,8 +6,6 @@ namespace NECRO
 {
 namespace Hammer
 {
-	Client g_client(std::thread::hardware_concurrency());
-
 	int Client::Init()
 	{
 		m_isRunning = false;

@@ -14,6 +14,7 @@ namespace NECRO
 namespace Hammer
 {
 	inline constexpr uint32_t SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC = 1;
+	inline constexpr uint32_t MAX_SOCKETS_PER_THREAD = 200;
 
 	class SocketManager
 	{
@@ -27,20 +28,20 @@ namespace Hammer
 		
 		// Contexts
 		boost::asio::io_context& m_ioContextRef;
-		boost::asio::ssl::context m_sslContext;
 
 	public:
-		SocketManager(const uint32_t threadCount, boost::asio::io_context& io) : m_ioContextRef(io), m_sslContext(boost::asio::ssl::context::sslv23_client)
+		SocketManager(const uint32_t threadCount, boost::asio::io_context& io) : m_ioContextRef(io)
 		{
-			m_sslContext.set_verify_mode(boost::asio::ssl::verify_peer);
-			m_sslContext.load_verify_file("server.pem");
-
 			m_networkThreadsCount = threadCount;
+
+			// Create the distribution timer
+			m_distributionTimer = std::make_shared<boost::asio::steady_timer>(m_ioContextRef);
 
 			// A mutex all threads share to call std::cout
 			auto printMutex = std::make_shared<std::mutex>(); 
 			for (int i = 0; i < threadCount; i++)
 			{
+				// Create the threads
 				m_networkThreads.push_back(std::make_shared<NetworkThread<HammerSocket>>(i, printMutex));
 			}
 		}
@@ -65,8 +66,7 @@ namespace Hammer
 
 		void Update()
 		{
-			m_distributionTimer = std::make_shared<boost::asio::steady_timer>(m_ioContextRef);
-
+			// Start the callback loop
 			m_distributionTimer->expires_after(std::chrono::milliseconds(SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
 			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSockets(); });
 		}
@@ -76,13 +76,18 @@ namespace Hammer
 		// ----------------------------------------------------------------------------------------
 		void DistributeNewSockets()
 		{
+			// Keep the loop alive
 			m_distributionTimer->expires_after(std::chrono::milliseconds(SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
 			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSockets(); });
 
 			for (int i = 0; i < m_networkThreadsCount; i++)
 			{
-				std::shared_ptr<HammerSocket> newSock = std::make_shared<HammerSocket>(m_ioContextRef, m_sslContext);
-				m_networkThreads[i]->QueueNewSocket(newSock);
+				if (m_networkThreads[i]->GetSocketsSize() < MAX_SOCKETS_PER_THREAD)
+				{
+					// Creates a new socket and sticks it into the network thread's list
+					std::shared_ptr<HammerSocket> newSock = std::make_shared<HammerSocket>(m_networkThreads[i]->GetIOContext(), m_networkThreads[i]->GetSSLContext());
+					m_networkThreads[i]->QueueNewSocket(newSock);
+				}
 			}
 		}
 	};

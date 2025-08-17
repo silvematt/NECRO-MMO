@@ -20,6 +20,12 @@ namespace Hammer
 
 		}
 
+		static Client& Instance()
+		{
+			static Client instance(std::thread::hardware_concurrency());
+			return instance;
+		}
+
 	private:
 		bool m_isRunning;
 
@@ -28,7 +34,7 @@ namespace Hammer
 
 		boost::asio::io_context	m_ioContext;
 
-		SocketManager	m_sockManager;
+		SocketManager m_sockManager;
 
 	public:
 		ConsoleLogger&		GetConsoleLogger()	{ return m_cLogger; }
@@ -41,9 +47,6 @@ namespace Hammer
 		void		Stop();
 		int			Shutdown();
 	};
-
-	// Global access for the Client 
-	extern Client g_client;
 }
 }
 

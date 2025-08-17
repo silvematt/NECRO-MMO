@@ -24,22 +24,25 @@ namespace NECRO
 	private:
 		std::shared_ptr<std::mutex>					m_printMutex;
 		int											m_threadID;
-		std::shared_ptr<std::thread>				m_thread;
+		std::unique_ptr<std::thread>				m_thread;
 		std::atomic<bool>							m_stopped;
 
 		boost::asio::io_context						m_ioContext;
+		boost::asio::ssl::context					m_sslContext;
+
 		boost::asio::steady_timer					m_updateTimer;
 
 		std::vector<std::shared_ptr<SocketType>>	m_sockets;
-		std::atomic<int32_t>						m_socketsNumber; // tracks both m_sockets and m_queuedSockets size
+		std::atomic<size_t>							m_socketsNumber; // tracks both m_sockets and m_queuedSockets size
 
 		std::vector<std::shared_ptr<SocketType>>	m_queuedSockets; // sockets queued up for insertion in the main m_sockets list
 		std::mutex									m_queuedSocketsMutex;
 	
 	public:
-		NetworkThread(int id, std::shared_ptr<std::mutex> printMx) : m_printMutex(printMx), m_threadID(id), m_thread(nullptr), m_stopped(false), m_ioContext(1), m_updateTimer(m_ioContext)
+		NetworkThread(int id, std::shared_ptr<std::mutex> printMx) : m_printMutex(printMx), m_threadID(id), m_thread(nullptr), m_stopped(false), m_ioContext(1), m_updateTimer(m_ioContext), m_sslContext(boost::asio::ssl::context::sslv23_client)
 		{
-
+			m_sslContext.set_verify_mode(boost::asio::ssl::verify_peer);
+			m_sslContext.load_verify_file("server.pem");
 		}
 
 	private:
@@ -68,8 +71,11 @@ namespace NECRO
 			AddQueuedSocketsToMainList();
 
 			// Update the sockets
-			// for (auto& sock : m_sockets)
-			// sock->Update();
+			int before = m_sockets.size();
+			m_sockets.erase(std::remove_if(m_sockets.begin(), m_sockets.end(),
+							[](auto& s) { return s->Update() == -1; }),
+							m_sockets.end());
+			m_socketsNumber -= before - m_sockets.size();
 
 			std::unique_lock lock(*m_printMutex);
 			std::cout << m_threadID << " called. " << m_socketsNumber << std::endl;
@@ -84,12 +90,6 @@ namespace NECRO
 				m_sockets.push_back(s);
 
 			m_queuedSockets.clear();
-
-			if (m_sockets.size() >= 500 && (m_socketsNumber % 500 == 0))
-			{
-				m_sockets.erase(m_sockets.begin(), m_sockets.begin() + 500);
-				m_socketsNumber -= 500;
-			}
 		}
 
 	public:
@@ -98,16 +98,17 @@ namespace NECRO
 			if (m_thread)
 				return -1;
 
-			m_thread = std::make_shared<std::thread>(&NetworkThread::Run, this);
+			m_thread = std::make_unique<std::thread>(&NetworkThread::Run, this);
 
 			return 0;
 		}
 
-		void GetSocketsSize() const
+		size_t GetSocketsSize() const
 		{
-			return m_socketsNumber;
+			return m_socketsNumber.load();
 		}
 
+		// Queues an already-created socket that will be inserted in the Network's Thread sockets list
 		void QueueNewSocket(std::shared_ptr<SocketType> newSock)
 		{
 			std::lock_guard guard(m_queuedSocketsMutex);
@@ -125,6 +126,16 @@ namespace NECRO
 		{
 			if (m_thread)
 				m_thread->join();
+		}
+
+		boost::asio::io_context& GetIOContext()
+		{
+			return m_ioContext;
+		}
+
+		boost::asio::ssl::context& GetSSLContext()
+		{
+			return m_sslContext;
 		}
 	};
 }
