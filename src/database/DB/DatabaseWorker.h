@@ -152,7 +152,7 @@ namespace NECRO
 
 					lock.unlock();
 
-					if (!req.m_cancelToken.expired())
+					if (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired()))
 					{
 						// Do stuff
 						try

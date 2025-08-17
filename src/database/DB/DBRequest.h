@@ -6,6 +6,7 @@
 #include <functional> 
 #include <variant>
 #include <string>
+#include <optional>
 
 #include <mysqlx/xdevapi.h>
 
@@ -21,7 +22,7 @@ public:
 	std::function<bool(mysqlx::SqlResult&)>		m_callback;
 	std::function<void()>						m_noticeFunc;
 
-	std::weak_ptr<void>							m_cancelToken;
+	std::optional<std::weak_ptr<void>>			m_cancelToken;
 
 	DBRequest(int enumVal, bool fireAndForget) : m_enumVal(enumVal), m_fireAndForget(fireAndForget)
 	{
