@@ -14,7 +14,7 @@ namespace NECRO
 namespace Hammer
 {
 	inline constexpr uint32_t SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC = 1;
-	inline constexpr uint32_t MAX_SOCKETS_PER_THREAD = 200;
+	inline constexpr uint32_t MAX_SOCKETS_PER_THREAD = 100;
 
 	class SocketManager
 	{

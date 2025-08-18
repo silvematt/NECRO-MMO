@@ -1,6 +1,9 @@
 #ifndef NECRO_HAMMER_SOCKET_H
 #define NECRO_HAMMER_SOCKET_H
 
+#include "TCPSocketBoost.h"
+#include "AuthCodes.h"
+
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
 
@@ -8,107 +11,70 @@ using boost::asio::ip::tcp;
 using boost::asio::ssl::stream;
 using boost::asio::ssl::context;
 
-class HammerSocket
+namespace NECRO
 {
-	typedef stream<tcp::socket> ssl_socket;
+namespace Hammer
+{
+    class HammerSocket;
+    #pragma pack(push, 1)
 
-	enum class HSSocketState
+    struct HammerHandler
+    {
+        NECRO::Auth::SocketStatus status;
+        size_t packetSize;
+        bool (HammerSocket::* handler)();
+    };
+
+    #pragma pack(pop)
+
+	struct AuthData
 	{
-		DEFAULT = 0,
-		RESOLVING,
-		CONNECTING,
-		HANDSHAKING,
-		CONNECTED,
-		CRITICAL_ERROR
+		std::string username;
+		std::string password;
+
+		std::string ipAddress;
+
+		std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
+		std::array<uint8_t, AES_128_KEY_SIZE> greetcode;
+
+		AES::IV iv;
+
+		bool hasAuthenticated = false;
 	};
 
-private:
-	boost::asio::io_context& m_ioContextRef;
-	ssl_socket m_socket;
-
-	HSSocketState m_state;
-
-public:
-	HammerSocket(boost::asio::io_context& io, context& ssl_ctx) : m_ioContextRef(io), m_socket(m_ioContextRef, ssl_ctx), m_state(HSSocketState::DEFAULT)
+	class HammerSocket : public TCPSocketBoost
 	{
-		
-	}
 
-	void Initialize()
-	{
-		m_state = HSSocketState::RESOLVING;
+    protected:
+        Auth::SocketStatus m_status;
+		AuthData m_data;
 
-		// Resolve
-		// Use shared_ptr to keep resolver alive
-		auto resolver = std::make_shared<tcp::resolver>(m_ioContextRef);
-		resolver->async_resolve("192.168.1.221", "61531", [this, resolver](const boost::system::error_code& ec, tcp::resolver::results_type results) 
-			{
-				if (!ec) 
-					OnResolve(results);
-				else 
-					m_state = HSSocketState::CRITICAL_ERROR;
-			}
-		);
-	}
-
-	void OnResolve(tcp::resolver::results_type results)
-	{
-		m_state = HSSocketState::CONNECTING;
-
-		boost::asio::async_connect(m_socket.lowest_layer(), results.begin(), results.end(),
-			[this](const boost::system::error_code& ec, tcp::resolver::results_type::iterator i)
-			{
-				if (!ec)
-				{
-					// Connected, need to handshake
-					m_socket.lowest_layer().set_option(tcp::no_delay(true));
-					m_socket.set_verify_mode(boost::asio::ssl::verify_peer);
-
-					OnConnected();
-				}
-				else
-					m_state = HSSocketState::CRITICAL_ERROR;
-			});
-	}
-
-	void OnConnected()
-	{
-		m_state = HSSocketState::HANDSHAKING;
-
-		m_socket.async_handshake(boost::asio::ssl::stream_base::client,
-			[this](const boost::system::error_code& ec)
-			{
-				if (!ec)
-				{
-					m_state = HSSocketState::CONNECTED;
-
-					// Now we can start reading/writing in Update()
-				}
-				else
-					m_state = HSSocketState::CRITICAL_ERROR;
-			});
-	}
-
-	// This runs in the NetworkThread that possess this socket
-	int Update()
-	{
-		// Signal this socket is dead and must be removed
-		if (m_state == HSSocketState::CRITICAL_ERROR)
-			return -1;
-
-		if (m_state == HSSocketState::DEFAULT)
+	public:
+		// TLS-enabled constructor
+		HammerSocket(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO)
 		{
-			Initialize();
-			return 0;
-		}
-		else if(m_state == HSSocketState::CONNECTED)
-		{
-			// Do stuff
+            m_data.username = "matt";
+            m_data.password = "124";
 		}
 
-		return 0;
-	}
+		// Or non-TLS version
+		HammerSocket(boost::asio::io_context& io) : TCPSocketBoost(io), m_status(Auth::SocketStatus::GATHER_INFO)
+		{
+            m_data.username = "matt";
+            m_data.password = "124";
+		}
 
-};
+        static std::unordered_map<uint8_t, HammerHandler> InitHandlers();
+
+		// This runs in the NetworkThread that possess this socket
+		int Update() override;
+		int AsyncReadCallback() override;
+		void AsyncWriteCallback() override;
+
+        bool HandlePacketAuthLoginGatherInfoResponse();
+        bool HandlePacketAuthLoginProofResponse();
+	};
+}
+}
 
 #endif

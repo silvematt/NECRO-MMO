@@ -3,6 +3,7 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="NECROHammer\NECROHammer.cpp" />
+    <ClCompile Include="NECROHammer\Manager\HammerSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="NECROHammer\NECROHammer.h" />

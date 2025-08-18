@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Authentication\AuthCodes.h" />
+    <ClInclude Include="Sockets\TCPSocketBoost.h" />
     <ClInclude Include="Encryption\AES.h" />
     <ClInclude Include="Logger\ConsoleLogger.h" />
     <ClInclude Include="Logger\FileLogger.h" />
@@ -147,6 +148,7 @@
     <ClInclude Include="Utility\Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
     <ClCompile Include="Logger\ConsoleLogger.cpp" />
     <ClCompile Include="Logger\FileLogger.cpp" />
     <ClCompile Include="Logger\Logger.cpp" />

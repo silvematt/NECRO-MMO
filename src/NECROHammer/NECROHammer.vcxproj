@@ -136,6 +136,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="NECROHammer\Manager\HammerSocket.cpp" />
     <ClCompile Include="NECROHammer\NECROHammer.cpp" />
   </ItemGroup>
   <ItemGroup>

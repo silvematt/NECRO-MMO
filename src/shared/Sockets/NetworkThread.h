@@ -75,11 +75,11 @@ namespace NECRO
 			m_sockets.erase(std::remove_if(m_sockets.begin(), m_sockets.end(),
 							[](auto& s) { return s->Update() == -1; }),
 							m_sockets.end());
-			m_socketsNumber -= before - m_sockets.size();
+			m_socketsNumber.fetch_sub(before - m_sockets.size());
 
-			std::unique_lock lock(*m_printMutex);
-			std::cout << m_threadID << " called. " << m_socketsNumber << std::endl;
-			lock.unlock();
+			//std::unique_lock lock(*m_printMutex);
+			//std::cout << m_threadID << " called. " << m_socketsNumber << std::endl;
+			//lock.unlock();
 		}
 
 		void AddQueuedSocketsToMainList()

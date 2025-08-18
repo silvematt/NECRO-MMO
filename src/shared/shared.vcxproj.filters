@@ -64,6 +64,7 @@
       <Filter>OpenSSL</Filter>
     </ClInclude>
     <ClInclude Include="Sockets\NetworkThread.h" />
+    <ClInclude Include="Sockets\TCPSocketBoost.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -84,5 +85,6 @@
     <ClCompile Include="OpenSSL\OpenSSLManager.cpp">
       <Filter>OpenSSL</Filter>
     </ClCompile>
+    <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
   </ItemGroup>
 </Project>
