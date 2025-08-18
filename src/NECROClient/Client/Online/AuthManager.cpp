@@ -63,25 +63,26 @@ namespace Client
 		LOG_DEBUG("Attempting to connect to Auth Server...");
 
 		// Initialize the pollfds vector
-		pollfd pfd;
-		pfd.fd = authSocket->GetSocketFD();
-		pfd.events = POLLOUT;
-		pfd.revents = 0;
-		poll_fds.push_back(pfd);
-		authSocket->SetPfd(&poll_fds[poll_fds.size() - 1]);
+		authSocket->m_pfd.fd = authSocket->GetSocketFD();
+		authSocket->m_pfd.events = POLLOUT;
+		authSocket->m_pfd.revents = 0;
 
 		return 0;
 	}
 
 	int AuthManager::NetworkUpdate()
 	{
-		// Is there anything to check?
-		if (poll_fds.size() <= 0)
+		// If operations never start, no need to poll
+		if (!isConnecting && !authSocketConnected)
 			return 0;
+
+		std::vector<pollfd> m_pollList;
+
+		m_pollList.push_back(authSocket->m_pfd);
 
 		static int timeout = 0; // waits 0 ms for the poll: try get data now or try next time
 
-		int res = WSAPoll(poll_fds.data(), poll_fds.size(), timeout);
+		int res = WSAPoll(m_pollList.data(), m_pollList.size(), timeout);
 
 		// Check for errors
 		if (res < 0)
@@ -100,7 +101,7 @@ namespace Client
 		// Wait for connection
 		if (!authSocketConnected)
 		{
-			int res = CheckIfAuthConnected();
+			int res = CheckIfAuthConnected(m_pollList[0]); // m_pollList[0] is the authSocket
 			if (res == -1)
 			{
 				LOG_DEBUG("Failed to auth");
@@ -110,7 +111,7 @@ namespace Client
 		}
 		else // Connection has been estabilished
 		{
-			int res = CheckForIncomingData();
+			int res = CheckForIncomingData(m_pollList[0]);
 			if (res == -1)
 			{
 				OnDisconnect();
@@ -126,7 +127,6 @@ namespace Client
 		// Delete and recreate socket for next try
 		authSocket->Close();
 		authSocket.reset();
-		poll_fds.clear();
 
 		CreateAuthSocket();
 
@@ -134,16 +134,16 @@ namespace Client
 		isConnecting = false;
 	}
 
-	int AuthManager::CheckIfAuthConnected()
+	int AuthManager::CheckIfAuthConnected(pollfd& pfd) // pfd of the authSession
 	{
 		Console& c = engine.GetConsole();
 
 		// Check for errors
-		if (poll_fds[0].revents & (POLLERR | POLLHUP | POLLNVAL))
+		if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))
 		{
 			int error = 0;
 			int len = sizeof(error);
-			if (getsockopt(poll_fds[0].fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0)
+			if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0)
 			{
 				// Get error type and print a message
 				if (error == WSAECONNREFUSED)
@@ -167,12 +167,12 @@ namespace Client
 		}
 
 		// Check if the socket is ready for writing, means we either connected successfuly or failed to connect
-		if (poll_fds[0].revents & POLLOUT)
+		if (pfd.revents & POLLOUT)
 		{
 			// If we get here, it indicates that a non-blocking connect has completed
 			int error = 0;
 			int len = sizeof(error);
-			if (getsockopt(poll_fds[0].fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) < 0)
+			if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) < 0)
 			{
 				LOG_ERROR("getsockopt failed! [{}]", SocketUtility::GetLastError());
 				return -1;
@@ -195,7 +195,7 @@ namespace Client
 				engine.GetConsole().Log("Connected to the server!");
 
 				// Switch from POLLOUT to POLLIN to get incoming data, POLLOUT will also be checked but only if there are packets to send in the outQueue
-				poll_fds[0].events = POLLIN;
+				pfd.events = POLLIN;
 
 				return OnConnectedToAuthServer();
 			}
@@ -233,15 +233,15 @@ namespace Client
 		return 0;
 	}
 
-	int AuthManager::CheckForIncomingData()
+	int AuthManager::CheckForIncomingData(pollfd& pfd)
 	{
 		Console& c = engine.GetConsole();
 
-		if (poll_fds[0].revents & (POLLERR | POLLHUP | POLLNVAL))
+		if (pfd.revents & (POLLERR | POLLHUP | POLLNVAL))
 		{
 			int error = 0;
 			int len = sizeof(error);
-			if (getsockopt(poll_fds[0].fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0)
+			if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0)
 			{
 				LOG_ERROR("AuthSocket encountered an error!");
 				c.Log("Connection lost! Server may have crashed or kicked you.");
@@ -258,7 +258,7 @@ namespace Client
 		else
 		{
 			// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
-			if (poll_fds[0].revents & POLLOUT)
+			if (pfd.revents & POLLOUT)
 			{
 				int r = authSocket->Send();
 
@@ -270,7 +270,7 @@ namespace Client
 				}
 			}
 
-			if (poll_fds[0].revents & POLLIN)
+			if (pfd.revents & POLLIN)
 			{
 				int r = authSocket->Receive();
 

@@ -173,12 +173,6 @@ namespace Client
             //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
 
         }
-        else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_USERNAME_IN_USE))
-        {
-            LOG_ERROR("Authentication failed, username is already in use.");
-            c.Log("Authentication failed. Username is already in use.");
-            return false;
-        }
         else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))
         {
             LOG_ERROR("Authentication failed, username does not exist.");

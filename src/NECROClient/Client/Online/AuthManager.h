@@ -35,17 +35,14 @@ namespace Client
 		bool authSocketConnected = false;
 		bool isConnecting = false;
 
-		std::vector<pollfd> poll_fds;
-
-
 	public:
 		int Init();
 		void CreateAuthSocket();
 
 		int ConnectToAuthServer();
 
-		int CheckIfAuthConnected();
-		int CheckForIncomingData();
+		int CheckIfAuthConnected(pollfd& pfd);  // pfd of the authSession is passed as parameter
+		int CheckForIncomingData(pollfd& pfd);
 		int NetworkUpdate();
 
 		void OnDisconnect();
