@@ -153,7 +153,7 @@ namespace Client
 				}
 				else
 				{
-					LOG_ERROR("AuthSocket encountered an error!");
+					LOG_ERROR("AuthSocket encountered an error! {}", error);
 					c.Log("Connection lost! Server may have crashed or kicked you.");
 				}
 			}
@@ -243,7 +243,7 @@ namespace Client
 			int len = sizeof(error);
 			if (getsockopt(pfd.fd, SOL_SOCKET, SO_ERROR, (char*)&error, &len) == 0)
 			{
-				LOG_ERROR("AuthSocket encountered an error!");
+				LOG_ERROR("AuthSocket encountered an error! {}", error);
 				c.Log("Connection lost! Server may have crashed or kicked you.");
 			}
 			else
@@ -265,7 +265,8 @@ namespace Client
 				// If receive failed
 				if (r < 0)
 				{
-					LOG_ERROR("Client socket error/disconnection detected.");
+					int errCode = WSAGetLastError();
+					LOG_ERROR("Send: Client socket error/disconnection detected.", errCode);
 					return -1;
 				}
 			}
@@ -277,7 +278,8 @@ namespace Client
 				// If receive failed
 				if (r < 0)
 				{
-					LOG_ERROR("Client socket error/disconnection detected.");
+					int errCode = WSAGetLastError();
+					LOG_ERROR("Receive: Client socket error/disconnection detected. {}", errCode);
 					return -1;
 				}
 			}
