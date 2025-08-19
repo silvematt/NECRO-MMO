@@ -24,7 +24,9 @@ public:
 
 	std::optional<std::weak_ptr<void>>			m_cancelToken;
 
-	DBRequest(int enumVal, bool fireAndForget) : m_enumVal(enumVal), m_fireAndForget(fireAndForget), m_cancelToken(std::nullopt)
+	std::chrono::steady_clock::time_point		m_creationTime;
+
+	DBRequest(int enumVal, bool fireAndForget) : m_enumVal(enumVal), m_fireAndForget(fireAndForget), m_cancelToken(std::nullopt), m_creationTime(std::chrono::steady_clock::now())
 	{
 		m_done = false;
 		m_callback = nullptr;

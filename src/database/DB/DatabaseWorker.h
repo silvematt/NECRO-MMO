@@ -13,6 +13,7 @@
 
 namespace NECRO
 {
+	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
 	//-----------------------------------------------------------------------------------------------------
 	// An abstraction of a thread that works on a database
 	//-----------------------------------------------------------------------------------------------------
@@ -95,20 +96,35 @@ namespace NECRO
 			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 			{
 				std::cerr << "CreatePersistentMySQLSession MySQL error: " << err.what() << std::endl;
+				m_persistentMysqlSession.reset();
 				return -1;
 			}
 			catch (const std::exception& ex)  // catches standard exceptions
 			{
 				std::cerr << "CreatePersistentMySQLSession Standard exception: " << ex.what() << std::endl;
+				m_persistentMysqlSession.reset();
 				return -1;
 			}
 			catch (...)
 			{
 				std::cerr << "CreatePersistentMySQLSession Unknown exception caught!" << std::endl;
+				m_persistentMysqlSession.reset();
 				return -1;
 			}
 
 			return 0;
+		}
+
+		int RecreatePersistentMySQLSession()
+		{
+			// Destroy the mysql session
+			if (m_persistentMysqlSession)
+			{
+				m_persistentMysqlSession->close();
+				m_persistentMysqlSession.reset();
+			}
+
+			return CreatePersistentMySQLSession();
 		}
 
 		//-----------------------------------------------------------------------------------------------------
@@ -190,7 +206,7 @@ namespace NECRO
 					// Swap all pending work into internal queue
 					std::swap(m_internalQueue, m_externalQueue);
 					lock.unlock();
-					
+
 					// Execute the queue
 					for (auto& req : m_internalQueue)
 					{
@@ -199,27 +215,48 @@ namespace NECRO
 							// Do stuff
 							try
 							{
-								// Get a session, prepare the statement and execute it
-								mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_enumVal);
-								for (auto& param : req.m_bindParams)
-									stmt.bind(param);
+								// If the persistent session died, attempt to fire it back up as long as the request is servable (idle timeout will not trigger)
+								if (!m_persistentMysqlSession)
+									while (RecreatePersistentMySQLSession() != 0)
+									{
+										// If the connection could not be made, wait for one second
+										std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-								req.m_sqlRes = stmt.execute();
+										// Then check if it's still worth to try and save this request (idle timeout will not trigger for the socket that initiated this request)
+										auto now = std::chrono::steady_clock::now();
+										if ((now - req.m_creationTime > std::chrono::milliseconds(DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS)) ||
+											(req.m_cancelToken.has_value() && req.m_cancelToken->expired()))
+										{
+											break; // drop the request
+										}
 
-								// If the request requires a callback, set things up
-								if (!req.m_fireAndForget)
+										// Try again
+									}
+
+								if (m_persistentMysqlSession)
 								{
-									std::unique_lock<std::mutex> resGuard(m_respMutex);
+									// Get a session, prepare the statement and execute it
+									mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_enumVal);
+									for (auto& param : req.m_bindParams)
+										stmt.bind(param);
 
-									// Preserve the life of the m_noticeFunc in this scope before it gets moved
-									std::function<void()> func = std::move(req.m_noticeFunc);
-									m_respQueue.push_back(std::move(req));
+									req.m_sqlRes = stmt.execute();
 
-									resGuard.unlock();
+									// If the request requires a callback, set things up
+									if (!req.m_fireAndForget)
+									{
+										std::unique_lock<std::mutex> resGuard(m_respMutex);
 
-									// Call notice function if set
-									if (func)
-										func();
+										// Preserve the life of the m_noticeFunc in this scope before it gets moved
+										std::function<void()> func = std::move(req.m_noticeFunc);
+										m_respQueue.push_back(std::move(req));
+
+										resGuard.unlock();
+
+										// Call notice function if set
+										if (func)
+											func();
+									}
 								}
 							}
 							// TODO figure out what to do with failed requests, we can have a retry-queue and for requests with callback
@@ -227,14 +264,17 @@ namespace NECRO
 							catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 							{
 								std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
+								RecreatePersistentMySQLSession();
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
 								std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
+								RecreatePersistentMySQLSession();
 							}
 							catch (...)
 							{
 								std::cerr << "DBWorker Unknown exception caught!" << std::endl;
+								RecreatePersistentMySQLSession();
 							}
 						}
 					}

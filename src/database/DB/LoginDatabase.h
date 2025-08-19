@@ -16,7 +16,8 @@ namespace NECRO
 		INS_LOG_WRONG_PASSWORD,		// id(uint32_t), username (string), ip:port(string)
 		DEL_PREV_SESSIONS,			// userid(uint32_t)
 		INS_NEW_SESSION,			// userid(uint32_t), sessionKey(binary), authip(string), greetcode(binary)
-		UPD_ON_LOGIN
+		UPD_ON_LOGIN,
+		KEEP_ALIVE
 	};
 
 
@@ -66,6 +67,10 @@ namespace NECRO
 
 			case static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN):
 				// TODO
+				break;
+
+			case static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE):
+				return sess.sql("SELECT 1");
 				break;
 
 			default:

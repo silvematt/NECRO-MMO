@@ -89,7 +89,7 @@ namespace Auth
 		for (auto& s : m_list)
 			m_pollList.push_back(s->m_pfd);
 
-		static int timeout = -1;	// wait forever until at least one socket has an event
+		static int timeout = SERVER_POLL_TIMEOUT_MS;
 
 		LOG_DEBUG("Polling {}", m_list.size());
 
@@ -105,9 +105,24 @@ namespace Auth
 			return -1;
 		}
 
+		// Check for DB KeepAlive request
+		auto dbCheckNow = std::chrono::steady_clock::now();
+		if (dbCheckNow - m_dbKeepAliveLastActivity > std::chrono::milliseconds(DB_KEEP_ALIVE_REQUEST_INTERVAL_MS))
+		{
+			LOG_DEBUG("Enqueued keep alive!");
+
+			// Enqueue a keep alive packet
+			auto& dbWorker = g_server.GetDBWorker();
+			DBRequest req(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), true);
+			dbWorker.Enqueue(std::move(req));
+
+			m_dbKeepAliveLastActivity = dbCheckNow;
+		}
+
 		// Check for timeout
 		if (res == 0)
 		{
+			LOG_DEBUG("Pool timeout triggered.");
 			return 0;
 		}
 

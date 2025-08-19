@@ -12,8 +12,11 @@ namespace NECRO
 {
 namespace Auth
 {
+	// AuthServer
 	inline constexpr uint8_t	MANAGER_RESERVED_FDS = 2;
 	inline constexpr uint16_t	MANAGER_SERVER_PORT = 61531;
+
+	inline constexpr int		SERVER_POLL_TIMEOUT_MS = 30000;
 
 	// The amout of time (in ms) that if passed will timeout the socket if TLS connection succeedes and no packet arrives
 	inline constexpr uint32_t MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 10000;
@@ -23,6 +26,9 @@ namespace Auth
 	inline constexpr bool		ENABLE_SPAM_PREVENTION = 0;
 	inline constexpr uint32_t	CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
 	inline constexpr uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
+
+	// Database keep alive
+	inline constexpr int		DB_KEEP_ALIVE_REQUEST_INTERVAL_MS = 60000; // 1 keep alive request every minute
 
 	//-----------------------------------------------------------------------------------------------------
 	// Abstracts a TCP Socket Listener into a manager, that listens, accepts and manages connections
@@ -54,8 +60,10 @@ namespace Auth
 			std::chrono::steady_clock::time_point lastUpdate;
 			size_t tries;
 		};
-
 		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
+
+		// DB Keep Alive
+		std::chrono::steady_clock::time_point m_dbKeepAliveLastActivity;
 
 		void SetupWakeup();
 
