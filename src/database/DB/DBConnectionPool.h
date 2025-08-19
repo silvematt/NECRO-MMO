@@ -12,6 +12,8 @@
 
 namespace NECRO
 {
+    inline constexpr int DB_CONN_POOL_MAX_SIZE = 100;
+
     class DBConnectionPool
     {
     public:
@@ -23,8 +25,14 @@ namespace NECRO
             {
                 std::string uri = "mysqlx://" + user + ":" + pass + "@" + host + "/" + dbname;
 
-                m_client = std::make_unique<mysqlx::Client>(uri, mysqlx::ClientOption::POOLING, false); // POOLING = true crashes the mysqlx library itself (?)
+                m_client = std::make_unique<mysqlx::Client>(
+                    uri,
+                    mysqlx::ClientOption::POOLING, true,      
+                    mysqlx::ClientOption::POOL_MAX_SIZE, DB_CONN_POOL_MAX_SIZE
+                );                
+                
                 LOG_INFO("DBConnectionPool initialized successfully.");
+
                 return 0;
             }
             catch (const mysqlx::Error& err)

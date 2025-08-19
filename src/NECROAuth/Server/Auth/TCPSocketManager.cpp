@@ -99,6 +99,9 @@ namespace Auth
 		if (res < 0)
 		{
 			LOG_ERROR("Could not Poll()");
+
+			int err = WSAGetLastError();
+			LOG_ERROR("WSAPoll() failed with error: {}", err);
 			return -1;
 		}
 
@@ -222,17 +225,13 @@ namespace Auth
 				// May need to re-do the loopback 
 
 				// Execute the callbacks
-				std::queue<DBRequest> requests = g_server.GetDBWorker().GetResponseQueue();
+				std::vector<DBRequest> requests = g_server.GetDBWorker().GetResponseQueue();
 
-				while (requests.size() > 0)
+				for (auto& req : requests)
 				{
-					LOG_DEBUG("Executing a callback!");
-					DBRequest r = std::move(requests.front());
-					requests.pop();
-					if (r.m_callback)
-						r.m_callback(r.m_sqlRes);
+					if (req.m_callback)
+						req.m_callback(req.m_sqlRes);
 				}
-
 				m_writePending = false;
 			}
 		}

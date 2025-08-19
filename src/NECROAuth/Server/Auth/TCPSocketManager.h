@@ -16,11 +16,11 @@ namespace Auth
 	inline constexpr uint16_t	MANAGER_SERVER_PORT = 61531;
 
 	// The amout of time (in ms) that if passed will timeout the socket if TLS connection succeedes and no packet arrives
-	inline constexpr uint32_t MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 5000;
-	inline constexpr uint32_t MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS = 5000;
+	inline constexpr uint32_t MANAGER_POST_TLS_IDLE_TIMEOUT_MS = 10000;
+	inline constexpr uint32_t MANAGER_HANDSHAKING_IDLE_TIMEOUT_MS = 10000;
 
 	// Spam prevention
-	inline constexpr bool		ENABLE_SPAM_PREVENTION = 1;
+	inline constexpr bool		ENABLE_SPAM_PREVENTION = 0;
 	inline constexpr uint32_t	CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
 	inline constexpr uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
 
