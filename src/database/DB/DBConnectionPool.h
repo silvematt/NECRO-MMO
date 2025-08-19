@@ -27,8 +27,7 @@ namespace NECRO
 
                 m_client = std::make_unique<mysqlx::Client>(
                     uri,
-                    mysqlx::ClientOption::POOLING, true,      
-                    mysqlx::ClientOption::POOL_MAX_SIZE, DB_CONN_POOL_MAX_SIZE
+                    mysqlx::ClientOption::POOLING, false      
                 );                
                 
                 LOG_INFO("DBConnectionPool initialized successfully.");
