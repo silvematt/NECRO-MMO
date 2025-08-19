@@ -37,6 +37,9 @@ namespace NECRO
 		std::mutex				m_respMutex;
 		std::vector<DBRequest>	m_respQueue;
 
+		// TODO: Keep alive mechanism
+		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
+
 	public:
 		int Setup(Database::DBType t)
 		{
@@ -71,8 +74,39 @@ namespace NECRO
 				Join();
 			}
 
-			m_running = true;
-			m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
+			if (CreatePersistentMySQLSession() == 0)
+			{
+				m_running = true;
+				m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
+
+				return 0;
+			}
+			else
+				return -1;
+		}
+
+		int CreatePersistentMySQLSession()
+		{
+			// Attempt to open the persistent mysql session
+			try
+			{
+				m_persistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
+			}
+			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
+			{
+				std::cerr << "CreatePersistentMySQLSession MySQL error: " << err.what() << std::endl;
+				return -1;
+			}
+			catch (const std::exception& ex)  // catches standard exceptions
+			{
+				std::cerr << "CreatePersistentMySQLSession Standard exception: " << ex.what() << std::endl;
+				return -1;
+			}
+			catch (...)
+			{
+				std::cerr << "CreatePersistentMySQLSession Unknown exception caught!" << std::endl;
+				return -1;
+			}
 
 			return 0;
 		}
@@ -82,6 +116,12 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		void Stop()
 		{
+			// Destroy the mysql session
+			if (m_persistentMysqlSession)
+			{
+				m_persistentMysqlSession->close();
+				m_persistentMysqlSession.reset();
+			}
 
 			m_running = false;
 			m_execWakeupCond.notify_one();
@@ -160,8 +200,7 @@ namespace NECRO
 							try
 							{
 								// Get a session, prepare the statement and execute it
-								mysqlx::Session sess = m_db->m_pool.m_client->getSession();
-								mysqlx::SqlStatement stmt = m_db->Prepare(sess, req.m_enumVal);
+								mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_enumVal);
 								for (auto& param : req.m_bindParams)
 									stmt.bind(param);
 
