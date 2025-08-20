@@ -14,13 +14,7 @@ namespace World
 		// Status
 		bool m_isRunning;
 
-		ConsoleLogger	m_cLogger;
-		FileLogger		m_fLogger;
-
 	public:
-		ConsoleLogger&	GetConsoleLogger();
-		FileLogger&		GetFileLogger();
-
 		int						Init();
 		void					Update();
 		void					Stop();
@@ -29,17 +23,6 @@ namespace World
 
 	// Global access for the Server 
 	extern Server g_server;
-
-	// Inline functions
-	inline ConsoleLogger& Server::GetConsoleLogger()
-	{
-		return m_cLogger;
-	}
-
-	inline FileLogger& Server::GetFileLogger()
-	{
-		return m_fLogger;
-	}
 
 }
 }
