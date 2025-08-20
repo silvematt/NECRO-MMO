@@ -29,18 +29,11 @@ namespace Hammer
 	private:
 		bool m_isRunning;
 
-		ConsoleLogger	m_cLogger;
-		FileLogger		m_fLogger;
-
 		boost::asio::io_context	m_ioContext;
 
 		SocketManager m_sockManager;
 
 	public:
-		ConsoleLogger&		GetConsoleLogger()	{ return m_cLogger; }
-		FileLogger&			GetFileLogger()		{ return m_fLogger; }
-
-
 		int			Init();
 		void		Start();
 		void		Update();
