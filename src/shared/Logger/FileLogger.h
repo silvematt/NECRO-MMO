@@ -15,7 +15,7 @@ namespace NECRO
 		std::ofstream m_logFile;
 
 	public:
-		static FileLogger* Instance();
+		static FileLogger& Instance();
 
 		FileLogger();
 		FileLogger(const std::string& filePath);

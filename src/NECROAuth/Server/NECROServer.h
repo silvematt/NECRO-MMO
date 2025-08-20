@@ -1,6 +1,7 @@
 #ifndef NECROAUTHSERVER_H
 #define NECROAUTHSERVER_H
 
+#include "Config.h"
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 #include "TCPSocketManager.h"
@@ -14,12 +15,19 @@ namespace Auth
 {
 	inline constexpr uint16_t MAX_CLIENTS_CONNECTED = 5000;
 
-	inline constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
-	inline constexpr uint8_t CLIENT_VERSION_MINOR = 0;
-	inline constexpr uint8_t CLIENT_VERSION_REVISION = 0;
+	inline constexpr const char* AUTH_CONFIG_FILE_PATH = "authserver.conf";
 
 	class Server
 	{
+	public:
+		// Server settings that can be overridden by config file
+		struct ConfigSettings
+		{
+			uint8_t CLIENT_VERSION_MAJOR = 1;
+			uint8_t CLIENT_VERSION_MINOR = 0;
+			uint8_t CLIENT_VERSION_REVISION = 0;
+		};
+
 	public:
 		Server() :
 			m_isRunning(false)
@@ -29,10 +37,8 @@ namespace Auth
 
 	private:
 		// Status
-		bool m_isRunning;
-
-		ConsoleLogger	m_cLogger;
-		FileLogger		m_fLogger;
+		ConfigSettings	m_configSettings;
+		bool			m_isRunning;
 
 		std::unique_ptr<TCPSocketManager> m_sockManager;
 
@@ -46,28 +52,24 @@ namespace Auth
 		TCPSocketManager&	GetSocketManager();
 
 		//LoginDatabase&	GetDirectDB();
-		DatabaseWorker&	GetDBWorker();
+		DatabaseWorker&		GetDBWorker();
 
 		int						Init();
+		void					ApplySettings();
 		void					Start();
 		void					Update();
 		void					Stop();
 		int						Shutdown();
+
+
+		const ConfigSettings& GetSettings() const
+		{
+			return m_configSettings;
+		};
 	};
 
 	// Global access for the Server 
 	extern Server g_server;
-
-	// Inline functions
-	inline ConsoleLogger& Server::GetConsoleLogger()
-	{
-		return m_cLogger;
-	}
-
-	inline FileLogger& Server::GetFileLogger()
-	{
-		return m_fLogger;
-	}
 
 	inline TCPSocketManager& Server::GetSocketManager()
 	{

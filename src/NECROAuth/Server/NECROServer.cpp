@@ -36,6 +36,18 @@ namespace Auth
 
 		LOG_OK("Booting up NECROAuth...");
 
+		// Load config file
+		if (!Config::Instance().Load(AUTH_CONFIG_FILE_PATH))
+		{
+			LOG_ERROR("Failed to load config file at: {}", AUTH_CONFIG_FILE_PATH);
+
+			return -1;
+		}
+		LOG_OK("Config file {} loaded successfully", AUTH_CONFIG_FILE_PATH);
+
+		// Apply Server Settings
+		ApplySettings();
+
 		SocketUtility::Initialize();
 
 		if (OpenSSLManager::ServerInit() != 0)
@@ -65,6 +77,19 @@ namespace Auth
 		m_sockManager = std::make_unique<TCPSocketManager>(SocketAddressesFamily::INET);
 
 		return 0;
+	}
+
+	void Server::ApplySettings()
+	{
+		auto& conf = Config::Instance();
+
+		// Apply config
+		ConsoleLogger::Instance().m_logEnabled	= conf.GetBool("ConsoleLoggingEnabled", false);
+		FileLogger::Instance().m_logEnabled		= conf.GetBool("FileLoggingEnabled", false);
+
+		m_configSettings.CLIENT_VERSION_MAJOR		= conf.GetInt("CLIENT_VERSION_MAJOR", 1);
+		m_configSettings.CLIENT_VERSION_MINOR		= conf.GetInt("CLIENT_VERSION_MINOR", 0);
+		m_configSettings.CLIENT_VERSION_REVISION	= conf.GetInt("CLIENT_VERSION_REVISION", 0);
 	}
 
 	void Server::Start()

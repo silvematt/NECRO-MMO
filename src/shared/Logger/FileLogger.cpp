@@ -5,10 +5,10 @@
 
 namespace NECRO
 {
-    FileLogger* FileLogger::Instance()
+    FileLogger& FileLogger::Instance()
     {
         static FileLogger instance;
-        return &instance;
+        return instance;
     }
 
     FileLogger::~FileLogger()

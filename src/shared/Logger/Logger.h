@@ -35,33 +35,25 @@ namespace NECRO
         std::string GetLogLevelStr(LogLevel level);
 
     public:
+        // TODO bitflag to enable LogLevels individually
+        bool m_logEnabled = true;
+
         virtual void Log(const std::string& message, LogLevel level, const char* file, int line, ...) = 0;
 
         template<typename... Args>
         void LogFmt(LogLevel level, const char* file, int line, fmt::format_string<Args...> fmtStr, Args&&... args)
         {
+            if (!m_logEnabled)
+                return;
+
             std::string message = fmt::format(fmtStr, std::forward<Args>(args)...);
             Log(message, level, file, line);
         }
 
-        /*
-        // Helper function to format the string using variadic arguments
-        // Not used anymore since FMT
-        std::string FormatString(const char* str, va_list args)
-        {
-            // The size of the formatted string, we'll grow it dynamically as needed.
-            size_t size = std::vsnprintf(nullptr, 0, str, args) + 1;  // +1 for null terminator
-            std::string result(size, '\0');
-            std::vsnprintf(&result[0], size, str, args);  // Write the formatted string into the result
-            return result;
-        } 
-        */
-
         #define cLog ConsoleLogger::Instance()
         #define fLog FileLogger::Instance()
 
-        #define LOG_FMT(logger, level, ...) (logger)->LogFmt(level, __FILE__, __LINE__, __VA_ARGS__)
-        // #define LOG(logger, level, message, ...) (logger)->Log(message, level, __FILE__, __LINE__, ##__VA_ARGS__)
+        #define LOG_FMT(logger, level, ...) (logger).LogFmt(level, __FILE__, __LINE__, __VA_ARGS__)
 
         // LOG uses the default Loggers instances, cLog and fLog (consoleLog, fileLog), by default logging on the console will also log on the file
         #define LOG_INFO(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__)

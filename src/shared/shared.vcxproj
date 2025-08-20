@@ -118,7 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -133,6 +133,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Authentication\AuthCodes.h" />
+    <ClInclude Include="Config\Config.h" />
     <ClInclude Include="Sockets\TCPSocketBoost.h" />
     <ClInclude Include="Encryption\AES.h" />
     <ClInclude Include="Logger\ConsoleLogger.h" />
@@ -148,6 +149,7 @@
     <ClInclude Include="Utility\Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Config\Config.cpp" />
     <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
     <ClCompile Include="Logger\ConsoleLogger.cpp" />
     <ClCompile Include="Logger\FileLogger.cpp" />

@@ -171,8 +171,10 @@ namespace Auth
         }
         else
         {
+            auto& serverSettings = g_server.GetSettings();
+            
             // Check client version with server's client version
-            if (m_data.versionMajor == CLIENT_VERSION_MAJOR && m_data.versionMinor == CLIENT_VERSION_MINOR && m_data.versionRevision == CLIENT_VERSION_REVISION)
+            if (m_data.versionMajor == serverSettings.CLIENT_VERSION_MAJOR && m_data.versionMinor == serverSettings.CLIENT_VERSION_MINOR && m_data.versionRevision == serverSettings.CLIENT_VERSION_REVISION)
             {
                 packet << uint8_t(AuthResults::SUCCESS);
 

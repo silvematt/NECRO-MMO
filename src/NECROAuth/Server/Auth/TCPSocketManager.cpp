@@ -16,7 +16,10 @@ namespace Auth
 	//-----------------------------------------------------------------------------------------------------
 	TCPSocketManager::TCPSocketManager(SocketAddressesFamily _family) : m_listener(_family), m_wakeListen(_family), m_wakeWrite(_family)
 	{
-		uint16_t inPort = MANAGER_SERVER_PORT;
+		// Apply settings from config file
+		ApplySettings();
+
+		uint16_t inPort = m_configSettings.MANAGER_SERVER_PORT;
 		SocketAddress localAddr(AF_INET, INADDR_ANY, inPort);
 		int flag = 1;
 
@@ -37,6 +40,18 @@ namespace Auth
 		m_listener.m_pfd.revents = 0;
 
 		SetupWakeup();
+	}
+
+	void TCPSocketManager::ApplySettings()
+	{
+		auto& conf = Config::Instance();
+
+		// Apply config
+		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61531);
+
+		m_configSettings.ENABLE_SPAM_PREVENTION						= conf.GetBool("ENABLE_SPAM_PREVENTION", true);
+		m_configSettings.CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN	= conf.GetInt("CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN", 1);
+		m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_MINUTE			= conf.GetInt("MAX_CONNECTION_ATTEMPTS_PER_MINUTE", 10);
 	}
 
 	void TCPSocketManager::SetupWakeup()
@@ -153,7 +168,7 @@ namespace Auth
 						// TODO instead of checking every new connection attempt, we can wait a bit longer 
 						for(auto it = m_ipRequestMap.begin(); it != m_ipRequestMap.end();)
 						{
-							if (now - it->second.lastUpdate > std::chrono::minutes(CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN))
+							if (now - it->second.lastUpdate > std::chrono::minutes(m_configSettings.CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN))
 								it = m_ipRequestMap.erase(it);
 							else
 								it++;
@@ -167,13 +182,13 @@ namespace Auth
 							m_ipRequestMap[clientIP].tries++;
 
 							// If the number of tries exceed the limit, block this request
-							if (m_ipRequestMap[clientIP].tries > MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+							if (m_ipRequestMap[clientIP].tries > m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
 								couldBeSpam = true;
 						}
 						else
 							m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
 
-						if (!ENABLE_SPAM_PREVENTION)
+						if (!m_configSettings.ENABLE_SPAM_PREVENTION)
 							couldBeSpam = false;
 
 						if (!couldBeSpam)

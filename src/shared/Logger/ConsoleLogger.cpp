@@ -3,10 +3,10 @@
 
 namespace NECRO
 {
-    ConsoleLogger* ConsoleLogger::Instance()
+    ConsoleLogger& ConsoleLogger::Instance()
     {
         static ConsoleLogger instance;
-        return &instance;
+        return instance;
     }
 
     std::string ConsoleLogger::GetColor(Logger::LogLevel lvl)
