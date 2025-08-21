@@ -10,6 +10,13 @@ namespace World
 {
 	class Server
 	{
+	public:
+		static Server& Instance()
+		{
+			static Server instance;
+			return instance;
+		}
+
 	private:
 		// Status
 		bool m_isRunning;
@@ -20,10 +27,6 @@ namespace World
 		void					Stop();
 		int						Shutdown();
 	};
-
-	// Global access for the Server 
-	extern Server g_server;
-
 }
 }
 

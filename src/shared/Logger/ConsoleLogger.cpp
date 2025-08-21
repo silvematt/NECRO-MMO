@@ -3,12 +3,6 @@
 
 namespace NECRO
 {
-    ConsoleLogger& ConsoleLogger::Instance()
-    {
-        static ConsoleLogger instance;
-        return instance;
-    }
-
     std::string ConsoleLogger::GetColor(Logger::LogLevel lvl)
     {
         switch (lvl)

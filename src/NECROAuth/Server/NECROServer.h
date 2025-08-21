@@ -35,6 +35,12 @@ namespace Auth
 
 		}
 
+		static Server& Instance()
+		{
+			static Server instance;
+			return instance;
+		}
+
 	private:
 		// Status
 		ConfigSettings	m_configSettings;
@@ -67,9 +73,6 @@ namespace Auth
 			return m_configSettings;
 		};
 	};
-
-	// Global access for the Server 
-	extern Server g_server;
 
 	inline TCPSocketManager& Server::GetSocketManager()
 	{

@@ -28,8 +28,6 @@ namespace NECRO
 {
 namespace Auth
 {
-	Server g_server;
-
 	int Server::Init()
 	{
 		m_isRunning = false;

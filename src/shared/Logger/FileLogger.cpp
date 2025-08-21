@@ -5,12 +5,6 @@
 
 namespace NECRO
 {
-    FileLogger& FileLogger::Instance()
-    {
-        static FileLogger instance;
-        return instance;
-    }
-
     FileLogger::~FileLogger()
     {
         if (m_logFile.is_open())

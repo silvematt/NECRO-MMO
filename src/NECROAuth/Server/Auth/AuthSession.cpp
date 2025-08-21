@@ -122,7 +122,7 @@ namespace Auth
         LOG_DEBUG("Handling AuthLoginInfo for user: {}", m_data.username);
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
-        auto& dbworker = g_server.GetDBWorker();
+        auto& dbworker = Server::Instance().GetDBWorker();
         {
             DBRequest req(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), false);
             req.m_bindParams.push_back(m_data.username);
@@ -142,7 +142,7 @@ namespace Auth
             {
                 if (auto self = weakSelf.lock()) 
                 {
-                    g_server.GetSocketManager().WakeUp();
+                    Server::Instance().GetSocketManager().WakeUp();
                 }
             };
             dbworker.Enqueue(std::move(req));
@@ -171,7 +171,7 @@ namespace Auth
         }
         else
         {
-            auto& serverSettings = g_server.GetSettings();
+            auto& serverSettings = Server::Instance().GetSettings();
             
             // Check client version with server's client version
             if (m_data.versionMajor == serverSettings.CLIENT_VERSION_MAJOR && m_data.versionMinor == serverSettings.CLIENT_VERSION_MINOR && m_data.versionRevision == serverSettings.CLIENT_VERSION_REVISION)
@@ -226,7 +226,7 @@ namespace Auth
         m_data.pass = p;
         m_data.randIVPrefix = pcktData->clientsIVRandomPrefix;
 
-        auto& dbworker = g_server.GetDBWorker();
+        auto& dbworker = Server::Instance().GetDBWorker();
         {
             DBRequest req(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), false);
             req.m_bindParams.push_back(m_data.accountID);
@@ -246,7 +246,7 @@ namespace Auth
                 {
                     if (auto self = weakSelf.lock())
                     {
-                        g_server.GetSocketManager().WakeUp();
+                        Server::Instance().GetSocketManager().WakeUp();
                     }
                 };
             dbworker.Enqueue(std::move(req));
@@ -270,7 +270,7 @@ namespace Auth
 
         bool authenticated = row[0].get<std::string>() == m_data.pass;
 
-        auto& dbworker = g_server.GetDBWorker();
+        auto& dbworker = Server::Instance().GetDBWorker();
         if (!authenticated)
         {
             LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());

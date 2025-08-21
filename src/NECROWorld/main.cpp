@@ -4,9 +4,11 @@
 
 int main()
 {
-	if (NECRO::World::g_server.Init() == 0)
+	auto& server = NECRO::World::Server::Instance();
+
+	if (server.Init() == 0)
 	{
-		NECRO::World::g_server.Update();
+		server.Update();
 	}
 
 	return 0;

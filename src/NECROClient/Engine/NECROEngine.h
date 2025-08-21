@@ -21,6 +21,13 @@ namespace Client
 
 	class Engine
 	{
+	public:
+		static Engine& Instance()
+		{
+			static Engine instance;
+			return instance;
+		}
+
 	private:
 		// Status
 		bool		m_isRunning;
@@ -57,9 +64,8 @@ namespace Client
 		void				Stop();
 	};
 
-
-	// Global access for the Engine 
-	extern Engine engine;
+	// Global define to engine instance
+	#define engine Engine::Instance()
 
 	// Inline functions
 	inline Game& Engine::GetGame()

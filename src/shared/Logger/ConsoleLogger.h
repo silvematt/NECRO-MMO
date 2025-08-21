@@ -9,7 +9,11 @@ namespace NECRO
 	class ConsoleLogger : public Logger
 	{
 	public:
-		static ConsoleLogger& Instance();
+		static ConsoleLogger& Instance()
+		{
+			static ConsoleLogger instance;
+			return instance;
+		}
 
 		std::string GetColor(LogLevel lvl);
 

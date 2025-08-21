@@ -40,7 +40,7 @@ namespace Client
 
 		uint16_t outPort = 61531;
 		struct in_addr addr;
-		inet_pton(AF_INET, "127.0.0.1", &addr);
+		inet_pton(AF_INET, "192.168.1.221", &addr);
 
 		SocketAddress authAddr(AF_INET, addr.s_addr, outPort);
 

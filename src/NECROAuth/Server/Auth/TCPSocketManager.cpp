@@ -127,7 +127,7 @@ namespace Auth
 			LOG_DEBUG("Enqueued keep alive!");
 
 			// Enqueue a keep alive packet
-			auto& dbWorker = g_server.GetDBWorker();
+			auto& dbWorker = Server::Instance().GetDBWorker();
 			DBRequest req(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), true);
 			dbWorker.Enqueue(std::move(req));
 
@@ -255,7 +255,7 @@ namespace Auth
 				// May need to re-do the loopback 
 
 				// Execute the callbacks
-				std::vector<DBRequest> requests = g_server.GetDBWorker().GetResponseQueue();
+				std::vector<DBRequest> requests = Server::Instance().GetDBWorker().GetResponseQueue();
 
 				for (auto& req : requests)
 				{

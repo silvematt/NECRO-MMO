@@ -8,8 +8,6 @@ namespace NECRO
 {
 namespace World
 {
-	Server g_server;
-
 	int Server::Init()
 	{
 		m_isRunning = false;

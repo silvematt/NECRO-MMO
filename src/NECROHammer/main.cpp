@@ -4,10 +4,12 @@
 
 int main()
 {
-	if (NECRO::Hammer::Client::Instance().Init() == 0)
+	auto& client = NECRO::Hammer::Client::Instance();
+
+	if (client.Init() == 0)
 	{
-		NECRO::Hammer::Client::Instance().Start();
-		NECRO::Hammer::Client::Instance().Update();
+		client.Start();
+		client.Update();
 	}
 
 	return 0;

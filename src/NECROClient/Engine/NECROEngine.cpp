@@ -7,8 +7,6 @@ namespace NECRO
 {
 namespace Client
 {
-	Engine engine;
-
 	//--------------------------------------
 	// Initializes the engine and subsystems
 	//--------------------------------------
