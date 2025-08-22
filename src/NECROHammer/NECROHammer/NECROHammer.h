@@ -19,7 +19,6 @@ namespace Hammer
 	public:
 		Client(uint32_t threadsCount) : m_isRunning(false), m_sockManager(threadsCount, m_ioContext)
 		{
-
 		}
 
 		static Client& Instance()
@@ -31,13 +30,18 @@ namespace Hammer
 	private:
 		bool m_isRunning;
 
+		// Main ioContext
 		boost::asio::io_context	m_ioContext;
 
 		SocketManager m_sockManager;
 
 	public:
+		// Initializes the Hammer client
 		int			Init();
+
+		// Applies the Config settings from the config file loaded during Init
 		void		ApplySettings();
+		
 		void		Start();
 		void		Update();
 		void		Stop();

@@ -22,7 +22,6 @@ namespace NECRO
 	class NetworkThread
 	{
 	private:
-		std::shared_ptr<std::mutex>					m_printMutex;
 		int											m_threadID;
 		std::unique_ptr<std::thread>				m_thread;
 		std::atomic<bool>							m_stopped;
@@ -39,7 +38,7 @@ namespace NECRO
 		std::mutex									m_queuedSocketsMutex;
 	
 	public:
-		NetworkThread(int id, std::shared_ptr<std::mutex> printMx) : m_printMutex(printMx), m_threadID(id), m_thread(nullptr), m_stopped(false), m_ioContext(1), m_updateTimer(m_ioContext), m_sslContext(boost::asio::ssl::context::sslv23_client)
+		NetworkThread(int id) : m_threadID(id), m_thread(nullptr), m_stopped(false), m_ioContext(1), m_updateTimer(m_ioContext), m_sslContext(boost::asio::ssl::context::sslv23_client)
 		{
 			m_sslContext.set_verify_mode(boost::asio::ssl::verify_peer);
 			m_sslContext.load_verify_file("server.pem");
@@ -76,10 +75,6 @@ namespace NECRO
 							[](auto& s) { return s->Update() == -1; }),
 							m_sockets.end());
 			m_socketsNumber.fetch_sub(before - m_sockets.size());
-
-			//std::unique_lock lock(*m_printMutex);
-			//std::cout << m_threadID << " called. " << m_socketsNumber << std::endl;
-			//lock.unlock();
 		}
 
 		void AddQueuedSocketsToMainList()

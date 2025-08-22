@@ -173,8 +173,6 @@ namespace Hammer
 
             NetworkMessage m(packet);
             QueuePacket(std::move(m));
-            //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
-
         }
         else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))
         {
@@ -204,7 +202,7 @@ namespace Hammer
             // Continue authentication
             m_status = NECRO::Auth::SocketStatus::AUTHED;
 
-            // Save the session key in the netManager data
+            // Save the session key in this session data
             std::copy(std::begin(pckData->sessionKey), std::end(pckData->sessionKey), std::begin(m_data.sessionKey));
 
             // Convert sessionKey to hex string in order to print it
@@ -215,7 +213,7 @@ namespace Hammer
             }
             std::string sessionStr = sessionStrStream.str();
 
-            // Save the greetcode in the netmanager data
+            // Save the greetcode in this session data
             std::copy(std::begin(pckData->greetcode), std::end(pckData->greetcode), std::begin(m_data.greetcode));
 
             // Convert greetcode to hex string in order to print it
@@ -232,10 +230,6 @@ namespace Hammer
             // Close connection to auth server
             LOG_OK("Authentication completed! Closing Auth Socket...");
             CloseSocket();
-
-            // We're now ready to connect to the game server
-            // This packet (AuthLoginProofResponse) could also contain the realms list
-            //netManager.OnAuthenticationCompleted();
         }
         else //  (pckData->error == LoginProofResults::LOGIN_FAILED)
         {

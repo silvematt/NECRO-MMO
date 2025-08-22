@@ -15,16 +15,21 @@ namespace NECRO
 {
 namespace Hammer
 {
+	// -----------------------------------------------------------------------
+	// Manages the NetworkThreads that hold the actual tcp sockets
+	// -----------------------------------------------------------------------
 	class SocketManager
 	{
+		typedef std::vector<std::unique_ptr<NetworkThread<HammerSocket>>> NetworkThreadList;
+
 		// Config settings for the SocketManager that can be overridden by config file
 		struct ConfigSettings
 		{
 			uint32_t SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC = 1;
 			uint32_t MAX_SOCKETS_PER_THREAD = 100;
 
-			std::string REMOTE_SERVER_IP;
-			std::string REMOTE_SERVER_PORT;
+			std::string REMOTE_SERVER_IP = "";
+			std::string REMOTE_SERVER_PORT = "";
 		};	
 
 	private:
@@ -32,13 +37,13 @@ namespace Hammer
 		ConfigSettings m_configSettings;
 
 		// Threads
-		std::vector<std::shared_ptr<NetworkThread<HammerSocket>>> m_networkThreads;
+		NetworkThreadList m_networkThreads;
 		int m_networkThreadsCount;
 
 		// Timer to update the distribution of new sockets
-		std::shared_ptr<boost::asio::steady_timer> m_distributionTimer;
+		std::unique_ptr<boost::asio::steady_timer> m_distributionTimer;
 		
-		// Contexts
+		// Context
 		boost::asio::io_context& m_ioContextRef;
 
 	public:
@@ -47,17 +52,19 @@ namespace Hammer
 			m_networkThreadsCount = threadCount;
 
 			// Create the distribution timer
-			m_distributionTimer = std::make_shared<boost::asio::steady_timer>(m_ioContextRef);
+			m_distributionTimer = std::make_unique<boost::asio::steady_timer>(m_ioContextRef);
 
 			// A mutex all threads share to call std::cout
-			auto printMutex = std::make_shared<std::mutex>(); 
 			for (int i = 0; i < threadCount; i++)
 			{
 				// Create the threads
-				m_networkThreads.push_back(std::make_shared<NetworkThread<HammerSocket>>(i, printMutex));
+				m_networkThreads.push_back(std::make_unique<NetworkThread<HammerSocket>>(i));
 			}
 		}
 
+		// -----------------------------------------------------------------------
+		// Manages the NetworkThreads that hold the actual tcp sockets
+		// -----------------------------------------------------------------------
 		int Initialize()
 		{
 			ApplySettings();
@@ -65,6 +72,9 @@ namespace Hammer
 			return 0;
 		}
 
+		// -----------------------------------------------------------------------
+		// Applies the Config settings from the config file loaded during Init
+		// -----------------------------------------------------------------------
 		void ApplySettings()
 		{
 			auto& conf = Config::Instance();
@@ -82,33 +92,17 @@ namespace Hammer
 			return m_configSettings;
 		}
 
+		// ----------------------------------------------------------------------------------------
+		// Starts the m_distributionTimer that makes sure there's always work in the main ioContext
+		// ----------------------------------------------------------------------------------------
 		void Start()
 		{
-			for(int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Start();
-		}
-
-		void Stop()
-		{
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Stop();
-		}
-
-		void Join()
-		{
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Join();
-		}
-
-		void Update()
-		{
-			// Start the callback loop
 			m_distributionTimer->expires_after(std::chrono::milliseconds(m_configSettings.SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
 			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSockets(); });
 		}
 
 		// ----------------------------------------------------------------------------------------
-		// Creates a new socket for each thread and inserts them in their respective queues
+		// Loop action: creates a new socket for each thread and inserts them in their respective queues
 		// ----------------------------------------------------------------------------------------
 		void DistributeNewSockets()
 		{
@@ -125,6 +119,24 @@ namespace Hammer
 					m_networkThreads[i]->QueueNewSocket(newSock);
 				}
 			}
+		}
+
+		void StartThreads()
+		{
+			for(int i = 0; i < m_networkThreadsCount; i++)
+				m_networkThreads[i]->Start();
+		}
+
+		void StopThreads()
+		{
+			for (int i = 0; i < m_networkThreadsCount; i++)
+				m_networkThreads[i]->Stop();
+		}
+
+		void JoinThreads()
+		{
+			for (int i = 0; i < m_networkThreadsCount; i++)
+				m_networkThreads[i]->Join();
 		}
 	};
 }
