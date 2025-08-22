@@ -10,7 +10,30 @@ namespace Hammer
 	{
 		m_isRunning = false;
 
+		// Load config file
+		if (!Config::Instance().Load(CLIENT_CONFIG_FILE_PATH))
+		{
+			LOG_ERROR("Failed to load config file at: {}", CLIENT_CONFIG_FILE_PATH);
+
+			return -1;
+		}
+		LOG_OK("Config file {} loaded successfully", CLIENT_CONFIG_FILE_PATH);
+
+		ApplySettings();
+
+		// Initialize subsystems
+		m_sockManager.Initialize();
+
 		return 0;
+	}
+
+	void Client::ApplySettings()
+	{
+		auto& conf = Config::Instance();
+
+		// Apply config
+		ConsoleLogger::Instance().m_logEnabled = conf.GetBool("ConsoleLoggingEnabled", true);
+		FileLogger::Instance().m_logEnabled = conf.GetBool("FileLoggingEnabled", true);
 	}
 
 	void Client::Start()

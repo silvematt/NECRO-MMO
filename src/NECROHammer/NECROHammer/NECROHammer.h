@@ -12,6 +12,8 @@ namespace NECRO
 {
 namespace Hammer
 {
+	inline constexpr const char* CLIENT_CONFIG_FILE_PATH = "hammerclient.conf";
+
 	class Client
 	{
 	public:
@@ -35,6 +37,7 @@ namespace Hammer
 
 	public:
 		int			Init();
+		void		ApplySettings();
 		void		Start();
 		void		Update();
 		void		Stop();

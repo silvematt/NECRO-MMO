@@ -32,7 +32,7 @@ namespace Hammer
 		if (m_state == State::DEFAULT)
 		{
 			// Startup the socket
-			Resolve("192.168.1.221", "61531");
+			Resolve(m_remoteIp, m_remotePort);
 			return 0;
 		}
 		else if (m_state == State::JUST_CONNECTED)

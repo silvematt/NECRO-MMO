@@ -44,21 +44,23 @@ namespace Hammer
 
 	class HammerSocket : public TCPSocketBoost
 	{
-
     protected:
+		std::string m_remoteIp;
+		std::string m_remotePort;
+
         Auth::SocketStatus m_status;
 		AuthData m_data;
 
 	public:
 		// TLS-enabled constructor
-		HammerSocket(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO)
+		HammerSocket(boost::asio::io_context& io, context& ssl_ctx, std::string ip, std::string port) : TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
 		{
             m_data.username = "matt";
             m_data.password = "124";
 		}
 
 		// Or non-TLS version
-		HammerSocket(boost::asio::io_context& io) : TCPSocketBoost(io), m_status(Auth::SocketStatus::GATHER_INFO)
+		HammerSocket(boost::asio::io_context& io, std::string ip, std::string port) : TCPSocketBoost(io), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
 		{
             m_data.username = "matt";
             m_data.password = "124";
