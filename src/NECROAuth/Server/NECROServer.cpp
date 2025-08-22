@@ -82,8 +82,8 @@ namespace Auth
 		auto& conf = Config::Instance();
 
 		// Apply config
-		ConsoleLogger::Instance().m_logEnabled	= conf.GetBool("ConsoleLoggingEnabled", false);
-		FileLogger::Instance().m_logEnabled		= conf.GetBool("FileLoggingEnabled", false);
+		ConsoleLogger::Instance().m_logEnabled	= conf.GetBool("ConsoleLoggingEnabled", true);
+		FileLogger::Instance().m_logEnabled		= conf.GetBool("FileLoggingEnabled", true);
 
 		m_configSettings.CLIENT_VERSION_MAJOR		= conf.GetInt("CLIENT_VERSION_MAJOR", 1);
 		m_configSettings.CLIENT_VERSION_MINOR		= conf.GetInt("CLIENT_VERSION_MINOR", 0);
