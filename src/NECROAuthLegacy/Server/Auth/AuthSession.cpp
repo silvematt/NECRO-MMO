@@ -1,6 +1,7 @@
 #include "AuthSession.h"
 #include "NECROServer.h"
 #include "AuthCodes.h"
+#include "TCPSocketManager.h"
 #include "DBRequest.h"
 
 #include <random>
@@ -23,54 +24,7 @@ namespace Auth
     std::unordered_map<uint8_t, AuthHandler> const Handlers = AuthSession::InitHandlers();
 
 
-    int AuthSession::Update()
-    {
-        // Signal this socket is dead and must be removed
-        if (m_UnderlyingState == UnderlyingState::CRITICAL_ERROR)
-            return -1;
-
-        if (m_UnderlyingState == UnderlyingState::DEFAULT)
-        {
-            // Startup the socket
-            if (m_usesTLS)
-            {
-                // Connected, need to handshake
-                m_sslSocket->lowest_layer().set_option(tcp::no_delay(true));
-                m_sslSocket->set_verify_mode(boost::asio::ssl::verify_none);
-
-                m_UnderlyingState = UnderlyingState::HANDSHAKING;
-
-                auto self = shared_from_this();
-                m_sslSocket->async_handshake(boost::asio::ssl::stream_base::server,
-                    [this, self](const boost::system::error_code& ec)
-                    {
-                        if (!ec)
-                        {
-                            m_UnderlyingState = UnderlyingState::JUST_CONNECTED;
-
-                            // Now we can start reading/writing, first operation will go in JUST_CONNECTED case
-                        }
-                        else
-                        {
-                            LOG_ERROR("Error during handshake: {}", ec.what());
-                            m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
-                        }
-                    });
-            }
-            return 0;
-        }
-        else if (m_UnderlyingState == UnderlyingState::JUST_CONNECTED)
-        {
-            // Start the async read loop
-            AsyncRead();
-
-            m_UnderlyingState = UnderlyingState::CONNECTED;
-        }
-
-        return 0;
-    }
-
-    int AuthSession::AsyncReadCallback()
+    int AuthSession::ReadCallback()
     {
         LOG_DEBUG("AuthSession ReadCallback");
 
@@ -140,8 +94,6 @@ namespace Auth
             packet.ReadCompleted(size); // Flag the read as completed, the while will look for remaining packets
         }
 
-        AsyncRead();
-
         return 0;
     }
 
@@ -172,7 +124,7 @@ namespace Auth
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), m_ioContextRef, false);
+            DBRequest req(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), false);
             req.m_bindParams.push_back(m_data.username);
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the request is being processed
@@ -186,8 +138,6 @@ namespace Auth
             };
 
             req.m_cancelToken = weakSelf;
-            
-            /*
             req.m_noticeFunc = [weakSelf]() 
             {
                 if (auto self = weakSelf.lock()) 
@@ -195,7 +145,6 @@ namespace Auth
                     Server::Instance().GetSocketManager().WakeUp();
                 }
             };
-            */
             dbworker.Enqueue(std::move(req));
         }
 
@@ -252,6 +201,8 @@ namespace Auth
 
         QueuePacket(std::move(m));
 
+        //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
+
         return true;
     }
 
@@ -277,7 +228,7 @@ namespace Auth
 
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), m_ioContextRef, false);
+            DBRequest req(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), false);
             req.m_bindParams.push_back(m_data.accountID);
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the request is being processed
@@ -291,8 +242,6 @@ namespace Auth
             };
 
             req.m_cancelToken = weakSelf;
-            
-            /*
             req.m_noticeFunc = [weakSelf]()
                 {
                     if (auto self = weakSelf.lock())
@@ -300,8 +249,6 @@ namespace Auth
                         Server::Instance().GetSocketManager().WakeUp();
                     }
                 };
-            */
-
             dbworker.Enqueue(std::move(req));
         }
 
@@ -326,12 +273,12 @@ namespace Auth
         auto& dbworker = Server::Instance().GetDBWorker();
         if (!authenticated)
         {
-            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPortSSL());
+            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), m_ioContextRef, true);
-                req.m_bindParams.push_back(this->GetRemoteAddressAndPortSSL());
+                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), true);
+                req.m_bindParams.push_back(this->GetRemoteAddressAndPort());
                 req.m_bindParams.push_back(m_data.username);
                 req.m_bindParams.push_back("WRONG_PASSWORD");
                 dbworker.Enqueue(std::move(req));
@@ -382,17 +329,17 @@ namespace Auth
             // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
             // TODO transaction or new callback
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), m_ioContextRef, true);
+                DBRequest req(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), true);
                 req.m_bindParams.push_back(m_data.accountID);
                 dbworker.Enqueue(std::move(req));
             }
 
             // Do an async insert on the DB worker to create a new active_session
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), m_ioContextRef, true);
+                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), true);
                 req.m_bindParams.push_back(m_data.accountID);
                 req.m_bindParams.push_back(mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()));
-                req.m_bindParams.push_back(this->GetRemoteAddressSSL());
+                req.m_bindParams.push_back(this->GetRemoteAddress());
                 req.m_bindParams.push_back(mysqlx::bytes(greetcode.data(), greetcode.size()));
                 dbworker.Enqueue(std::move(req));
             }
@@ -407,15 +354,17 @@ namespace Auth
         NetworkMessage m(packet);
         QueuePacket(std::move(m));
 
+        //Send(); packets are sent by checking POLLOUT events in the authSockets, and we check for POLLOUT events only if there are packets written in the outQueue
+
         return true;
     }
 
-    void AuthSession::AsyncWriteCallback()
+    void AuthSession::SendCallback()
     {
         if (m_closeAfterSend && m_outQueue.size() == 0)
         {
             LOG_DEBUG("Send Callback called on m_closeAfterSend.");
-            CloseSocket();
+            closesocket(GetSocketFD()); // TODO, this doesn't work correctly. Client should receive the packet and then the termination signal, but it doesn't happen as of now
         }
     }
 

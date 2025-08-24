@@ -58,7 +58,7 @@ namespace Hammer
 			for (int i = 0; i < threadCount; i++)
 			{
 				// Create the threads
-				m_networkThreads.push_back(std::make_unique<NetworkThread<HammerSocket>>(i));
+				m_networkThreads.push_back(std::make_unique<NetworkThread<HammerSocket>>(i, false));
 			}
 		}
 
@@ -98,17 +98,17 @@ namespace Hammer
 		void Start()
 		{
 			m_distributionTimer->expires_after(std::chrono::milliseconds(m_configSettings.SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
-			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSockets(); });
+			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSocketsHandler(); });
 		}
 
 		// ----------------------------------------------------------------------------------------
 		// Loop action: creates a new socket for each thread and inserts them in their respective queues
 		// ----------------------------------------------------------------------------------------
-		void DistributeNewSockets()
+		void DistributeNewSocketsHandler()
 		{
 			// Keep the loop alive
 			m_distributionTimer->expires_after(std::chrono::milliseconds(m_configSettings.SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
-			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSockets(); });
+			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSocketsHandler(); });
 
 			for (int i = 0; i < m_networkThreadsCount; i++)
 			{

@@ -21,9 +21,10 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{d999cd81-b931-4125-873a-eacf23caf087}</ProjectGuid>
-    <RootNamespace>shared</RootNamespace>
+    <ProjectGuid>{a94a6d2a-a254-4c5c-91fb-d329a7340758}</ProjectGuid>
+    <RootNamespace>NECROAuthLegacy</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>NECROAuthLegacy</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -46,7 +47,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -70,6 +71,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\NECROAuthLegacy</OutDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -118,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Config;C:\Lib\fmt-11.2.0\include;C:\Users\Mattia\source\repos\NECRO MMO\src\database\DB;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROAuthLegacy\Server\Auth;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROAuthLegacy\Server;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -127,39 +131,20 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.3\lib64\vs14;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Ws2_32.lib;libssl.lib;libcrypto.lib;mysqlcppconn.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\x64\Release\database.lib;..\..\x64\Release\shared.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;mysqlcppconn.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Authentication\AuthCodes.h" />
-    <ClInclude Include="Config\Config.h" />
-    <ClInclude Include="Sockets\TCPSocketBoost.h" />
-    <ClInclude Include="Encryption\AES.h" />
-    <ClInclude Include="Logger\ConsoleLogger.h" />
-    <ClInclude Include="Logger\FileLogger.h" />
-    <ClInclude Include="Logger\Logger.h" />
-    <ClInclude Include="OpenSSL\OpenSSLManager.h" />
-    <ClInclude Include="Packets\NetworkMessage.h" />
-    <ClInclude Include="Packets\Packet.h" />
-    <ClInclude Include="Sockets\NetworkThread.h" />
-    <ClInclude Include="Sockets\SocketAddress.h" />
-    <ClInclude Include="Sockets\SocketUtility.h" />
-    <ClInclude Include="Sockets\TCPSocket.h" />
-    <ClInclude Include="Sockets\TCPAcceptor.h" />
-    <ClInclude Include="Utility\inerithable_shared_from_this.h" />
-    <ClInclude Include="Utility\Utility.h" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server\Auth\AuthSession.cpp" />
+    <ClCompile Include="Server\Auth\TCPSocketManager.cpp" />
+    <ClCompile Include="Server\NECROServer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Config\Config.cpp" />
-    <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
-    <ClCompile Include="Logger\ConsoleLogger.cpp" />
-    <ClCompile Include="Logger\FileLogger.cpp" />
-    <ClCompile Include="Logger\Logger.cpp" />
-    <ClCompile Include="OpenSSL\OpenSSLManager.cpp" />
-    <ClCompile Include="Packets\Packet.cpp" />
-    <ClCompile Include="Sockets\TCPSocket.cpp" />
-    <ClCompile Include="Sockets\TCPAcceptor.cpp" />
+    <ClInclude Include="Server\Auth\AuthSession.h" />
+    <ClInclude Include="Server\Auth\TCPSocketManager.h" />
+    <ClInclude Include="Server\NECROServer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

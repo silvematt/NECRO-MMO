@@ -21,7 +21,7 @@
     <ClCompile Include="Server\Auth\AuthSession.cpp">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClCompile>
-    <ClCompile Include="Server\Auth\SocketManager.cpp">
+    <ClCompile Include="Server\Auth\TCPSocketManager.cpp">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,7 +32,7 @@
     <ClInclude Include="Server\Auth\AuthSession.h">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClInclude>
-    <ClInclude Include="Server\Auth\SocketManager.h">
+    <ClInclude Include="Server\Auth\TCPSocketManager.h">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClInclude>
   </ItemGroup>

@@ -38,7 +38,6 @@ namespace NECRO
 		std::mutex				m_respMutex;
 		std::vector<DBRequest>	m_respQueue;
 
-		// TODO: Keep alive mechanism
 		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
 
 	public:
@@ -259,8 +258,6 @@ namespace NECRO
 									}
 								}
 							}
-							// TODO figure out what to do with failed requests, we can have a retry-queue and for requests with callback
-							// we may inform/timeout the client if enough tries fail
 							catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 							{
 								std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;

@@ -1,7 +1,7 @@
 #ifndef AUTH_SESSION_H
 #define AUTH_SESSION_H
 
-#include "TCPSocketBoost.h"
+#include "TCPSocket.h"
 #include <AuthCodes.h>
 #include <unordered_map>
 #include <array>
@@ -10,7 +10,6 @@
 #include <mysqlx/xdevapi.h>
 
 #include "AES.h"
-#include "inerithable_shared_from_this.h"
 
 namespace NECRO
 {
@@ -48,10 +47,8 @@ namespace Auth
     // AuthSession is the extension of the base TCPSocket class, that defines the methods and
     // functionality that defines the exchange of messages with the connected client on the other end
     //----------------------------------------------------------------------------------------------------
-    class AuthSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<AuthSession>
+    class AuthSession : public TCPSocket, public std::enable_shared_from_this<AuthSession>
     {
-        using inheritable_enable_shared_from_this<AuthSession>::shared_from_this;    
-    
     private:
         AccountData m_data;
         bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
@@ -61,14 +58,9 @@ namespace Auth
         std::chrono::steady_clock::time_point m_lastActivity;
 
     public:
-        AuthSession(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
+        AuthSession(sock_t socket) : TCPSocket(socket), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
         {
         }
-
-        AuthSession(tcp::socket&& insocket, context& ssl_ctx) : TCPSocketBoost(std::move(insocket), ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
-        {
-        }
-
 
         SocketStatus m_status;
 
@@ -102,11 +94,8 @@ namespace Auth
             return m_handshakeStartTime;
         }
 
-        // This runs in the NetworkThread that possess this socket
-        int     Update() override;
-
-        int     AsyncReadCallback() override;
-        void    AsyncWriteCallback() override;
+        int ReadCallback() override;
+        void SendCallback() override;
 
         // Handlers functions
         bool HandleAuthLoginGatherInfoPacket();
@@ -118,5 +107,4 @@ namespace Auth
 
 }
 }
-
 #endif

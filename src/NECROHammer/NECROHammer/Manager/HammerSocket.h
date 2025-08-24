@@ -70,6 +70,7 @@ namespace Hammer
 
 		// This runs in the NetworkThread that possess this socket
 		int Update() override;
+
 		int AsyncReadCallback() override;
 		void AsyncWriteCallback() override;
 

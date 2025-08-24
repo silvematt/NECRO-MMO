@@ -26,16 +26,16 @@ namespace Hammer
 	int HammerSocket::Update()
 	{
 		// Signal this socket is dead and must be removed
-		if (m_state == State::CRITICAL_ERROR)
+		if (m_UnderlyingState == UnderlyingState::CRITICAL_ERROR)
 			return -1;
 
-		if (m_state == State::DEFAULT)
+		if (m_UnderlyingState == UnderlyingState::DEFAULT)
 		{
 			// Startup the socket
 			Resolve(m_remoteIp, m_remotePort);
 			return 0;
 		}
-		else if (m_state == State::JUST_CONNECTED)
+		else if (m_UnderlyingState == UnderlyingState::JUST_CONNECTED)
 		{
 			// Start the async read loop
 			AsyncRead();
@@ -58,7 +58,7 @@ namespace Hammer
 			NetworkMessage message(greetPacket);
 			QueuePacket(std::move(message));
 
-			m_state = State::CONNECTED;
+            m_UnderlyingState = UnderlyingState::CONNECTED;
 		}
 		
 		return 0;

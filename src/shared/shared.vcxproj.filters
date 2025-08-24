@@ -66,6 +66,8 @@
     <ClInclude Include="Sockets\NetworkThread.h" />
     <ClInclude Include="Sockets\TCPSocketBoost.h" />
     <ClInclude Include="Config\Config.h" />
+    <ClInclude Include="Utility\inerithable_shared_from_this.h" />
+    <ClInclude Include="Sockets\TCPAcceptor.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -88,5 +90,6 @@
     </ClCompile>
     <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
     <ClCompile Include="Config\Config.cpp" />
+    <ClCompile Include="Sockets\TCPAcceptor.cpp" />
   </ItemGroup>
 </Project>

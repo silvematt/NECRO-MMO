@@ -9,7 +9,7 @@ namespace NECRO
 
 	void TCPSocketBoost::Resolve(const std::string& ip, const std::string& port)
 	{
-		m_state = State::RESOLVING;
+		m_UnderlyingState = UnderlyingState::RESOLVING;
 
 		// Resolve
 		// Use shared_ptr to keep resolver alive
@@ -20,14 +20,14 @@ namespace NECRO
 				if (!ec)
 					OnResolve(results);
 				else
-					m_state = State::CRITICAL_ERROR;
+					m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
 			}
 		);
 	}
 
 	void TCPSocketBoost::OnResolve(tcp::resolver::results_type results)
 	{
-		m_state = State::CONNECTING;
+		m_UnderlyingState = UnderlyingState::CONNECTING;
 
 		if (m_usesTLS)
 		{
@@ -44,7 +44,7 @@ namespace NECRO
 						OnConnected();
 					}
 					else
-						m_state = State::CRITICAL_ERROR;
+						m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
 				});
 		}
 		else
@@ -61,7 +61,7 @@ namespace NECRO
 						OnConnected();
 					}
 					else
-						m_state = State::CRITICAL_ERROR;
+						m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
 				});
 		}
 	}
@@ -70,7 +70,7 @@ namespace NECRO
 	{
 		if (m_usesTLS)
 		{
-			m_state = State::HANDSHAKING;
+			m_UnderlyingState = UnderlyingState::HANDSHAKING;
 
 			auto self = shared_from_this();
 			m_sslSocket->async_handshake(boost::asio::ssl::stream_base::client,
@@ -78,16 +78,19 @@ namespace NECRO
 				{
 					if (!ec)
 					{
-						m_state = State::JUST_CONNECTED;
+						m_UnderlyingState = UnderlyingState::JUST_CONNECTED;
 
 						// Now we can start reading/writing in Update()
 					}
 					else
-						m_state = State::CRITICAL_ERROR;
+					{
+						LOG_ERROR("Error during handshake: {}", ec.what());
+						m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
+					}
 				});
 		}
 		else
-			m_state = State::JUST_CONNECTED;
+			m_UnderlyingState = UnderlyingState::JUST_CONNECTED;
 	}
 
 	void TCPSocketBoost::AsyncRead()
@@ -121,7 +124,12 @@ namespace NECRO
 		else
 		{
 			m_inBuffer.WriteCompleted(transferredBytes);
-			AsyncReadCallback();
+
+			if (AsyncReadCallback() == -1)
+			{
+				LOG_ERROR("ERROR ON InternalReadCallback! AsyncReadCallback returned -1!");
+				CloseSocket();
+			}
 		}
 	}
 
@@ -173,11 +181,11 @@ namespace NECRO
 			if (m_outQueue.front().GetActiveSize() <= 0)
 				m_outQueue.pop();
 
+			AsyncWriteCallback();
+
 			// Check if there are still things in the outqueue
 			if (m_outQueue.size() > 0)
 				AsyncWrite();
-
-			AsyncWriteCallback();
 		}
 	}
 
@@ -209,7 +217,7 @@ namespace NECRO
 				boost::system::error_code close_ec;
 				m_sslSocket->lowest_layer().close(close_ec);
 				m_Closed = true;
-				m_state = State::CRITICAL_ERROR; // this will allow the manager to clean up this socket
+				m_UnderlyingState = UnderlyingState::CRITICAL_ERROR; // this will allow the manager to clean up this socket
 			});
 		}
 		else
@@ -217,7 +225,7 @@ namespace NECRO
 			boost::system::error_code close_ec;
 			m_socket.close(close_ec);
 			m_Closed = true;
-			m_state = State::CRITICAL_ERROR; // this will allow the manager to clean up this socket
+			m_UnderlyingState = UnderlyingState::CRITICAL_ERROR; // this will allow the manager to clean up this socket
 		}
 	}
 }
