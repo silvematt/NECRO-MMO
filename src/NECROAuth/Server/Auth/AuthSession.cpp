@@ -326,12 +326,12 @@ namespace Auth
         auto& dbworker = Server::Instance().GetDBWorker();
         if (!authenticated)
         {
-            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPortSSL());
+            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
                 DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), m_ioContextRef, true);
-                req.m_bindParams.push_back(this->GetRemoteAddressAndPortSSL());
+                req.m_bindParams.push_back(this->GetRemoteAddressAndPort());
                 req.m_bindParams.push_back(m_data.username);
                 req.m_bindParams.push_back("WRONG_PASSWORD");
                 dbworker.Enqueue(std::move(req));
@@ -392,7 +392,7 @@ namespace Auth
                 DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), m_ioContextRef, true);
                 req.m_bindParams.push_back(m_data.accountID);
                 req.m_bindParams.push_back(mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()));
-                req.m_bindParams.push_back(this->GetRemoteAddressSSL());
+                req.m_bindParams.push_back(this->GetRemoteAddress());
                 req.m_bindParams.push_back(mysqlx::bytes(greetcode.data(), greetcode.size()));
                 dbworker.Enqueue(std::move(req));
             }

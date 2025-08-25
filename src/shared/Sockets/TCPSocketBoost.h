@@ -115,7 +115,7 @@ namespace NECRO
 			return !m_Closed && !m_Closing;
 		}
 
-		std::string GetRemoteAddressAndPortSSL()
+		std::string GetRemoteAddressAndPort()
 		{
 			try 
 			{
@@ -129,12 +129,20 @@ namespace NECRO
 			}
 		}
 
-		std::string GetRemoteAddressSSL()
+		std::string GetRemoteAddress()
 		{
 			try
 			{
-				auto endpoint = m_sslSocket->lowest_layer().remote_endpoint();
-				return endpoint.address().to_string();
+				if (m_usesTLS)
+				{
+					auto endpoint = m_sslSocket->lowest_layer().remote_endpoint();
+					return endpoint.address().to_string();
+				}
+				else
+				{
+					auto endpoint = m_socket.remote_endpoint();
+					return endpoint.address().to_string();
+				}
 			}
 			catch (const boost::system::system_error& e)
 			{

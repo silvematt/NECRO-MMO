@@ -31,8 +31,7 @@ namespace NECRO
 		tcp::endpoint	m_endpoint;
 
 		// Accept side
-		tcp::socket*	m_inSocket;
-
+		tcp::socket*	m_inSocket;	// Socket in which we'll pull in the connection, will refer to the respective io_Context of the NetworkThread that will manage this new conn
 		int				m_threadID;
 
 		bool m_Closed = false;
@@ -45,68 +44,17 @@ namespace NECRO
 		{
 		}
 
-		//---------------------------------------------------------------------------------------------------------------------------------------------
 		// Sets the ptr to the socket that will receive the next accept.
 		// It's used by the SocketManager to determine which socket receives the accept (so which ioContext the socket will be associated with
-		//---------------------------------------------------------------------------------------------------------------------------------------------
-		bool SetInSocket(tcp::socket* ptr, uint32_t tID)
-		{
-			if (ptr)
-			{
-				m_inSocket = ptr;
-				m_threadID = tID;
+		bool SetInSocket(tcp::socket* ptr, uint32_t tID);
 
-				return true;
-			}
-			else
-			{
-				LOG_ERROR("Error while setting m_inSocket. Given ptr was invalid!");
-				m_inSocket = nullptr;
-				tID = -1;
-
-				return false;
-			}
-		}
-
-		//---------------------------------------------------------------------------------------------------------------------------------------------
 		// Binds the acceptor to 0.0.0.0
-		//---------------------------------------------------------------------------------------------------------------------------------------------
-		bool Bind()
-		{
-			boost::system::error_code ec;
-			m_acceptor.open(m_endpoint.protocol(), ec);
-			m_acceptor.set_option(boost::asio::socket_base::reuse_address(true));
+		bool Bind();
 
-			if (ec)
-			{
-				LOG_ERROR("Error while opening Acceptor Socket.");
-				return false;
-			}
-
-			m_acceptor.bind(m_endpoint, ec);
-
-			if (ec)
-			{
-				LOG_ERROR("Error while binding Acceptor Socket.");
-				return false;
-			}
-
-			m_acceptor.listen(NECRO_ACCEPTOR_LISTEN_MAX_CONN, ec);
-
-			if (ec)
-			{
-				LOG_ERROR("Error while listening Acceptor Socket.");
-				return false;
-			}
-
-			return true;
-		}
-
-
-		//---------------------------------------------------------------------------------------------------------------------------------------------
-		// Templated Accept, passing the SocketManager instance and the acceptCallback will allow us to define a callback that runs in the SocketManager instance
+		//----------------------------------------------------------------------------------------------------------------------------------------------------------
+		// Templated Accept, passing the SocketManager instance and the acceptCallback will allow us to define a callback that runs in the SocketManager instance.
 		// That callback will manage the new connection
-		//---------------------------------------------------------------------------------------------------------------------------------------------
+		//----------------------------------------------------------------------------------------------------------------------------------------------------------
 		template <typename T, void (T::* acceptCallback)(tcp::socket&&, int)>
 		void AsyncAccept(T* instance)
 		{
@@ -125,4 +73,5 @@ namespace NECRO
 		}
 	};
 }
+
 #endif

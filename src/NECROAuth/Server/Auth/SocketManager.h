@@ -44,62 +44,20 @@ namespace Auth
 			m_acceptor.Bind();
 		}
 
-		void Start()
-		{
-			SocketManagerHandler();
-		}
+		// Start triggers the first SocketManagerHandler
+		void Start();
 
-		void SocketManagerHandler()
-		{
-			// Selects the socket that will receive
-			int tID = -1;
-			int minSockNum = std::numeric_limits<int>::max();
+		// Handles the Accept loop
+		void SocketManagerHandler();
 
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				if (minSockNum > m_networkThreads[i]->GetSocketsSize())
-				{
-					tID = i;
-					minSockNum = m_networkThreads[i]->GetSocketsSize();
-				}
+		// Callbacks when accept happen
+		void AsyncAcceptCallback(tcp::socket&& sock, int tID);
+		void SSLAsyncAcceptCallback(tcp::socket&& sock, int tID);
 
-			m_acceptor.SetInSocket(m_networkThreads[tID]->GetAcceptSocketPtr(), tID);
-			m_acceptor.AsyncAccept<SocketManager, &SocketManager::SSLAsyncAcceptCallback>(this);
-		}
-
-		void AsyncAcceptCallback(tcp::socket&& sock, int tID)
-		{
-
-		}
-
-		
-		void SSLAsyncAcceptCallback(tcp::socket&& sock, int tID)
-		{
-			LOG_DEBUG("New client accepted! Put into {}", tID);
-			std::shared_ptr<AuthSession> newConn = std::make_shared<AuthSession>(std::move(sock), m_networkThreads[tID]->GetSSLContext());
-
-			m_networkThreads[tID]->QueueNewSocket(newConn);
-
-			SocketManagerHandler();
-		}
-		
-
-		void StartThreads()
-		{
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Start();
-		}
-
-		void StopThreads()
-		{
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Stop();
-		}
-
-		void JoinThreads()
-		{
-			for (int i = 0; i < m_networkThreadsCount; i++)
-				m_networkThreads[i]->Join();
-		}
+		// NetworkThreads management
+		void StartThreads();
+		void StopThreads();
+		void JoinThreads();
 	};
 }
 }
