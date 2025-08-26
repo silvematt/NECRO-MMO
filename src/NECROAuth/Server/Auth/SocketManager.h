@@ -19,6 +19,13 @@ namespace Auth
 	{
 		typedef std::vector<std::unique_ptr<NetworkThread<AuthSession>>> NetworkThreadList;
 
+		// IP-based spam prevention <ip, last attempt>
+		struct IPRequestData
+		{
+			std::chrono::steady_clock::time_point lastUpdate;
+			size_t tries;
+		};
+
 	private:
 		boost::asio::io_context&	m_ioContextRef;
 		uint32_t					m_threadCount;
@@ -28,6 +35,9 @@ namespace Auth
 
 		// Acceptor
 		TCPAcceptor m_acceptor;
+
+		// IP-Request spam prevention
+		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
 
 	public:
 		SocketManager(const uint32_t threadCount, boost::asio::io_context& io, uint16_t port) : m_ioContextRef(io), m_threadCount(threadCount), m_acceptor(m_ioContextRef, port)
@@ -53,6 +63,8 @@ namespace Auth
 		// Callbacks when accept happen
 		void AsyncAcceptCallback(tcp::socket&& sock, int tID);
 		void SSLAsyncAcceptCallback(tcp::socket&& sock, int tID);
+
+		void IPRequestMapCleanup();
 
 		// NetworkThreads management
 		void StartThreads();

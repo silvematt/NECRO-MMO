@@ -190,9 +190,8 @@ namespace Auth
 		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS));
 		m_ipRequestCleanupTimer.async_wait([this](boost::system::error_code const& ec) { IPRequestCleanupHandler(); });
 
-		// Clear the ip map
-		std::lock_guard guard(m_ipRequestMapMutex);
-		m_ipRequestMap.clear();
+		// Clear the ip-request map (m_socketManager is constructed on the same io_context, so no race conditions)
+		m_socketManager->IPRequestMapCleanup();
 	}
 
 	void Server::DBCallbackCheckHandler()

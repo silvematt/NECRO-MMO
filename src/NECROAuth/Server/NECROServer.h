@@ -15,8 +15,6 @@ namespace NECRO
 {
 namespace Auth
 {
-	inline constexpr uint16_t MAX_CLIENTS_CONNECTED = 5000; //TODO
-
 	inline constexpr const char* AUTH_CONFIG_FILE_PATH = "authserver.conf";
 
 	class Server
@@ -47,13 +45,6 @@ namespace Auth
 			uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
 		};
 
-		// IP-based spam prevention <ip, last attempt>
-		struct IPRequestData//TODO
-		{
-			std::chrono::steady_clock::time_point lastUpdate;
-			size_t tries;
-		};
-
 	public:
 		Server() :
 			m_isRunning(false), m_keepDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_dbCallbackCheckTimer(m_ioContext)
@@ -74,9 +65,6 @@ namespace Auth
 
 		boost::asio::io_context m_ioContext;
 		std::unique_ptr<SocketManager> m_socketManager;
-
-		std::mutex m_ipRequestMapMutex;
-		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
 
 		// directdb will be used for queries that run (and block) on the main thread
 		// LoginDatabase	m_directdb;
