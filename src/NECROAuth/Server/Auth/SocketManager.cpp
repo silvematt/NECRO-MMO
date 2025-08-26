@@ -1,4 +1,5 @@
 #include "SocketManager.h"
+#include "NECROServer.h"
 
 namespace NECRO
 {
@@ -28,10 +29,21 @@ namespace Auth
 
 	void SocketManager::SSLAsyncAcceptCallback(tcp::socket&& sock, int tID)
 	{
-		LOG_DEBUG("New client accepted! Put into {}", tID);
-		std::shared_ptr<AuthSession> newConn = std::make_shared<AuthSession>(std::move(sock), m_networkThreads[tID]->GetSSLContext());
+		auto config = Server::Instance().GetSettings();
 
-		m_networkThreads[tID]->QueueNewSocket(newConn);
+		if (config.MAX_CONNECTED_CLIENTS_PER_THREAD == -1 || m_networkThreads[tID]->GetSocketsSize() < config.MAX_CONNECTED_CLIENTS_PER_THREAD)
+		{
+			LOG_DEBUG("New client accepted! Put into {}", tID);
+			std::shared_ptr<AuthSession> newConn = std::make_shared<AuthSession>(std::move(sock), m_networkThreads[tID]->GetSSLContext());
+
+			m_networkThreads[tID]->QueueNewSocket(newConn);
+		}
+		else
+		{
+			// MAX_CONNECTED_CLIENTS_PER_THREAD reached
+			LOG_DEBUG("MAX_CONNECTED_CLIENTS_PER_THREAD reached! Dropping connection.");
+			sock.close();
+		}
 
 		SocketManagerHandler();
 	}

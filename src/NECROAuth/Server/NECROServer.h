@@ -36,6 +36,7 @@ namespace Auth
 
 			// Server settings
 			uint16_t	MANAGER_SERVER_PORT = 61531;
+			int			MAX_CONNECTED_CLIENTS_PER_THREAD = -1; //-1 equals to no check
 			int			NETWORK_THREADS_COUNT = -1; //-1 equals to std::thread::hardware_concurrency()
 			int			CONNECTED_AND_IDLE_TIMEOUT_MS = 10000; // After CONNECTED_AND_IDLE_TIMEOUT_MS, kick the client if he doesn't proceed with the communication
 			int			HANDSHAKING_AND_IDLE_TIMEOUT_MS = 10000;
