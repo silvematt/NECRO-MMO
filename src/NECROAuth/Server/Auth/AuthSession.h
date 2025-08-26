@@ -57,15 +57,18 @@ namespace Auth
         bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
 
 
-        std::chrono::steady_clock::time_point m_handshakeStartTime;
-        std::chrono::steady_clock::time_point m_lastActivity;
+        std::chrono::steady_clock::time_point   m_handshakeStartTime;
+        boost::asio::steady_timer               m_handshakeTimeoutTimer;
+        bool                                    m_handshakeTimedout;
+
+        std::chrono::steady_clock::time_point   m_lastActivity;
 
     public:
-        AuthSession(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
+        AuthSession(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false), m_handshakeTimeoutTimer(m_ioContextRef), m_handshakeTimedout(false)
         {
         }
 
-        AuthSession(tcp::socket&& insocket, context& ssl_ctx) : TCPSocketBoost(std::move(insocket), ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false)
+        AuthSession(tcp::socket&& insocket, context& ssl_ctx) : TCPSocketBoost(std::move(insocket), ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false), m_handshakeTimeoutTimer(m_ioContextRef), m_handshakeTimedout(false)
         {
         }
 
@@ -74,33 +77,7 @@ namespace Auth
 
         static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 
-        AccountData& GetAccountData()
-        {
-            return m_data;
-        }
-
-        //----------------------------------------------------------------------------------------------------
-        // Updates the internal time_point to now()
-        //----------------------------------------------------------------------------------------------------
-        void UpdateLastActivity()
-        {
-            m_lastActivity = std::chrono::steady_clock::now();
-        }
-
-        void SetHandshakeStartTime()
-        {
-            m_handshakeStartTime = std::chrono::steady_clock::now();
-        }
-
-        std::chrono::steady_clock::time_point GetLastActivity()
-        {
-            return m_lastActivity;
-        }
-
-        std::chrono::steady_clock::time_point GetHandshakeStartTime()
-        {
-            return m_handshakeStartTime;
-        }
+        void HandshakeTimeoutHandler(boost::system::error_code const& ec);
 
         // This runs in the NetworkThread that possess this socket
         int     Update(std::chrono::steady_clock::time_point now) override;
@@ -114,6 +91,11 @@ namespace Auth
 
         bool HandleAuthLoginProofPacket();
         bool DBCallback_AuthLoginProofPacket(mysqlx::SqlResult& result);
+
+        AccountData& GetAccountData()
+        {
+            return m_data;
+        }
     };
 
 }

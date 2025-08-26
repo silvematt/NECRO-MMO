@@ -39,21 +39,33 @@ namespace Auth
                 m_sslSocket->set_verify_mode(boost::asio::ssl::verify_none);
 
                 m_UnderlyingState = UnderlyingState::HANDSHAKING;
+                m_handshakeStartTime = now;
 
-                auto self = shared_from_this();
+                // Start the handshake timeout
+                auto self1 = shared_from_this();
+                m_handshakeTimeoutTimer.expires_after(std::chrono::milliseconds(Server::Instance().GetSettings().HANDSHAKING_AND_IDLE_TIMEOUT_MS));
+                m_handshakeTimeoutTimer.async_wait([this, self1](boost::system::error_code const& ec) { HandshakeTimeoutHandler(ec); });
+
+                auto self2 = shared_from_this();
                 m_sslSocket->async_handshake(boost::asio::ssl::stream_base::server,
-                    [this, self](const boost::system::error_code& ec)
+                    [this, self2](const boost::system::error_code& ec)
                     {
-                        if (!ec)
+                        if (!ec && !m_handshakeTimedout)
                         {
                             m_UnderlyingState = UnderlyingState::JUST_CONNECTED;
+
+                            m_handshakeTimeoutTimer.cancel();
 
                             // Now we can start reading/writing, first operation will go in JUST_CONNECTED case
                         }
                         else
                         {
-                            LOG_ERROR("Error during handshake: {}", ec.what());
-                            m_UnderlyingState = UnderlyingState::CRITICAL_ERROR;
+                            if (ec)
+                            {
+                                LOG_ERROR("Error during handshake: {}", ec.what());
+                            }
+
+                            CloseSocket();
                         }
                     });
             }
@@ -81,6 +93,20 @@ namespace Auth
         }
 
         return 0;
+    }
+
+    // Called to stop this socket if the handshake took more than Server::Instance().GetSettings().HANDSHAKING_AND_IDLE_TIMEOUT_MS
+    void AuthSession::HandshakeTimeoutHandler(boost::system::error_code const& ec)
+    {
+        if (ec)
+            return;
+
+        if (m_UnderlyingState == UnderlyingState::HANDSHAKING)
+        {
+            m_handshakeTimedout = true;
+            LOG_DEBUG("Kicking a client for handshake-inactivity.");
+            CloseSocket();
+        }
     }
 
     int AuthSession::AsyncReadCallback()
