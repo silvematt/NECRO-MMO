@@ -23,7 +23,7 @@ namespace Hammer
     }
     std::unordered_map<uint8_t, HammerHandler> const Handlers = HammerSocket::InitHandlers();
 
-	int HammerSocket::Update()
+	int HammerSocket::Update(std::chrono::steady_clock::time_point now)
 	{
 		// Signal this socket is dead and must be removed
 		if (m_UnderlyingState == UnderlyingState::CRITICAL_ERROR)

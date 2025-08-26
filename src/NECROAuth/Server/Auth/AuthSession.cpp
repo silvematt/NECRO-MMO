@@ -23,7 +23,7 @@ namespace Auth
     std::unordered_map<uint8_t, AuthHandler> const Handlers = AuthSession::InitHandlers();
 
 
-    int AuthSession::Update()
+    int AuthSession::Update(std::chrono::steady_clock::time_point now)
     {
         // Signal this socket is dead and must be removed
         if (m_UnderlyingState == UnderlyingState::CRITICAL_ERROR)
@@ -61,10 +61,23 @@ namespace Auth
         }
         else if (m_UnderlyingState == UnderlyingState::JUST_CONNECTED)
         {
+            // Update last activity
+            m_lastActivity = now;
+
             // Start the async read loop
             AsyncRead();
 
             m_UnderlyingState = UnderlyingState::CONNECTED;
+        }
+        else if (m_UnderlyingState == UnderlyingState::CONNECTED)
+        {
+            // Check for connected timeout
+            if (now - m_lastActivity > std::chrono::milliseconds(Server::Instance().GetSettings().CONNECTED_AND_IDLE_TIMEOUT_MS))
+            {
+                // Kick this client for inactivity
+                LOG_DEBUG("Kicking a client for connected-inactivity.");
+                CloseSocket();
+            }
         }
 
         return 0;
@@ -147,6 +160,9 @@ namespace Auth
 
     bool AuthSession::HandleAuthLoginGatherInfoPacket()
     {
+        // Update last activity (only during meaningful requests)
+        m_lastActivity = std::chrono::steady_clock::now();
+
         SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(m_inBuffer.GetReadPointer());
 
         // Pre-checks
@@ -206,6 +222,9 @@ namespace Auth
     {
         LOG_CRITICAL("Handling DBCallback_AuthLoginGatherInfoPacket for user {}!!", m_data.username);
 
+        // DB callbacks should also update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
         // Reply to the client
         Packet packet;
         packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
@@ -257,6 +276,9 @@ namespace Auth
 
     bool AuthSession::HandleAuthLoginProofPacket()
     {
+        // Update last activity (only during meaningful requests)
+        m_lastActivity = std::chrono::steady_clock::now();
+
         SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(m_inBuffer.GetReadPointer());
 
         // Pre-checks
@@ -311,6 +333,9 @@ namespace Auth
     bool AuthSession::DBCallback_AuthLoginProofPacket(mysqlx::SqlResult& result)
     {
         LOG_CRITICAL("Handling DBCallback_AuthLoginProofPacket for user {}!!", m_data.username);
+
+        // DB callbacks should also update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
 
         // Reply to the client
         Packet packet;
@@ -412,6 +437,9 @@ namespace Auth
 
     void AuthSession::AsyncWriteCallback()
     {
+        // Update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
         if (m_closeAfterSend && m_outQueue.size() == 0)
         {
             LOG_DEBUG("Send Callback called on m_closeAfterSend.");

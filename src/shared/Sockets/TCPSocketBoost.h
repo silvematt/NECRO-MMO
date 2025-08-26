@@ -9,6 +9,7 @@
 #include "FileLogger.h"
 
 #include <queue>
+#include <chrono>
 
 #include "inerithable_shared_from_this.h"
 
@@ -108,7 +109,7 @@ namespace NECRO
 			SetupTLS(sslCtx);
 		}
 
-		virtual int Update() { return 0; };
+		virtual int Update(std::chrono::steady_clock::time_point now) { return 0; };
 
 		bool IsOpen()
 		{

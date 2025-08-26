@@ -69,7 +69,7 @@ namespace Hammer
         static std::unordered_map<uint8_t, HammerHandler> InitHandlers();
 
 		// This runs in the NetworkThread that possess this socket
-		int Update() override;
+		int Update(std::chrono::steady_clock::time_point now) override;
 
 		int AsyncReadCallback() override;
 		void AsyncWriteCallback() override;

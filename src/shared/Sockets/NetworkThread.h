@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <mutex>
+#include <chrono>
 
 namespace NECRO
 {
@@ -114,10 +115,12 @@ namespace NECRO
 			// Insert pending sockets
 			AddQueuedSocketsToMainList();
 
+			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+
 			// Update the sockets
 			int before = m_sockets.size();
 			m_sockets.erase(std::remove_if(m_sockets.begin(), m_sockets.end(),
-							[](auto& s) { return s->Update() == -1; }),
+							[now](auto& s) { return s->Update(now) == -1; }),
 							m_sockets.end());
 			m_socketsNumber.fetch_sub(before - m_sockets.size());
 		}

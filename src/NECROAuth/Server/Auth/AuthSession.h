@@ -103,7 +103,7 @@ namespace Auth
         }
 
         // This runs in the NetworkThread that possess this socket
-        int     Update() override;
+        int     Update(std::chrono::steady_clock::time_point now) override;
 
         int     AsyncReadCallback() override;
         void    AsyncWriteCallback() override;
