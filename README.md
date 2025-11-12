@@ -21,9 +21,9 @@
 
 | Component       | Role                      | Tech               | Status                                                                 | Description |
 |-----------------|---------------------------|--------------------|------------------------------------------------------------------------|-------------|
-| [**NECROAuth**](/src/NECROAuth)    | Authentication Server     | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/status-functional-brightgreen) | Account management with a MySQL database, login handshake, session tokens, and gateway to game realms. |
-| [**NECROClient**](/src/NECROClient) | Game Engine & Client      | C++                | ![functional](https://img.shields.io/badge/status-functional-brightgreen) | Data-driven game engine, renders the world, handles player input, networking, entity sync, and client-side prediction. |
-| [**NECROWorld**](/src/NECROWorld) | World Game Server               | C++ / `Boost.Asio` | ![not started](https://img.shields.io/badge/status-not_started-lightgrey) | Authoritative world state, zone/instance management, AI, scripts, combat, persistence with a MySQL database. |
-| [**NECROHammer**](/src/NECROHammer) | Load & Stress Tester      | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/status-functional-brightgreen) | Hammers servers with synthetic clients and scripted traffic to validate throughput and latency under high load. |
+| [**NECROAuth**](/src/NECROAuth)    | Authentication Server     | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/functional-brightgreen) | Account management with a MySQL database, login handshake, session tokens, and gateway to game realms. |
+| [**NECROClient**](/src/NECROClient) | Game Engine & Client      | C++                | ![functional](https://img.shields.io/badge/functional-brightgreen) | Data-driven game engine, renders the world, handles player input, networking, entity sync, and client-side prediction. |
+| [**NECROWorld**](/src/NECROWorld) | World Game Server               | C++ / `Boost.Asio` | ![not started](https://img.shields.io/badge/not_started-red) | Authoritative world state, zone/instance management, AI, scripts, combat, persistence with a MySQL database. |
+| [**NECROHammer**](/src/NECROHammer) | Load & Stress Tester      | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/functional-brightgreen) | Hammers servers with synthetic clients and scripted traffic to validate throughput and latency under high load. |
 
 ---
