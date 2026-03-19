@@ -160,7 +160,7 @@ namespace Auth
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
 
                 // Check for size
-                if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
+                if (size > S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE)
                 {
                     return - 1;
                 }

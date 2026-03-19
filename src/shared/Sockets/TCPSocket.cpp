@@ -115,7 +115,8 @@ namespace NECRO
 	{
 		if (m_outQueue.empty())
 			return 0;
-
+		
+		// TODO maybe it's better to try to send all packets in the queue until we get a short send, instead of sending just the front packet and then waiting for the next POLLOUT event to send the next one
 		NetworkMessage& out = m_outQueue.front();
 
 		int bytesSent = 0;
@@ -156,7 +157,8 @@ namespace NECRO
 
 		if (out.GetActiveSize() == 0)
 			m_outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
-
+		
+		// else? should we call SendCallback even in the case of a short send? TODO : figure out if send callback is useful for partial sends 
 		SendCallback();
 
 		// Update pfd events
@@ -395,6 +397,9 @@ namespace NECRO
 		OpenSSLManager::SetCertVerificationHostname(m_ssl, hostname);
 	}
 
+	// --------------------------------------------------------------------------------------------------------------------------
+	// Performs the TLS handshake on the client side (SSL_connect). The server-side will perform it on a SSL_accept
+	// --------------------------------------------------------------------------------------------------------------------------
 	int TCPSocket::TLSPerformHandshake()
 	{
 		int ret;

@@ -207,9 +207,9 @@ namespace Auth
 		// Callbacks are executed on the NetworkThread's context associated with the AuthSocket that created the DBRequest, so there's no risk of race conditions
 		for (auto& req : requests)
 		{
-			auto reqPtr = std::make_shared<DBRequest>(std::move(req));
+			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
 
-			boost::asio::post(req.m_callbackContexRef, [reqPtr]()
+			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
 			{
 				if (reqPtr->m_callback)
 					reqPtr->m_callback(reqPtr->m_sqlRes);

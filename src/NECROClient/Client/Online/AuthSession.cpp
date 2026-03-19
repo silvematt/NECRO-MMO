@@ -235,7 +235,7 @@ namespace Client
 
             // Close connection to auth server
             LOG_DEBUG("Authentication completed! Closing Auth Socket...");
-            Close();
+            Close(); // TODO handle TLS shutdown and shutdhown gracefully
 
             // We're now ready to connect to the game server
             // This packet (AuthLoginProofResponse) could also contain the realms list
