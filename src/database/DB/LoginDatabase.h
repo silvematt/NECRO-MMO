@@ -27,10 +27,15 @@ namespace NECRO
 	class LoginDatabase : public Database
 	{
 	public:
-		int Init() override
+		int Init(const std::string& URI) override
 		{
-			if (m_pool.Init("localhost", 33060, "root", "root", "necroauth") == 0)
+			if (m_pool.Init(URI) == 0)
+			{
+				// Register all the statements
+				RegisterAllStatements();
+
 				return 0;
+			}
 			else
 				return -1;
 
@@ -42,41 +47,15 @@ namespace NECRO
 			*/
 		}
 
-
-		//-----------------------------------------------------------------------------------------------------
-		// Returns a mysqlx::SqlStatement, ready to be bound with parameters and executed by the caller
-		//-----------------------------------------------------------------------------------------------------
-		mysqlx::SqlStatement Prepare(mysqlx::Session& sess, int enum_value) override
+		void RegisterAllStatements() override
 		{
-			switch (enum_value)
-			{
-			case static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME):
-				return sess.sql("SELECT id FROM necroauth.users WHERE username = ?;");
-
-			case static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD):
-				return sess.sql("SELECT password FROM necroauth.users WHERE id = ?;"); // TODO password should not be in clear, but should be hashed and salted with the salt saved for each user
-
-			case static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD):
-				return sess.sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
-
-			case static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS):
-				return sess.sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;");
-
-			case static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION):
-				return sess.sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
-
-			case static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN):
-				// TODO
-				break;
-
-			case static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE):
-				return sess.sql("SELECT 1");
-				break;
-
-			default:
-				throw std::invalid_argument("Invalid LoginDatabaseStatement");
-				break;
-			}
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), "SELECT id FROM necroauth.users WHERE username = ?;");
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), "SELECT password FROM necroauth.users WHERE id = ?;");
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), "INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), "DELETE FROM necroauth.active_sessions WHERE userid = ?;");
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), "INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
+			//RegisterStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), ""); TODO
+			RegisterStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), "SELECT 1");
 		}
 
 		int Close() override

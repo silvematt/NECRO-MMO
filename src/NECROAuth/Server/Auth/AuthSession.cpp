@@ -126,7 +126,7 @@ namespace Auth
                 LOG_DEBUG("Discarding the packet.");
                 packet.Clear();
                 return -1;
-                //break; TODO, adding some kind of tolerance may be good for messages that gets corrupted in flight
+                // No tolerance for the Auth server. For WorldServer we may have some tolerance for messages that gets corrupted in flight
             }
 
             // Check if the current cmd matches our state
@@ -224,7 +224,7 @@ namespace Auth
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), m_ioContextRef, false);
+            DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), m_ioContextRef, false);
             req.m_bindParams.push_back(m_data.username);
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
@@ -336,7 +336,7 @@ namespace Auth
 
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), m_ioContextRef, false);
+            DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::CHECK_PASSWORD), m_ioContextRef, false);
             req.m_bindParams.push_back(m_data.accountID);
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
@@ -392,7 +392,7 @@ namespace Auth
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), m_ioContextRef, true);
+                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), m_ioContextRef, true);
                 req.m_bindParams.push_back(this->GetRemoteAddressAndPort());
                 req.m_bindParams.push_back(m_data.username);
                 req.m_bindParams.push_back("WRONG_PASSWORD");
@@ -444,14 +444,14 @@ namespace Auth
             // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
             // TODO transaction or new callback
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), m_ioContextRef, true);
+                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::DEL_PREV_SESSIONS), m_ioContextRef, true);
                 req.m_bindParams.push_back(m_data.accountID);
                 dbworker.Enqueue(std::move(req));
             }
 
             // Do an async insert on the DB worker to create a new active_session
             {
-                DBRequest req(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), m_ioContextRef, true);
+                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION), m_ioContextRef, true);
                 req.m_bindParams.push_back(m_data.accountID);
                 req.m_bindParams.push_back(mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()));
                 req.m_bindParams.push_back(this->GetRemoteAddress());

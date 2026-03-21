@@ -43,7 +43,7 @@ namespace NECRO
 
 	public:
 		// TODO we could allow a dbworker to work on multiple databases
-		int Setup(Database::DBType t)
+		int Setup(Database::DBType t, const std::string& URI)
 		{
 			switch (t)
 			{
@@ -55,7 +55,7 @@ namespace NECRO
 				throw std::exception("No database type!");
 			}
 
-			if (m_db->Init() == 0)
+			if (m_db->Init(URI) == 0)
 				return 0;
 			else
 			{

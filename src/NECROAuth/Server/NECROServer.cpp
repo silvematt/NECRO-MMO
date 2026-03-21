@@ -61,7 +61,7 @@ namespace Auth
 		}
 		*/
 
-		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE) != 0)
+		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE, m_configSettings.LOGIN_DATABASE_CONNECTION_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 			return -3;
@@ -115,6 +115,9 @@ namespace Auth
 
 		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
 		m_configSettings.HANDSHAKING_AND_IDLE_TIMEOUT_MS = conf.GetInt("HANDSHAKING_AND_IDLE_TIMEOUT_MS", 10000);
+
+		// MySQL related
+		m_configSettings.LOGIN_DATABASE_CONNECTION_URI = conf.GetString("LoginDatabaseURI", "root:root@localhost:33060/necroauth");
 	}
 
 	void Server::Start()
@@ -183,7 +186,7 @@ namespace Auth
 		m_keepDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Enqueue a keep alive packet
-		DBRequest req(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), m_ioContext, true);
+		DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), m_ioContext, true);
 		m_dbworker.Enqueue(std::move(req));
 	}
 

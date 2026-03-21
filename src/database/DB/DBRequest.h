@@ -18,7 +18,7 @@ class DBRequest
 {
 public:
 	bool										m_done = false;
-	int											m_enumVal;		// Enum val passed to Database.Prepare, to identify the query to call
+	uint32_t									m_enumVal;		// Enum val passed to Database.Prepare, to identify the query to call
 	std::vector<mysqlx::Value>					m_bindParams;	// Params to bind to the query
 	bool										m_fireAndForget;// Fire and forget requests do not require to capture SqlRes or callbacks, like a databse logging request
 

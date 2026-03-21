@@ -19,11 +19,11 @@ namespace NECRO
     public:
         std::unique_ptr<mysqlx::Client> m_client;
 
-        int Init(const std::string& host, int port, const std::string& user, const std::string& pass, const std::string& dbname)
+        int Init(const std::string& URI)
         {
             try
             {
-                std::string uri = "mysqlx://" + user + ":" + pass + "@" + host + "/" + dbname;
+                std::string uri = "mysqlx://" + URI;
 
                 m_client = std::make_unique<mysqlx::Client>(
                     uri,
