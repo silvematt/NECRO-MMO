@@ -24,8 +24,16 @@ namespace Hammer
 
 		ApplySettings();
 
-		// Initialize subsystems
-		m_sockManager.Initialize();
+		// Make TCPSocketManager
+		int threadsCount = std::thread::hardware_concurrency();
+
+		if (m_configSettings.THREADS_COUNT != -1)
+			threadsCount = m_configSettings.THREADS_COUNT;
+
+		m_sockManager = std::make_unique<SocketManager>(threadsCount, m_ioContext);
+
+		// Initialize
+		m_sockManager->Initialize();
 
 		return 0;
 	}
@@ -43,6 +51,8 @@ namespace Hammer
 
 		ConsoleLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("ConsoleLoggingLevel", "111111"));
 		FileLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("FileLoggingLevel", "111111"));
+
+		m_configSettings.THREADS_COUNT = conf.GetInt("THREADS_COUNT", -1);
 	}
 
 	void Client::Start()
@@ -50,10 +60,10 @@ namespace Hammer
 		m_isRunning = true;
 
 		// Posts work on the main context_io and makes up the main loop
-		m_sockManager.Start();
+		m_sockManager->Start();
 
 		// Start
-		m_sockManager.StartThreads();
+		m_sockManager->StartThreads();
 	}
 
 	void Client::Update()
@@ -72,8 +82,8 @@ namespace Hammer
 	int Client::Shutdown()
 	{
 		// Stop and join the threads
-		m_sockManager.StopThreads();
-		m_sockManager.JoinThreads();
+		m_sockManager->StopThreads();
+		m_sockManager->JoinThreads();
 
 		return 0;
 	}

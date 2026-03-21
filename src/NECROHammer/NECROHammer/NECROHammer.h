@@ -17,23 +17,31 @@ namespace Hammer
 	class Client
 	{
 	public:
-		Client(uint32_t threadsCount) : m_isRunning(false), m_sockManager(threadsCount, m_ioContext)
+		struct ConfigSettings
+		{
+			// Threads count to spawn for the SocketManager
+			int THREADS_COUNT = -1; //-1 equals to std::thread::hardware_concurrency()
+		};
+
+	public:
+		Client() : m_isRunning(false)
 		{
 		}
 
 		static Client& Instance()
 		{
-			static Client instance(std::thread::hardware_concurrency());
+			static Client instance;
 			return instance;
 		}
 
 	private:
+		ConfigSettings m_configSettings;
 		bool m_isRunning;
 
 		// Main ioContext
 		boost::asio::io_context	m_ioContext;
 
-		SocketManager m_sockManager;
+		std::unique_ptr<SocketManager> m_sockManager;
 
 	public:
 		// Initializes the Hammer client
