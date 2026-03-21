@@ -36,12 +36,19 @@ namespace Auth
 
 		LOG_OK("Booting up NECROAuth...");
 
+		// Load libraries
+		if (sodium_init() < 0) 
+		{
+			LOG_ERROR("Failed to Init Sodium.");
+			return -1;
+		}
+
 		// Load config file
 		if (!Config::Instance().Load(AUTH_CONFIG_FILE_PATH))
 		{
 			LOG_ERROR("Failed to load config file at: {}", AUTH_CONFIG_FILE_PATH);
 
-			return -1;
+			return -2;
 		}
 		LOG_OK("Config file {} loaded successfully", AUTH_CONFIG_FILE_PATH);
 
@@ -51,7 +58,7 @@ namespace Auth
 		SocketUtility::Initialize();
 
 		if (OpenSSLManager::ServerInit() != 0)
-			return -1;
+			return -3;
 
 		/*
 		if (m_directdb.Init() != 0)
@@ -64,13 +71,13 @@ namespace Auth
 		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE, m_configSettings.LOGIN_DATABASE_CONNECTION_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
-			return -3;
+			return -4;
 		}
 
 		if (m_dbworker.Start() != 0)
 		{
 			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
-			return -4;
+			return -5;
 		}
 
 		// Make TCPSocketManager

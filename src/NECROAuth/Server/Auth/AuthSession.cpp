@@ -6,6 +6,7 @@
 #include <random>
 #include <sstream>
 #include <iomanip>
+#include <sodium.h>
 
 namespace NECRO
 {
@@ -381,9 +382,22 @@ namespace Auth
 
         mysqlx::Row row = result.fetchOne();
 
-        LOG_CRITICAL("my {} db {}", m_data.pass, row[0].get<std::string>());
+        // Extra precaution, if somehow the account is deleted between GATHER_INFO and this query, result.fetchOne could return null
+        if (!row)
+        {
+            // Delete password from memory and disconnect immediately
+            LOG_CRITICAL("Account {} no longer exists in DB.", m_data.username);
+            sodium_memzero(m_data.pass.data(), m_data.pass.size());
+            m_data.pass.clear();
+            return false;
+        }
 
-        bool authenticated = row[0].get<std::string>() == m_data.pass;
+        // Verify the password with the database
+        bool authenticated = crypto_pwhash_str_verify(row[0].get<std::string>().data(), m_data.pass.data(), m_data.pass.size()) == 0;
+
+        // Delete password from memory
+        sodium_memzero(m_data.pass.data(), m_data.pass.size());
+        m_data.pass.clear();
 
         auto& dbworker = Server::Instance().GetDBWorker();
         if (!authenticated)

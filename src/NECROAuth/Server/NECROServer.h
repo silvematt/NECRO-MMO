@@ -11,6 +11,9 @@
 #include "LoginDatabase.h"
 #include "DatabaseWorker.h"
 
+#define SODIUM_STATIC
+#include <sodium.h>
+
 namespace NECRO
 {
 namespace Auth
