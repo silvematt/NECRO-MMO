@@ -92,6 +92,10 @@ namespace Auth
 		ConsoleLogger::Instance().m_logEnabled	= conf.GetBool("ConsoleLoggingEnabled", true);
 		FileLogger::Instance().m_logEnabled		= conf.GetBool("FileLoggingEnabled", true);
 
+		// Initialize the log levels
+		ConsoleLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("ConsoleLoggingLevel", "111111"));
+		FileLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("FileLoggingLevel", "111111"));
+
 		m_configSettings.CLIENT_VERSION_MAJOR		= conf.GetInt("CLIENT_VERSION_MAJOR", 1);
 		m_configSettings.CLIENT_VERSION_MINOR		= conf.GetInt("CLIENT_VERSION_MINOR", 0);
 		m_configSettings.CLIENT_VERSION_REVISION	= conf.GetInt("CLIENT_VERSION_REVISION", 0);

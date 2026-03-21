@@ -40,6 +40,9 @@ namespace Hammer
 		// Apply config
 		ConsoleLogger::Instance().m_logEnabled = conf.GetBool("ConsoleLoggingEnabled", true);
 		FileLogger::Instance().m_logEnabled = conf.GetBool("FileLoggingEnabled", true);
+
+		ConsoleLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("ConsoleLoggingLevel", "111111"));
+		FileLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("FileLoggingLevel", "111111"));
 	}
 
 	void Client::Start()

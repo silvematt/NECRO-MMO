@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <mutex>
+#include <bitset>
 
 #define FMT_HEADER_ONLY
 #include <fmt/core.h>
@@ -26,7 +27,8 @@ namespace NECRO
             LOG_LEVEL_OKSTATUS,
             LOG_LEVEL_WARNING,
             LOG_LEVEL_ERROR,
-            LOG_LEVEL_CRITICAL
+            LOG_LEVEL_CRITICAL,
+            LAST_VALUE // used to have the size of this enum
         };
 
     protected:
@@ -35,15 +37,18 @@ namespace NECRO
         std::string GetLogLevelStr(LogLevel level);
 
     public:
-        // TODO bitflag to enable LogLevels individually
+        // TODO if we want to enable/disable logs or log levels while the servers are up and running, we need to protect these with an std::atomic
         bool m_logEnabled = true;
+
+        // Bitflag to enable/disable log levels
+        std::bitset<static_cast<int>(LogLevel::LAST_VALUE)> m_logEnabledSet = std::bitset<static_cast<int>(LogLevel::LAST_VALUE)>().set(); // Initialize to all 1
 
         virtual void Log(const std::string& message, LogLevel level, const char* file, int line, ...) = 0;
 
         template<typename... Args>
         void LogFmt(LogLevel level, const char* file, int line, fmt::format_string<Args...> fmtStr, Args&&... args)
         {
-            if (!m_logEnabled)
+            if (!m_logEnabled || !m_logEnabledSet[static_cast<int>(level)])
                 return;
 
             std::string message = fmt::format(fmtStr, std::forward<Args>(args)...);
