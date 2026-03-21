@@ -28,15 +28,25 @@ namespace Client
 
 	class AuthManager
 	{
-	private:
-		AuthData data;
+	public:
+		struct AuthConfigSettings
+		{
+			std::string hostname;
+			uint16_t port;
+		};
 
-		std::unique_ptr<AuthSession> authSocket;
-		bool authSocketConnected = false;
-		bool isConnecting = false;
+	private:
+		AuthConfigSettings m_configSettings;
+		AuthData m_data;
+
+		std::unique_ptr<AuthSession> m_authSocket;
+		bool m_authSocketConnected = false;
+		bool m_isConnecting = false;
 
 	public:
 		int Init();
+		void ApplySettings();
+
 		void CreateAuthSocket();
 
 		int ConnectToAuthServer();
@@ -54,22 +64,22 @@ namespace Client
 		// AuthData Setters
 		void SetAuthDataUsername(const std::string& u)
 		{
-			data.username = u;
+			m_data.username = u;
 		}
 
 		void SetAuthDataPassword(const std::string& u)
 		{
-			data.password = u;
+			m_data.password = u;
 		}
 
 		void SetAuthDataIpAddress(const std::string& i)
 		{
-			data.ipAddress = i;
+			m_data.ipAddress = i;
 		}
 
 		AuthData& GetData()
 		{
-			return data;
+			return m_data;
 		}
 	};
 

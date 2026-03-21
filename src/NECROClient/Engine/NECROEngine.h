@@ -10,11 +10,13 @@
 #include "Console.h"
 #include "NMath.h"
 #include "AuthManager.h"
+#include "Config.h"
 
 namespace NECRO
 {
 namespace Client
 {
+	inline constexpr const char* CONFIG_FILE_PATH = "client.conf";
 	inline constexpr uint8_t CLIENT_VERSION_MAJOR = 1;
 	inline constexpr uint8_t CLIENT_VERSION_MINOR = 0;
 	inline constexpr uint8_t CLIENT_VERSION_REVISION = 0;

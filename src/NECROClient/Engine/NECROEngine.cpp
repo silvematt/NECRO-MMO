@@ -35,6 +35,13 @@ namespace Client
 			return -3;
 		}
 
+		// Initialize Config File
+		if (!Config::Instance().Load(CONFIG_FILE_PATH))
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to load config file at: %s", CONFIG_FILE_PATH);
+			return -1;
+		}
+
 		// Initialize Input SubSystem
 		if (m_input.Init() != 0)
 		{

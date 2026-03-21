@@ -2,6 +2,7 @@
 #include "OpenSSLManager.h"
 #include "NECROEngine.h"
 #include "AuthCodes.h"
+#include "Config.h"
 
 namespace NECRO
 {
@@ -17,40 +18,48 @@ namespace Client
 			return -1;
 		}
 
+		ApplySettings();
 		CreateAuthSocket();
 
 		return 0;
 	}
 
+	void AuthManager::ApplySettings()
+	{
+		auto& config = Config::Instance();
+
+		m_configSettings.hostname = config.GetString("Hostname", "192.168.1.221");
+		m_configSettings.port = config.GetInt("Port", 61531);
+	}
+
 	void AuthManager::CreateAuthSocket()
 	{
-		isConnecting = false;
+		m_isConnecting = false;
 
-		authSocket = std::make_unique<AuthSession>(SocketAddressesFamily::INET);
+		m_authSocket = std::make_unique<AuthSession>(SocketAddressesFamily::INET);
 
 		int flag = 1;
-		authSocket->SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
-		authSocket->SetBlockingEnabled(false);
+		m_authSocket->SetSocketOption(IPPROTO_TCP, TCP_NODELAY, (char*)&flag, sizeof(int));
+		m_authSocket->SetBlockingEnabled(false);
 	}
 
 	int AuthManager::ConnectToAuthServer()
 	{
-		if (isConnecting)
+		if (m_isConnecting)
 			return 0;
 
-		// TODO do a config file for the client as well with this kind of info
-		uint16_t outPort = 61531;
+		uint16_t outPort = m_configSettings.port;
 		struct in_addr addr;
-		inet_pton(AF_INET, "192.168.1.221", &addr);
+		inet_pton(AF_INET, m_configSettings.hostname.data(), &addr);
 
 		SocketAddress authAddr(AF_INET, addr.s_addr, outPort);
 
-		authSocket->SetRemoteAddressAndPort(authAddr, outPort);
+		m_authSocket->SetRemoteAddressAndPort(authAddr, outPort);
 
-		authSocketConnected = false;
-		isConnecting = true;
+		m_authSocketConnected = false;
+		m_isConnecting = true;
 
-		if (authSocket->Connect(authAddr) != 0)
+		if (m_authSocket->Connect(authAddr) != 0)
 		{
 			// Manage error
 			Console& c = engine.GetConsole();
@@ -64,9 +73,9 @@ namespace Client
 		LOG_DEBUG("Attempting to connect to Auth Server...");
 
 		// Initialize the authsocket pdf
-		authSocket->m_pfd.fd = authSocket->GetSocketFD();
-		authSocket->m_pfd.events = POLLOUT;
-		authSocket->m_pfd.revents = 0;
+		m_authSocket->m_pfd.fd = m_authSocket->GetSocketFD();
+		m_authSocket->m_pfd.events = POLLOUT;
+		m_authSocket->m_pfd.revents = 0;
 
 		return 0;
 	}
@@ -74,12 +83,12 @@ namespace Client
 	int AuthManager::NetworkUpdate()
 	{
 		// If operations never start, no need to poll
-		if (!isConnecting && !authSocketConnected)
+		if (!m_isConnecting && !m_authSocketConnected)
 			return 0;
 
 		std::vector<pollfd> m_pollList;
 
-		m_pollList.push_back(authSocket->m_pfd);
+		m_pollList.push_back(m_authSocket->m_pfd);
 
 		static int timeout = 0; // waits 0 ms for the poll: try get data now or try next time
 
@@ -98,7 +107,7 @@ namespace Client
 			return 0;
 
 		// Wait for connection
-		if (!authSocketConnected)
+		if (!m_authSocketConnected)
 		{
 			int res = CheckIfAuthConnected(m_pollList[0]); // m_pollList[0] is the authSocket
 			if (res == -1)
@@ -126,13 +135,13 @@ namespace Client
 	void AuthManager::OnDisconnect()
 	{
 		// Delete and recreate socket for next try
-		authSocket->Close();
-		authSocket.reset();
+		m_authSocket->Close();
+		m_authSocket.reset();
 
 		CreateAuthSocket();
 
-		authSocketConnected = false;
-		isConnecting = false;
+		m_authSocketConnected = false;
+		m_isConnecting = false;
 	}
 
 	int AuthManager::CheckIfAuthConnected(pollfd& pfd) // pfd of the authSession
@@ -207,11 +216,11 @@ namespace Client
 
 	int AuthManager::OnConnectedToAuthServer()
 	{
-		isConnecting = false;
-		authSocketConnected = true;
+		m_isConnecting = false;
+		m_authSocketConnected = true;
 
 		// Set TLS for the AuthSocket
-		authSocket->ClientTLSSetup("localhost");
+		m_authSocket->ClientTLSSetup("localhost");
 
 		engine.GetConsole().Log("Handshaking...");
 		if (!engine.GetConsole().IsOpen())
@@ -220,7 +229,7 @@ namespace Client
 		}
 
 		// Check if it fails
-		if (authSocket->TLSPerformHandshake() == 0) // TODO tls handshake is blocking for the client right now
+		if (m_authSocket->TLSPerformHandshake() == 0) // TODO tls handshake is blocking for the client right now
 		{
 			LOG_ERROR("Handshake failed!");
 			engine.GetConsole().Log("Handshake failed!");
@@ -229,7 +238,7 @@ namespace Client
 
 		LOG_OK("TLS Handshake successful!");
 
-		authSocket->OnConnectedCallback(); // here the client will send the greet packet
+		m_authSocket->OnConnectedCallback(); // here the client will send the greet packet
 
 		return 0;
 	}
@@ -261,7 +270,7 @@ namespace Client
 			// If the socket is writable AND we're looking for POLLOUT events as well (meaning there's something on the outQueue), send it!
 			if (pfd.revents & POLLOUT)
 			{
-				int r = authSocket->Send();
+				int r = m_authSocket->Send();
 
 				// If receive failed
 				if (r < 0)
@@ -274,7 +283,7 @@ namespace Client
 
 			if (pfd.revents & POLLIN)
 			{
-				int r = authSocket->Receive();
+				int r = m_authSocket->Receive();
 
 				// If receive failed
 				if (r < 0)
@@ -291,7 +300,7 @@ namespace Client
 
 	void AuthManager::OnAuthenticationCompleted()
 	{
-		data.hasAuthenticated = true;
+		m_data.hasAuthenticated = true;
 
 		// Connect to game server
 
