@@ -52,6 +52,12 @@ namespace Auth
     {
         using inheritable_enable_shared_from_this<AuthSession>::shared_from_this;    
     
+        // Rate-limiting the clients
+        // For AuthServer we can know exactly how many packets we need the client/server to exchange in order to correctly authenticate.
+        // For the WorldServer, we can probably estimate an upperbound packets-per-minute and reset the m_packetsProcessed every minute
+        // If m_packetsProcessed exceeds the upperbound, the client is doing something suspicious
+        static constexpr uint32_t MAX_PACKETS_EXCHANGE_PER_CLIENT = 2;
+
     private:
         AccountData m_data;
         bool        m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
@@ -62,6 +68,9 @@ namespace Auth
         bool                                    m_handshakeTimedout;
 
         std::chrono::steady_clock::time_point   m_lastActivity;
+
+        
+        uint32_t m_packetsProcessed = 0;
 
     public:
         AuthSession(boost::asio::io_context& io, context& ssl_ctx) : TCPSocketBoost(io, ssl_ctx), m_status(SocketStatus::GATHER_INFO), m_closeAfterSend(false), m_handshakeTimeoutTimer(m_ioContextRef), m_handshakeTimedout(false)

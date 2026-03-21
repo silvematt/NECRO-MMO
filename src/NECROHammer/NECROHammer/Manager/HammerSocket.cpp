@@ -39,24 +39,24 @@ namespace Hammer
 		{
 			// Start the async read loop
 			AsyncRead();
+            
+            // Write the first packet
+            Packet greetPacket;
+            uint8_t usernameLenght = static_cast<uint8_t>(m_data.username.size());;
 
-			// Write the first packet
-			Packet greetPacket;
-			uint8_t usernameLenght = static_cast<uint8_t>(m_data.username.size());;
+            greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
+            greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
+            greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
 
-			greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
-			greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
-			greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
+            greetPacket << uint8_t(1); // versionMajor
+            greetPacket << uint8_t(0); // versionMinor
+            greetPacket << uint8_t(0); // versionRevision
 
-			greetPacket << uint8_t(1); // versionMajor
-			greetPacket << uint8_t(0); // versionMinor
-			greetPacket << uint8_t(0); // versionRevision
+            greetPacket << usernameLenght;
+            greetPacket << m_data.username; // string is and should be without null terminator!
 
-			greetPacket << usernameLenght;
-			greetPacket << m_data.username; // string is and should be without null terminator!
-
-			NetworkMessage message(std::move(greetPacket));
-			QueuePacket(std::move(message));
+            NetworkMessage message(std::move(greetPacket));
+            QueuePacket(std::move(message));
 
             m_UnderlyingState = UnderlyingState::CONNECTED;
 		}

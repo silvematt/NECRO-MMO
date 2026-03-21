@@ -170,6 +170,15 @@ namespace Auth
             if (packet.GetActiveSize() < size)
                 break;  // probably a short receive
 
+            // Here we received a whole packet
+            if (++m_packetsProcessed > MAX_PACKETS_EXCHANGE_PER_CLIENT)
+            {
+                // We got more packets than we were anticipating for a login
+                LOG_DEBUG("MAX_PACKETS_EXCHANGE_PER_CLIENT reached, kicking the client...");
+                packet.Clear();
+                return -1;
+            }
+
             // Call the Handler's function and ensure it returns true
             if (!(*this.*it->second.handler)())
             {
@@ -210,6 +219,7 @@ namespace Auth
         m_data.versionRevision = pcktData->versionRevision;
 
         LOG_DEBUG("Handling AuthLoginInfo for user: {}", m_data.username);
+        m_status = SocketStatus::GATHER_INFO_PENDING; // this will flag this client as someone who already sent a GATHER_INFO, so if the same client sends the same packet again, we'll have a status mismatch
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         auto& dbworker = Server::Instance().GetDBWorker();
@@ -318,6 +328,7 @@ namespace Auth
                 return false;
 
         LOG_OK("Handling AuthLoginProof for user {}", m_data.username);
+        m_status = SocketStatus::LOGIN_ATTEMPT_PENDING;
 
         std::string p((char const*)pcktData->password, pcktData->passwordSize);
         m_data.pass = p;

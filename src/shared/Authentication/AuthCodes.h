@@ -10,7 +10,9 @@ namespace Auth
     {
         HANDSHAKING = 0,
         GATHER_INFO,
+        GATHER_INFO_PENDING,
         LOGIN_ATTEMPT,
+        LOGIN_ATTEMPT_PENDING,
         AUTHED,
         CLOSED
     };

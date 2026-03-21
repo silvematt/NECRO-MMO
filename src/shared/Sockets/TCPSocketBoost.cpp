@@ -127,7 +127,7 @@ namespace NECRO
 
 			if (AsyncReadCallback() == -1)
 			{
-				LOG_ERROR("ERROR ON InternalReadCallback! AsyncReadCallback returned -1!");
+				LOG_DEBUG("ERROR ON InternalReadCallback! AsyncReadCallback returned -1!");
 				CloseSocket();
 			}
 		}
