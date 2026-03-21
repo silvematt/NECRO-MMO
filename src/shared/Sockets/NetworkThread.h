@@ -46,7 +46,7 @@ namespace NECRO
 		std::vector<std::shared_ptr<SocketType>>	m_queuedSockets; // sockets queued up for insertion in the main m_sockets list
 		std::mutex									m_queuedSocketsMutex;
 
-		boost::asio::ip::tcp::socket				m_acceptSocket;		// the acceptor (that runs on the main thread's context) can choose to use this to pull in the new connection
+		boost::asio::ip::tcp::socket				m_acceptSocket;		// the acceptor (that runs on the main thread's context) can choose to use this tcp::socket to pull in the new connection
 
 	public:
 		NetworkThread(int id, bool server) : 
@@ -93,7 +93,7 @@ namespace NECRO
 	private:
 		void Run()
 		{
-			// Start the thread
+			// Thread's execution content
 			m_updateTimer.expires_after(std::chrono::milliseconds(NETWORK_THREAD_UPDATE_WAIT_MILLISEC_VAL));
 			m_updateTimer.async_wait([this](boost::system::error_code const& ec) { Update(); });
 
@@ -151,7 +151,7 @@ namespace NECRO
 			return m_socketsNumber.load();
 		}
 
-		// Queues an already-created socket that will be inserted in the Network's Thread sockets list
+		// Queues an already-created socket (a socket that has been accepted by the main thread) that will be inserted in the Network's Thread sockets list
 		void QueueNewSocket(std::shared_ptr<SocketType> newSock)
 		{
 			std::lock_guard guard(m_queuedSocketsMutex);

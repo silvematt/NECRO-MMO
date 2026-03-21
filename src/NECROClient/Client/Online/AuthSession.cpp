@@ -47,7 +47,7 @@ namespace Client
 
         // Send greet packet
         Packet greetPacket;
-        uint8_t usernameLenght = static_cast<uint8_t>(netManager.GetData().username.size());;
+        uint8_t usernameLenght = static_cast<uint8_t>(netManager.GetData().username.size());
 
         greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
         greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
@@ -60,7 +60,7 @@ namespace Client
         greetPacket << usernameLenght;
         greetPacket << netManager.GetData().username; // string is and should be without null terminator!
 
-        NetworkMessage message(greetPacket);
+        NetworkMessage message(std::move(greetPacket));
         QueuePacket(std::move(message));
         //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
     }
@@ -168,7 +168,7 @@ namespace Client
 
             std::cout << "My IV Prefix: " << net.GetData().iv.prefix << std::endl;
 
-            NetworkMessage m(packet);
+            NetworkMessage m(std::move(packet));
             QueuePacket(std::move(m));
             //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
 

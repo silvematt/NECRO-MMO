@@ -16,6 +16,7 @@ namespace NECRO
 	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
 	//-----------------------------------------------------------------------------------------------------
 	// An abstraction of a thread that works on a database
+	// TODO transaction, one dbworker on multiple databases?
 	//-----------------------------------------------------------------------------------------------------
 	class DatabaseWorker
 	{
@@ -41,6 +42,7 @@ namespace NECRO
 		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
 
 	public:
+		// TODO we could allow a dbworker to work on multiple databases
 		int Setup(Database::DBType t)
 		{
 			switch (t)
@@ -230,11 +232,13 @@ namespace NECRO
 										}
 
 										// Try again
+										// TODO if databse is down and game server still runs, we may have lots of db enqueues while we're stuck here
+										// we need to stress load and see if we should limit how much the external queue can grow while we are here
 									}
 
 								if (m_persistentMysqlSession)
 								{
-									// Get a session, prepare the statement and execute it
+									// Prepare the statement and execute it on the persistent mysql session
 									mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_enumVal);
 									for (auto& param : req.m_bindParams)
 										stmt.bind(param);

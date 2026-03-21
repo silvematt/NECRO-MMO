@@ -139,7 +139,7 @@ namespace Auth
 
 	void Server::Update()
 	{
-		// Boost Loop
+		// Boost Event Loop
 		m_ioContext.run();
 
 		// Here if somebody called Server::Stop() or the m_ioContext ran out of work
@@ -204,7 +204,7 @@ namespace Auth
 		// Execute the callbacks
 		std::vector<DBRequest> requests = m_dbworker.GetResponseQueue();
 
-		// Callbacks are executed on the NetworkThread's context associated with the AuthSocket that created the DBRequest, so there's no risk of race conditions
+		// Callbacks are executed on the NetworkThread's io_context associated with the AuthSocket that created the DBRequest originally, so there's no risk of race conditions
 		for (auto& req : requests)
 		{
 			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
@@ -214,7 +214,6 @@ namespace Auth
 				if (reqPtr->m_callback)
 					reqPtr->m_callback(reqPtr->m_sqlRes);
 			});
-			
 		}
 	}
 }

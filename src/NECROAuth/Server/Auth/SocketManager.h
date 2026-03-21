@@ -27,8 +27,7 @@ namespace Auth
 		};
 
 	private:
-		boost::asio::io_context&	m_ioContextRef;
-		uint32_t					m_threadCount;
+		boost::asio::io_context&	m_ioContextRef; // main thread's io_context reference
 
 		uint32_t			m_networkThreadsCount;
 		NetworkThreadList	m_networkThreads;
@@ -40,14 +39,13 @@ namespace Auth
 		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
 
 	public:
-		SocketManager(const uint32_t threadCount, boost::asio::io_context& io, uint16_t port) : m_ioContextRef(io), m_threadCount(threadCount), m_acceptor(m_ioContextRef, port)
+		SocketManager(const uint32_t threadCount, boost::asio::io_context& io, uint16_t port) : m_ioContextRef(io), m_acceptor(m_ioContextRef, port)
 		{
 			m_networkThreadsCount = threadCount;
 
-			// Spawn the network threads
+			// Create the network threads
 			for (int i = 0; i < threadCount; i++)
 			{
-				// Create the threads
 				m_networkThreads.push_back(std::make_unique<NetworkThread<AuthSession>>(i, true));
 			}
 

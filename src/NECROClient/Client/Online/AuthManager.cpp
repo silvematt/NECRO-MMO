@@ -38,6 +38,7 @@ namespace Client
 		if (isConnecting)
 			return 0;
 
+		// TODO do a config file for the client as well with this kind of info
 		uint16_t outPort = 61531;
 		struct in_addr addr;
 		inet_pton(AF_INET, "192.168.1.221", &addr);
@@ -62,7 +63,7 @@ namespace Client
 
 		LOG_DEBUG("Attempting to connect to Auth Server...");
 
-		// Initialize the pollfds vector
+		// Initialize the authsocket pdf
 		authSocket->m_pfd.fd = authSocket->GetSocketFD();
 		authSocket->m_pfd.events = POLLOUT;
 		authSocket->m_pfd.revents = 0;
@@ -94,9 +95,7 @@ namespace Client
 
 		// Check for timeout
 		if (res == 0)
-		{
 			return 0;
-		}
 
 		// Wait for connection
 		if (!authSocketConnected)
@@ -121,6 +120,8 @@ namespace Client
 
 		return 0;
 	}
+
+
 
 	void AuthManager::OnDisconnect()
 	{
@@ -219,7 +220,7 @@ namespace Client
 		}
 
 		// Check if it fails
-		if (authSocket->TLSPerformHandshake() == 0)
+		if (authSocket->TLSPerformHandshake() == 0) // TODO tls handshake is blocking for the client right now
 		{
 			LOG_ERROR("Handshake failed!");
 			engine.GetConsole().Log("Handshake failed!");

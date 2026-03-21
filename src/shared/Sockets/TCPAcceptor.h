@@ -45,7 +45,7 @@ namespace NECRO
 		}
 
 		// Sets the ptr to the socket that will receive the next accept.
-		// It's used by the SocketManager to determine which socket receives the accept (so which ioContext the socket will be associated with
+		// It's used by the SocketManager to determine which socket receives the accept (so which ioContext the socket will be associated with)
 		bool SetInSocket(tcp::socket* ptr, uint32_t tID);
 
 		// Binds the acceptor to 0.0.0.0

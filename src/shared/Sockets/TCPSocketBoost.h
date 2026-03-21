@@ -41,7 +41,7 @@ namespace NECRO
 		};
 
 	protected:
-		boost::asio::io_context& m_ioContextRef;
+		boost::asio::io_context& m_ioContextRef; // if this socket is managed by a NetworkThread, this reference will be of the NetworkThread's context
 
 		tcp::socket m_socket;
 

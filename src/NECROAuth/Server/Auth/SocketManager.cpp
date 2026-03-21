@@ -10,6 +10,7 @@ namespace Auth
 		SocketManagerHandler();
 	}
 
+	// This runs in the main thread's io_context
 	void SocketManager::SocketManagerHandler()
 	{
 		// Selects the socket that will receive
@@ -82,7 +83,7 @@ namespace Auth
 		SocketManagerHandler();
 	}
 
-	// Called by boost::asio timer started in Server
+	// Called by boost::asio timer started in Server's main thread
 	void SocketManager::IPRequestMapCleanup()
 	{
 		auto now = std::chrono::steady_clock::now();

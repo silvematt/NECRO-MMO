@@ -58,6 +58,13 @@ namespace NECRO
         size_t  Size()  const { return m_data.size(); }
         bool    Empty() const { return m_data.empty(); }
 
+        // Moves the internal data vector out of this packet, leaving it empty
+        // Useful for avoiding having to re-write data we've just written to a packet when we're just wrapping a packet into a network message and discarding it later anyways
+        std::vector<uint8_t> TakeData()
+        {
+            m_rpos = m_wpos = 0;
+            return std::move(m_data);
+        }
 
         // Base append function
         void Append(uint8_t const* src, size_t cnt);

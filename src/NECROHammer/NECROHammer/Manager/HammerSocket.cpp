@@ -55,7 +55,7 @@ namespace Hammer
 			greetPacket << usernameLenght;
 			greetPacket << m_data.username; // string is and should be without null terminator!
 
-			NetworkMessage message(greetPacket);
+			NetworkMessage message(std::move(greetPacket));
 			QueuePacket(std::move(message));
 
             m_UnderlyingState = UnderlyingState::CONNECTED;
@@ -171,7 +171,7 @@ namespace Hammer
 
             std::cout << "My IV Prefix: " << m_data.iv.prefix << std::endl;
 
-            NetworkMessage m(packet);
+            NetworkMessage m(std::move(packet));
             QueuePacket(std::move(m));
         }
         else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))

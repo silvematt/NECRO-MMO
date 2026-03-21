@@ -48,56 +48,56 @@ namespace NECRO
 		return true;
 	}
 
-	int Config::GetInt(const std::string& q, int fallback)
+	int Config::GetInt(const std::string& key, int fallback)
 	{
-		auto it = m_confMap.find(q);
+		auto it = m_confMap.find(key);
 		if (it == m_confMap.end())
 		{
 			// Return default
-			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", q, fallback);
+			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", key, fallback);
 			return fallback;
 		}
 
-		return std::stoi(m_confMap[q]);
+		return std::stoi(m_confMap[key]);
 	}
 
-	float Config::GetFloat(const std::string& q, float fallback)
+	float Config::GetFloat(const std::string& key, float fallback)
 	{
-		auto it = m_confMap.find(q);
+		auto it = m_confMap.find(key);
 		if (it == m_confMap.end())
 		{
 			// Return default
-			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", q, fallback);
+			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", key, fallback);
 			return fallback;
 		}
 
-		return std::stof(m_confMap[q]);
+		return std::stof(m_confMap[key]);
 	}
 
-	bool Config::GetBool(const std::string& q, bool fallback)
+	bool Config::GetBool(const std::string& key, bool fallback)
 	{
-		auto it = m_confMap.find(q);
+		auto it = m_confMap.find(key);
 		if (it == m_confMap.end())
 		{
 			// Return default
-			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", q, fallback);
+			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", key, fallback);
 			return fallback;
 		}
 
-		return m_confMap[q] != "0";
+		return m_confMap[key] != "0";
 	}
 
-	std::string Config::GetString(const std::string& q, std::string fallback)
+	std::string Config::GetString(const std::string& key, std::string fallback)
 	{
-		auto it = m_confMap.find(q);
+		auto it = m_confMap.find(key);
 		if (it == m_confMap.end())
 		{
 			// Return default
-			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", q, fallback);
+			LOG_WARNING("Tried to load {} from Config, but it was never loaded. Returning fallback: {}", key, fallback);
 			return fallback;
 		}
 
-		return m_confMap[q];
+		return m_confMap[key];
 	}
 
 }

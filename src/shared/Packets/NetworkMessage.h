@@ -9,7 +9,7 @@
 namespace NECRO
 {
     //-----------------------------------------------------------------------------------------------------------
-    // Higher-level view packets, used for Network transmission.
+    // Higher-level view on packets, used for Network transmission.
     //-----------------------------------------------------------------------------------------------------------
     class NetworkMessage
     {
@@ -47,11 +47,18 @@ namespace NECRO
             m_data.resize(reservedSize);
         }
 
-        // Wraps a packet in a NetworkMessage
+        // Wraps a packet in a NetworkMessage by copying its content (without invalidating the packet)
         NetworkMessage(const Packet& p) : m_rpos(0), m_wpos(0)
         {
             m_data.resize(p.Size());
             Write(p.GetContentToRead(), p.Size());
+        }
+
+        // Wraps a packet in a NetworkMessage by moving the packet's internals to the NetworkMessage's data
+        NetworkMessage(Packet&& p) : m_rpos(0), m_wpos(0)
+        {
+            m_data = p.TakeData();
+            m_wpos = m_data.size();
         }
 
         //-----------------------------------------------------------------------------------------------------------
@@ -207,10 +214,10 @@ namespace NECRO
             }
         }
 
-        //---------------------------------------------------------------------------------------------------------------------------
+        //--------------------------------------------------------------------------------------------------------------------------------------------------------
         // Increases the data buffer size by 50% of the current size if it's currently full, useful to the inBuffer of the Sockets,
-        // if done before a read it can avoid having to queue packets
-        //---------------------------------------------------------------------------------------------------------------------------
+        // if done before a read it can avoid calling recv without any space left in the inbuffer, and therefore preventing the OS socket buffer from being drained
+        //--------------------------------------------------------------------------------------------------------------------------------------------------------
         void EnlargeBufferIfNeeded()
         {
             if (GetRemainingSpace() == 0)

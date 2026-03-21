@@ -20,10 +20,10 @@ namespace NECRO
 
 		bool			Load(const std::string& filePath);
 
-		int				GetInt(const std::string& q, int fallback);
-		float			GetFloat(const std::string& q, float fallback);
-		bool			GetBool(const std::string& q, bool fallback);
-		std::string		GetString(const std::string& q, std::string fallback);
+		int				GetInt(const std::string& key, int fallback);
+		float			GetFloat(const std::string& key, float fallback);
+		bool			GetBool(const std::string& key, bool fallback);
+		std::string		GetString(const std::string& key, std::string fallback);
 	};
 }
 

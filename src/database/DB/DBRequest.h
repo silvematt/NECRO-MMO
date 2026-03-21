@@ -11,18 +11,21 @@
 #include <mysqlx/xdevapi.h>
 #include <boost/asio.hpp>
 
+// ------------------------------------------------------------------------------------------------------------------------------------------
+// DBRequest is a container for a request a socket (or client, or however we want to call it) can make.
+// ------------------------------------------------------------------------------------------------------------------------------------------
 class DBRequest
 {
 public:
 	bool										m_done = false;
 	int											m_enumVal;		// Enum val passed to Database.Prepare, to identify the query to call
 	std::vector<mysqlx::Value>					m_bindParams;	// Params to bind to the query
-	bool										m_fireAndForget;// Fire and forget requests do not require to capture SqlRes or callbacks
+	bool										m_fireAndForget;// Fire and forget requests do not require to capture SqlRes or callbacks, like a databse logging request
 
 	// For requests that are not fire-and-forget, we need to capture the sql result and execute a callback that will process it and 
 	// let more code be executed. DB request->DB Callback
 	mysqlx::SqlResult							m_sqlRes;
-	boost::asio::io_context&					m_callbackContexRef; // the io_context that should execute the callback. Server::DBCallbackCheckHandler will post the callback function to this context
+	boost::asio::io_context&					m_callbackContexRef; // the io_context that should execute the callback. This context is the same context that was used by the socket that made this DBRequest. Server::DBCallbackCheckHandler will post the callback function to this context
 	std::function<bool(mysqlx::SqlResult&)>		m_callback;
 
 	// A notice function allows to call code in the DB thread as soon as this DBRequest is executed and it's been put on the respQueue.

@@ -217,7 +217,7 @@ namespace Auth
             DBRequest req(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), m_ioContextRef, false);
             req.m_bindParams.push_back(m_data.username);
 
-            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the request is being processed
+            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
             req.m_callback = [weakSelf](mysqlx::SqlResult& res)
             {
@@ -287,7 +287,7 @@ namespace Auth
             }
         }
 
-        NetworkMessage m(packet);
+        NetworkMessage m(std::move(packet));
 
         /* Encryption example
         int res = m.AESEncrypt(data.sessionKey.data(), data.iv, nullptr, 0);
@@ -328,7 +328,7 @@ namespace Auth
             DBRequest req(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), m_ioContextRef, false);
             req.m_bindParams.push_back(m_data.accountID);
 
-            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the request is being processed
+            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
             req.m_callback = [weakSelf](mysqlx::SqlResult& res) 
             {
@@ -455,7 +455,7 @@ namespace Auth
             }
         }
 
-        NetworkMessage m(packet);
+        NetworkMessage m(std::move(packet));
         QueuePacket(std::move(m));
 
         return true;
