@@ -193,7 +193,8 @@ namespace Auth
 		m_keepDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Enqueue a keep alive packet
-		DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), m_ioContext, true);
+		DBRequest req(m_ioContext, true);
+		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
 		m_dbworker.Enqueue(std::move(req));
 	}
 
@@ -226,7 +227,7 @@ namespace Auth
 			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
 			{
 				if (reqPtr->m_callback)
-					reqPtr->m_callback(reqPtr->m_sqlRes);
+					reqPtr->m_callback(reqPtr->m_sqlResults);
 			});
 		}
 	}

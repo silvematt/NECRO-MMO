@@ -96,10 +96,10 @@ namespace Auth
 
         // Handlers functions
         bool HandleAuthLoginGatherInfoPacket();
-        bool DBCallback_AuthLoginGatherInfoPacket(mysqlx::SqlResult& result);
+        bool DBCallback_AuthLoginGatherInfoPacket(std::vector<mysqlx::SqlResult>& result);
 
         bool HandleAuthLoginProofPacket();
-        bool DBCallback_AuthLoginProofPacket(mysqlx::SqlResult& result);
+        bool DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result);
 
         AccountData& GetAccountData()
         {

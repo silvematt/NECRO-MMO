@@ -16,7 +16,12 @@ namespace NECRO
 	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
 	//-----------------------------------------------------------------------------------------------------
 	// An abstraction of a thread that works on a database
-	// TODO transaction, one dbworker on multiple databases?
+	// 
+	// TODO 
+	// 1.One dbworker on multiple databases? 
+	// 2. Instead of waiting for the NetworkThread to timeout clients that had failed DBRequests, we should call the callback with the error and handle that
+	//    If the error is critical, we can kick them right away without having to wait for timeout, but if the error isn't critical (like inventory fetch), we could just display a "TryAgain" message.
+	// 3. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
 	//-----------------------------------------------------------------------------------------------------
 	class DatabaseWorker
 	{
@@ -133,14 +138,12 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		void Stop()
 		{
-			// Destroy the mysql session
-			if (m_persistentMysqlSession)
+			// Stop is usually called from the main thread, so acquire lock before changing m_running that gets read by the ThreadRoutine
+			// Even though m_running is atomic, m_execWakeupCond could fail to notify if Stop is called just at the right time when ThreadRoutine is checking the queue
 			{
-				m_persistentMysqlSession->close();
-				m_persistentMysqlSession.reset();
+				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
+				m_running = false;
 			}
-
-			m_running = false;
 			m_execWakeupCond.notify_one();
 		}
 
@@ -151,6 +154,13 @@ namespace NECRO
 		{
 			if (m_thread.joinable())
 				m_thread.join();
+
+			// Destroy the mysql session after ThreadRoutine has stopped
+			if (m_persistentMysqlSession)
+			{
+				m_persistentMysqlSession->close();
+				m_persistentMysqlSession.reset();
+			}
 		}
 
 		// ----------------------------------------------------------------------------------------------------
@@ -211,13 +221,14 @@ namespace NECRO
 					// Execute the queue
 					for (auto& req : m_internalQueue)
 					{
-						if (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired()))
+						if(req.IsValid() && (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired())))
 						{
 							// Do stuff
 							try
 							{
 								// If the persistent session died, attempt to fire it back up as long as the request is servable (idle timeout will not trigger)
 								if (!m_persistentMysqlSession)
+								{
 									while (RecreatePersistentMySQLSession() != 0)
 									{
 										// If the connection could not be made, wait for one second
@@ -235,46 +246,96 @@ namespace NECRO
 										// TODO if databse is down and game server still runs, we may have lots of db enqueues while we're stuck here
 										// we need to stress load and see if we should limit how much the external queue can grow while we are here
 									}
+								}
 
 								if (m_persistentMysqlSession)
 								{
 									// Prepare the statement and execute it on the persistent mysql session
-									mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_enumVal);
-									for (auto& param : req.m_bindParams)
-										stmt.bind(param);
 
-									req.m_sqlRes = stmt.execute();
-
-									// If the request requires a callback, set things up
-									if (!req.m_fireAndForget)
+									if (req.IsTransaction())
 									{
-										std::unique_lock<std::mutex> resGuard(m_respMutex);
+										// Start the transaction
+										m_persistentMysqlSession->startTransaction();
+										for (size_t i = 0; i < req.m_steps.size(); i++)
+										{
+											mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_steps[i].m_enumVal);
+											for (auto& param : req.m_steps[i].m_bindParams)
+												stmt.bind(param);
 
-										// Preserve the life of the m_noticeFunc in this scope before it gets moved
-										std::function<void()> func = std::move(req.m_noticeFunc);
-										m_respQueue.push_back(std::move(req));
+											req.m_sqlResults.push_back(stmt.execute());
+										}
 
-										resGuard.unlock();
+										m_persistentMysqlSession->commit();
+										req.m_committed = true;
 
-										// Call notice function if set
-										if (func)
-											func();
+										// If the request requires a callback, set things up
+										if (!req.m_fireAndForget)
+										{
+											ThreadPushResponse(std::move(req));
+										}
+									}
+									else // Single request (m_steps[0] exists because this request IsValid())
+									{
+										mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_steps[0].m_enumVal);
+										for (auto& param : req.m_steps[0].m_bindParams)
+											stmt.bind(param);
+
+										req.m_sqlResults.push_back(stmt.execute());
+
+										// If the request requires a callback, set things up
+										if (!req.m_fireAndForget)
+										{
+											ThreadPushResponse(std::move(req));
+										}
 									}
 								}
 							}
 							catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 							{
 								std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
+
+								// If we're here because of failuire on commit (more likely the session just died), rollback
+								try {
+									if (req.IsTransaction() && m_persistentMysqlSession)
+										m_persistentMysqlSession->rollback();
+								}
+								catch (...)
+								{
+
+								}
+
 								RecreatePersistentMySQLSession();
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
 								std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
+
+								// If we're here because of failuire on commit (more likely the session just died), rollback
+								try {
+									if (req.IsTransaction() && m_persistentMysqlSession)
+										m_persistentMysqlSession->rollback();
+								}
+								catch (...)
+								{
+
+								}
+
 								RecreatePersistentMySQLSession();
 							}
 							catch (...)
 							{
 								std::cerr << "DBWorker Unknown exception caught!" << std::endl;
+
+								// If we're here because of failuire on commit (more likely the session just died), rollback
+								try {
+									if (req.IsTransaction() && m_persistentMysqlSession)
+										m_persistentMysqlSession->rollback();
+								}
+								catch (...)
+								{
+
+								}
+
 								RecreatePersistentMySQLSession();
 							}
 						}
@@ -283,6 +344,24 @@ namespace NECRO
 					m_internalQueue.clear();
 				}
 			}
+		}
+
+		//-----------------------------------------------------------------------------------------------------
+		// Pushes a DBRequest that was exectued by the ThreadRoutine in the responseQueue
+		//-----------------------------------------------------------------------------------------------------
+		void ThreadPushResponse(DBRequest&& req)
+		{
+			std::unique_lock<std::mutex> resGuard(m_respMutex);
+
+			// Preserve the life of the m_noticeFunc in this scope before it gets moved
+			std::function<void()> func = std::move(req.m_noticeFunc);
+			m_respQueue.push_back(std::move(req));
+
+			resGuard.unlock();
+
+			// Call notice function if set
+			if (func)
+				func();
 		}
 	};
 

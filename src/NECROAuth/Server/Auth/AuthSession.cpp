@@ -225,12 +225,12 @@ namespace Auth
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), m_ioContextRef, false);
-            req.m_bindParams.push_back(m_data.username);
+            DBRequest req(m_ioContextRef, false);
+            req.m_steps.push_back({static_cast<uint32_t>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), { m_data.username } });
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](mysqlx::SqlResult& res)
+            req.m_callback = [weakSelf](std::vector<mysqlx::SqlResult>& res)
             {
                 if (auto lockedSelf = weakSelf.lock()) 
                     return lockedSelf->DBCallback_AuthLoginGatherInfoPacket(res);
@@ -255,7 +255,7 @@ namespace Auth
         return true;
     }
 
-    bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(mysqlx::SqlResult& result)
+    bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(std::vector<mysqlx::SqlResult>& result)
     {
         LOG_CRITICAL("Handling DBCallback_AuthLoginGatherInfoPacket for user {}!!", m_data.username);
 
@@ -266,7 +266,10 @@ namespace Auth
         Packet packet;
         packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
 
-        mysqlx::Row row = result.fetchOne();
+        // TODO at this point it's safe to assume results[0] exists, ThreadRoutine always calls m_sqlResults.push_back(...) before calling this DBCallback.
+        // If in the future we allow callbacks to be called even on errors, results[0] could cause a crash
+        // Let's just add this check for now
+        mysqlx::Row row = result[0].fetchOne();
 
         if (!row)
         {
@@ -337,12 +340,12 @@ namespace Auth
 
         auto& dbworker = Server::Instance().GetDBWorker();
         {
-            DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::CHECK_PASSWORD), m_ioContextRef, false);
-            req.m_bindParams.push_back(m_data.accountID);
+            DBRequest req(m_ioContextRef, false);
+            req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::CHECK_PASSWORD), {m_data.accountID } });
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](mysqlx::SqlResult& res) 
+            req.m_callback = [weakSelf](std::vector<mysqlx::SqlResult>& res) 
             {
                 if (auto lockedSelf = weakSelf.lock()) 
                     return lockedSelf->DBCallback_AuthLoginProofPacket(res);
@@ -368,7 +371,7 @@ namespace Auth
         return true;
     }
 
-    bool AuthSession::DBCallback_AuthLoginProofPacket(mysqlx::SqlResult& result)
+    bool AuthSession::DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result)
     {
         LOG_CRITICAL("Handling DBCallback_AuthLoginProofPacket for user {}!!", m_data.username);
 
@@ -380,7 +383,7 @@ namespace Auth
 
         packet << uint8_t(PacketIDs::LOGIN_ATTEMPT);
 
-        mysqlx::Row row = result.fetchOne();
+        mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
         // Extra precaution, if somehow the account is deleted between GATHER_INFO and this query, result.fetchOne could return null
         if (!row)
@@ -406,10 +409,8 @@ namespace Auth
 
             // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
             {
-                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), m_ioContextRef, true);
-                req.m_bindParams.push_back(this->GetRemoteAddressAndPort());
-                req.m_bindParams.push_back(m_data.username);
-                req.m_bindParams.push_back("WRONG_PASSWORD");
+                DBRequest req(m_ioContextRef, true);
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), {this->GetRemoteAddressAndPort(), m_data.username, "WRONG_PASSWORD"} });
                 dbworker.Enqueue(std::move(req));
             }
 
@@ -455,21 +456,12 @@ namespace Auth
             std::array<uint8_t, AES_128_KEY_SIZE> greetcode = AES::GenerateSessionKey();
 
             // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
-            // Note: this works because there is only ONE database worker, so we can queue FIFO (if there were multiple workers, the second query (inserting new connection) could have been executed before deleting all the previous sessions, resulting in deleting the new insert as well)
-            // TODO transaction or new callback
+            // This is a transaction
             {
-                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::DEL_PREV_SESSIONS), m_ioContextRef, true);
-                req.m_bindParams.push_back(m_data.accountID);
-                dbworker.Enqueue(std::move(req));
-            }
+                DBRequest req(m_ioContextRef, true);
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::DEL_PREV_SESSIONS),  {m_data.accountID} });
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(greetcode.data(), greetcode.size())} });
 
-            // Do an async insert on the DB worker to create a new active_session
-            {
-                DBRequest req(static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION), m_ioContextRef, true);
-                req.m_bindParams.push_back(m_data.accountID);
-                req.m_bindParams.push_back(mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()));
-                req.m_bindParams.push_back(this->GetRemoteAddress());
-                req.m_bindParams.push_back(mysqlx::bytes(greetcode.data(), greetcode.size()));
                 dbworker.Enqueue(std::move(req));
             }
 

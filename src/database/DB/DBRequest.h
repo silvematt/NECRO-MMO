@@ -12,21 +12,30 @@
 #include <boost/asio.hpp>
 
 // ------------------------------------------------------------------------------------------------------------------------------------------
+// To Support transactions, a DBRequest can be composed of multiple steps
+// ------------------------------------------------------------------------------------------------------------------------------------------
+struct DBRequestStep
+{
+	uint32_t									m_enumVal;		// Enum val passed to Database.Prepare, to identify the query to call
+	std::vector<mysqlx::Value>					m_bindParams;	// Params to bind to the query
+};
+
+// ------------------------------------------------------------------------------------------------------------------------------------------
 // DBRequest is a container for a request a socket (or client, or however we want to call it) can make.
 // ------------------------------------------------------------------------------------------------------------------------------------------
 class DBRequest
 {
 public:
 	bool										m_done = false;
-	uint32_t									m_enumVal;		// Enum val passed to Database.Prepare, to identify the query to call
-	std::vector<mysqlx::Value>					m_bindParams;	// Params to bind to the query
+	std::vector<DBRequestStep>					m_steps;
+	bool										m_committed = false;
 	bool										m_fireAndForget;// Fire and forget requests do not require to capture SqlRes or callbacks, like a databse logging request
 
 	// For requests that are not fire-and-forget, we need to capture the sql result and execute a callback that will process it and 
 	// let more code be executed. DB request->DB Callback
-	mysqlx::SqlResult							m_sqlRes;
-	boost::asio::io_context&					m_callbackContexRef; // the io_context that should execute the callback. This context is the same context that was used by the socket that made this DBRequest. Server::DBCallbackCheckHandler will post the callback function to this context
-	std::function<bool(mysqlx::SqlResult&)>		m_callback;
+	std::vector<mysqlx::SqlResult>							m_sqlResults; // Store one for each step
+	boost::asio::io_context&								m_callbackContexRef; // the io_context that should execute the callback. This context is the same context that was used by the socket that made this DBRequest. Server::DBCallbackCheckHandler will post the callback function to this context
+	std::function<bool(std::vector<mysqlx::SqlResult>&)>	m_callback; // One callback for the whole transaction, with all the results from all the steps as parameter
 
 	// A notice function allows to call code in the DB thread as soon as this DBRequest is executed and it's been put on the respQueue.
 	// For that reason, it can be executed before/after the function's callback.
@@ -41,11 +50,22 @@ public:
 
 	std::chrono::steady_clock::time_point		m_creationTime;
 
-	DBRequest(int enumVal, boost::asio::io_context& io, bool fireAndForget) : m_enumVal(enumVal), m_callbackContexRef(io), m_fireAndForget(fireAndForget), m_cancelToken(std::nullopt), m_creationTime(std::chrono::steady_clock::now())
+	DBRequest(boost::asio::io_context& io, bool fireAndForget) : m_callbackContexRef(io), m_fireAndForget(fireAndForget), m_cancelToken(std::nullopt), m_creationTime(std::chrono::steady_clock::now())
 	{
 		m_done = false;
 		m_callback = nullptr;
+		m_committed = false;
 		m_noticeFunc = nullptr;
+	}
+
+	bool IsTransaction()
+	{
+		return m_steps.size() > 1;
+	}
+
+	bool IsValid()
+	{
+		return !m_steps.empty();
 	}
 };
 
