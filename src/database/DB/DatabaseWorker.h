@@ -47,7 +47,7 @@ namespace NECRO
 		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
 
 	public:
-		// TODO we could allow a dbworker to work on multiple databases
+
 		int Setup(Database::DBType t, const std::string& URI)
 		{
 			switch (t)
@@ -131,6 +131,25 @@ namespace NECRO
 			}
 
 			return CreatePersistentMySQLSession();
+		}
+
+		//-----------------------------------------------------------------------------------------------------
+		// Returns true if the persistent session is still valid.
+		//-----------------------------------------------------------------------------------------------------
+		bool IsPersistentSessionAlive()
+		{
+			if (!m_persistentMysqlSession)
+				return false;
+
+			try
+			{
+				m_persistentMysqlSession->sql("SELECT 1").execute();
+				return true;
+			}
+			catch (...)
+			{
+				return false;
+			}
 		}
 
 		//-----------------------------------------------------------------------------------------------------
@@ -294,48 +313,47 @@ namespace NECRO
 							{
 								std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
 
-								// If we're here because of failuire on commit (more likely the session just died), rollback
-								try {
-									if (req.IsTransaction() && m_persistentMysqlSession)
-										m_persistentMysqlSession->rollback();
-								}
-								catch (...)
+								if (IsPersistentSessionAlive())
 								{
-
+									// Attempt rollback for failed transactions
+									try
+									{
+										if (req.IsTransaction() && m_persistentMysqlSession)
+											m_persistentMysqlSession->rollback();
+									}
+									catch (...) {}
 								}
-
-								RecreatePersistentMySQLSession();
+								else
+									RecreatePersistentMySQLSession();
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
 								std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
 
-								// If we're here because of failuire on commit (more likely the session just died), rollback
-								try {
-									if (req.IsTransaction() && m_persistentMysqlSession)
-										m_persistentMysqlSession->rollback();
-								}
-								catch (...)
+								if (IsPersistentSessionAlive())
 								{
-
+									try
+									{
+										if (req.IsTransaction() && m_persistentMysqlSession)
+											m_persistentMysqlSession->rollback();
+									}
+									catch (...) {}
 								}
-
-								RecreatePersistentMySQLSession();
+								else
+									RecreatePersistentMySQLSession();
 							}
 							catch (...)
 							{
 								std::cerr << "DBWorker Unknown exception caught!" << std::endl;
 
-								// If we're here because of failuire on commit (more likely the session just died), rollback
-								try {
+								try
+								{
 									if (req.IsTransaction() && m_persistentMysqlSession)
 										m_persistentMysqlSession->rollback();
 								}
-								catch (...)
-								{
+								catch (...) {}
 
-								}
-
+								// Unknown exception
 								RecreatePersistentMySQLSession();
 							}
 						}
