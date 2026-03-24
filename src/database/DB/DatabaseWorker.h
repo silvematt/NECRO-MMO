@@ -98,6 +98,7 @@ namespace NECRO
 			try
 			{
 				m_persistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
+				m_db->PrepareAllStatements(*m_persistentMysqlSession);
 			}
 			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 			{
@@ -277,7 +278,7 @@ namespace NECRO
 										m_persistentMysqlSession->startTransaction();
 										for (size_t i = 0; i < req.m_steps.size(); i++)
 										{
-											mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_steps[i].m_enumVal);
+											mysqlx::SqlStatement stmt = m_db->GetPreparedStatement(req.m_steps[i].m_enumVal);
 											for (auto& param : req.m_steps[i].m_bindParams)
 												stmt.bind(param);
 
@@ -295,7 +296,7 @@ namespace NECRO
 									}
 									else // Single request (m_steps[0] exists because this request IsValid())
 									{
-										mysqlx::SqlStatement stmt = m_db->Prepare(*m_persistentMysqlSession, req.m_steps[0].m_enumVal);
+										mysqlx::SqlStatement stmt = m_db->GetPreparedStatement(req.m_steps[0].m_enumVal);
 										for (auto& param : req.m_steps[0].m_bindParams)
 											stmt.bind(param);
 

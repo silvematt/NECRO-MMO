@@ -29,11 +29,9 @@ namespace NECRO
 	public:
 		int Init(const std::string& URI) override
 		{
+			// DBWorker uses pool's client to get the persistent mysql session
 			if (m_pool.Init(URI) == 0)
 			{
-				// Register all the statements
-				RegisterAllStatements();
-
 				return 0;
 			}
 			else
@@ -47,15 +45,17 @@ namespace NECRO
 			*/
 		}
 
-		void RegisterAllStatements() override
+		void PrepareAllStatements(mysqlx::Session& s) override
 		{
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), "SELECT id FROM necroauth.users WHERE username = ?;");
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), "SELECT password FROM necroauth.users WHERE id = ?;");
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), "INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);");
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), "DELETE FROM necroauth.active_sessions WHERE userid = ?;");
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), "INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);");
-			//RegisterStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), ""); TODO
-			RegisterStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), "SELECT 1");
+			m_statementsMap.clear();
+
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), s.sql("SELECT id FROM necroauth.users WHERE username = ?;"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), s.sql("SELECT password FROM necroauth.users WHERE id = ?;"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), s.sql("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), s.sql("DELETE FROM necroauth.active_sessions WHERE userid = ?;"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), s.sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), s.sql("UPDATE users SET online = ?, last_login = ? WHERE id = ?;"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), s.sql("SELECT 1"));
 		}
 
 		int Close() override

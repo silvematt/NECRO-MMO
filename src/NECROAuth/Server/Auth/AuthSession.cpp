@@ -461,6 +461,8 @@ namespace Auth
                 DBRequest req(m_ioContextRef, true);
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::DEL_PREV_SESSIONS),  {m_data.accountID} });
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(greetcode.data(), greetcode.size())} });
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::UPD_ON_LOGIN),       {1, Utility::time_stamp(), m_data.accountID} });
+
 
                 dbworker.Enqueue(std::move(req));
             }
