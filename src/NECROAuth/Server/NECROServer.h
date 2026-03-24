@@ -47,12 +47,12 @@ namespace Auth
 			uint32_t	CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
 			uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
 
-			std::string LOGIN_DATABASE_CONNECTION_URI;
+			std::string LOGIN_DATABASE_URI;
 		};
 
 	public:
 		Server() :
-			m_isRunning(false), m_keepDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_dbCallbackCheckTimer(m_ioContext)
+			m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_dbCallbackCheckTimer(m_ioContext)
 		{
 
 		}
@@ -73,20 +73,23 @@ namespace Auth
 
 		// directdb will be used for queries that run (and block) on the main thread
 		// LoginDatabase	m_directdb;
-		DatabaseWorker	m_dbworker;
+		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
 
 		// Handlers on main ioContext 
-		boost::asio::steady_timer m_keepDatabaseAliveTimer;
+		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
 		boost::asio::steady_timer m_ipRequestCleanupTimer;
 		boost::asio::steady_timer m_dbCallbackCheckTimer;
 
 		void KeepDatabaseAliveHandler();
 		void IPRequestCleanupHandler();
-		void DBCallbackCheckHandler();
+		void LoginDBCallbackCheckHandler();
 
 	public:
 		//LoginDatabase&	GetDirectDB();
-		DatabaseWorker&		GetDBWorker();
+		DatabaseWorker<LoginDatabase>& GetLoginDBWorker()
+		{
+			return m_loginDbWorker;
+		}
 
 		int						Init();
 		void					ApplySettings();
@@ -101,11 +104,6 @@ namespace Auth
 			return m_configSettings;
 		}
 	};
-
-	inline DatabaseWorker& Server::GetDBWorker()
-	{
-		return m_dbworker;
-	}
 }
 }
 

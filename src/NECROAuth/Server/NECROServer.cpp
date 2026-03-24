@@ -68,13 +68,13 @@ namespace Auth
 		}
 		*/
 
-		if (m_dbworker.Setup(Database::DBType::LOGIN_DATABASE, m_configSettings.LOGIN_DATABASE_CONNECTION_URI) != 0)
+		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
 			return -4;
 		}
 
-		if (m_dbworker.Start() != 0)
+		if (m_loginDbWorker.Start() != 0)
 		{
 			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
 			return -5;
@@ -124,14 +124,14 @@ namespace Auth
 		m_configSettings.HANDSHAKING_AND_IDLE_TIMEOUT_MS = conf.GetInt("HANDSHAKING_AND_IDLE_TIMEOUT_MS", 10000);
 
 		// MySQL related
-		m_configSettings.LOGIN_DATABASE_CONNECTION_URI = conf.GetString("LoginDatabaseURI", "root:root@localhost:33060/necroauth");
+		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 	}
 
 	void Server::Start()
 	{
 		// Post DB Handler
-		m_keepDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
-		m_keepDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
+		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
+		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Post ip request cleanup
 		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS));
@@ -139,7 +139,7 @@ namespace Auth
 
 		// Post database callback check
 		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { DBCallbackCheckHandler(); });
+		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
 		// Start network threads
 		m_socketManager->StartThreads();
@@ -175,9 +175,9 @@ namespace Auth
 
 		//m_directdb.Close();
 
-		m_dbworker.Stop();
-		m_dbworker.Join();
-		m_dbworker.CloseDB();
+		m_loginDbWorker.Stop();
+		m_loginDbWorker.Join();
+		m_loginDbWorker.CloseDB();
 
 		LOG_OK("Shut down of the NECROAuth completed.");
 		return 0;
@@ -189,13 +189,13 @@ namespace Auth
 		//LOG_DEBUG("KeepDatabaseAliveHandler...");
 
 		// Calls itself again
-		m_keepDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
-		m_keepDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
+		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
+		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Enqueue a keep alive packet
 		DBRequest req(m_ioContext, true);
 		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_dbworker.Enqueue(std::move(req));
+		m_loginDbWorker.Enqueue(std::move(req));
 	}
 
 	void Server::IPRequestCleanupHandler()
@@ -209,15 +209,15 @@ namespace Auth
 		m_socketManager->IPRequestMapCleanup();
 	}
 
-	void Server::DBCallbackCheckHandler()
+	void Server::LoginDBCallbackCheckHandler()
 	{
 		//LOG_DEBUG("DBCallbackCheckHandler...");
 
 		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { DBCallbackCheckHandler(); });
+		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
 		// Execute the callbacks
-		std::vector<DBRequest> requests = m_dbworker.GetResponseQueue();
+		std::vector<DBRequest> requests = m_loginDbWorker.GetResponseQueue();
 
 		// Callbacks are executed on the NetworkThread's io_context associated with the AuthSocket that created the DBRequest originally, so there's no risk of race conditions
 		for (auto& req : requests)

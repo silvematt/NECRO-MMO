@@ -223,7 +223,7 @@ namespace Auth
         m_status = SocketStatus::GATHER_INFO_PENDING; // this will flag this client as someone who already sent a GATHER_INFO, so if the same client sends the same packet again, we'll have a status mismatch
 
         // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
-        auto& dbworker = Server::Instance().GetDBWorker();
+        auto& dbworker = Server::Instance().GetLoginDBWorker();
         {
             DBRequest req(m_ioContextRef, false);
             req.m_steps.push_back({static_cast<uint32_t>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), { m_data.username } });
@@ -338,7 +338,7 @@ namespace Auth
         m_data.pass = p;
         m_data.randIVPrefix = pcktData->clientsIVRandomPrefix;
 
-        auto& dbworker = Server::Instance().GetDBWorker();
+        auto& dbworker = Server::Instance().GetLoginDBWorker();
         {
             DBRequest req(m_ioContextRef, false);
             req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::CHECK_PASSWORD), {m_data.accountID } });
@@ -402,7 +402,7 @@ namespace Auth
         sodium_memzero(m_data.pass.data(), m_data.pass.size());
         m_data.pass.clear();
 
-        auto& dbworker = Server::Instance().GetDBWorker();
+        auto& dbworker = Server::Instance().GetLoginDBWorker();
         if (!authenticated)
         {
             LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
