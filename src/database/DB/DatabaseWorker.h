@@ -22,11 +22,13 @@ namespace NECRO
 	// 2. Instead of waiting for the NetworkThread to timeout clients that had failed DBRequests, we should call the callback with the error and handle that
 	//    If the error is critical, we can kick them right away without having to wait for timeout, but if the error isn't critical (like inventory fetch), we could just display a "TryAgain" message.
 	// 3. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
+	// 4. Pool of DBWorkers that share the requests queue
 	//-----------------------------------------------------------------------------------------------------
+	template<class T>
 	class DatabaseWorker
 	{
 	private:
-		std::unique_ptr<Database>	m_db;
+		std::unique_ptr<T>	m_db;
 		std::thread					m_thread;
 
 		std::atomic<bool>			m_running{ false };
@@ -48,25 +50,15 @@ namespace NECRO
 
 	public:
 
-		int Setup(Database::DBType t, const std::string& URI)
+		int Setup(const std::string& URI)
 		{
-			switch (t)
-			{
-			case Database::DBType::LOGIN_DATABASE:
-				m_db = std::make_unique<LoginDatabase>();
-				break;
-
-			default:
-				throw std::exception("No database type!");
-			}
+			m_db = std::make_unique<T>();
 
 			if (m_db->Init(URI) == 0)
 				return 0;
-			else
-			{
-				LOG_ERROR("Could not initialize DatabaseWorker internal db, MySQL may be not running.");
-				return 1;
-			}
+
+			LOG_ERROR("Could not initialize DatabaseWorker internal db, MySQL may be not running.");
+			return 1;
 		}
 
 		//-----------------------------------------------------------------------------------------------------
