@@ -128,7 +128,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Lib\fmt-11.2.0\include;C:\Users\Mattia\source\repos\NECRO MMO\src\NECROWorld\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Encryption;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Packets;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\OpenSSL;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Utility;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Logger;C:\Users\Mattia\source\repos\NECRO MMO\src\shared\Sockets;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -137,8 +137,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>..\..\x64\Release\shared.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>..\..\x64\Release\shared.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;mysqlcppconn.lib;mysqlcppconnx.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
