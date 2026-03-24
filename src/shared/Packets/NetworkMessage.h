@@ -132,14 +132,15 @@ namespace NECRO
             if (GetActiveSize() < sizeof(uint32_t) + packetSize)
                 return -1; // not enough data to event start decrypting
 
-            // Read packet [PCKT_SIZE | IV | TAG | CIPHERTEXT]
-            unsigned char* ivPtr = GetReadPointer() + sizeof(packetSize);
-            unsigned char* tagPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE;
-            unsigned char* cipherPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE + GCM_TAG_SIZE;
             int cipherTextLen = packetSize - (GCM_IV_SIZE + GCM_TAG_SIZE);
 
             if (cipherTextLen < 0)
                 return -2; // malformed packet
+
+            // Read packet [PCKT_SIZE | IV | TAG | CIPHERTEXT]
+            unsigned char* ivPtr = GetReadPointer() + sizeof(packetSize);
+            unsigned char* tagPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE;
+            unsigned char* cipherPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE + GCM_TAG_SIZE;
 
             // Decrypt
             m_cipherData.resize(cipherTextLen);

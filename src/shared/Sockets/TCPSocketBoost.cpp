@@ -144,7 +144,7 @@ namespace NECRO
 	// AsyncWrites do work without syncronization issues because at most one thread at the time calls these handlers
 	void TCPSocketBoost::AsyncWrite()
 	{
-		if (m_AsyncWriting)
+		if (m_AsyncWriting || m_outQueue.empty())
 			return;
 
 		m_AsyncWriting = true;
@@ -184,7 +184,7 @@ namespace NECRO
 			AsyncWriteCallback();
 
 			// Check if there are still things in the outqueue
-			if (m_outQueue.size() > 0)
+			if (!m_outQueue.empty())
 				AsyncWrite();
 		}
 	}
