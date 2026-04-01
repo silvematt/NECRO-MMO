@@ -233,13 +233,16 @@ namespace Client
             LOG_DEBUG("My session key is: {}", sessionStr);
             LOG_DEBUG("Greetcode is : {}", greetStr);
 
-            // Close connection to auth server
-            LOG_DEBUG("Authentication completed! Closing Auth Socket...");
-            Close(); // TODO handle TLS shutdown and shutdhown gracefully
+            // Auth completed, gather the realms now
+            LOG_DEBUG("Authentication completed! Gathering Realms...");
+            
+            // Send gather request
+            Packet p;
+            p << uint8_t(Auth::PacketIDs::LOGIN_GATHER_REALMLIST);
+            p << uint8_t(Auth::AuthResults::SUCCESS);
 
-            // We're now ready to connect to the game server
-            // This packet (AuthLoginProofResponse) could also contain the realms list
-            netManager.OnAuthenticationCompleted();
+            NetworkMessage m(std::move(p));
+            QueuePacket(std::move(m));
         }
         else //  (pckData->error == LoginProofResults::LOGIN_FAILED)
         {

@@ -24,6 +24,7 @@
     <ClCompile Include="Server\Auth\SocketManager.cpp">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClCompile>
+    <ClCompile Include="Server\Realmlist\RealmList.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\NECROServer.h">
@@ -35,5 +36,6 @@
     <ClInclude Include="Server\Auth\SocketManager.h">
       <Filter>NECROAuth\Server\Auth</Filter>
     </ClInclude>
+    <ClInclude Include="Server\Realmlist\RealmList.h" />
   </ItemGroup>
 </Project>

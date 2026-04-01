@@ -14,6 +14,7 @@ namespace Auth
         LOGIN_ATTEMPT,
         LOGIN_ATTEMPT_PENDING,
         AUTHED,
+        GATHER_REALMLIST_PENDING,
         CLOSED
     };
 
@@ -24,7 +25,7 @@ namespace Auth
     {
         LOGIN_GATHER_INFO = 0x00,
         LOGIN_ATTEMPT = 0x01,
-        CONFIRM = 0x02
+        LOGIN_GATHER_REALMLIST = 0x02
     };
 
     //--------------------------------------------------------------------------------------------
@@ -110,8 +111,42 @@ namespace Auth
     static_assert(sizeof(CPacketAuthLoginProof) == (1 + 1 + 2 + AES_128_KEY_SIZE + AES_128_KEY_SIZE), "CPacketAuthLoginProof size assert failed!");
     inline constexpr int C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
-    #pragma pack(pop)
+    struct SPacketGatherRealmlist
+    {
+        uint8_t id;
+        uint8_t error;
+    };
+    static_assert(sizeof(SPacketGatherRealmlist) == (1 + 1), "SPacketGatherRealmlist size assert failed!");
 
+
+    struct CRealmData
+    {
+        uint8_t id;
+
+        uint8_t status;
+
+        uint8_t ipAddress[4];
+        uint16_t port;
+
+        uint8_t nameSize;
+        uint8_t name[1];
+    };
+    inline constexpr int REALM_MAX_NAME_SIZE = 32 - 1;
+
+    struct CPacketGatherRealmlist
+    {
+        uint8_t id;
+        uint8_t error;
+        uint16_t size;
+
+        uint8_t numOfRealms;
+        CRealmData bytes[];
+    };
+
+    static_assert(sizeof(CPacketGatherRealmlist) == (1 + 1 + 2 + 1), "CPacketGatherRealmlist size assert failed!");
+    inline constexpr int C_PACKET_GATHERREALMLISTH_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+    inline constexpr int MAX_REALMS_N = 32;
+    #pragma pack(pop)
 }
 }
 

@@ -17,7 +17,8 @@ namespace NECRO
 		DEL_PREV_SESSIONS,			// userid(uint32_t)
 		INS_NEW_SESSION,			// userid(uint32_t), sessionKey(binary), authip(string), greetcode(binary)
 		UPD_ON_LOGIN,
-		KEEP_ALIVE
+		KEEP_ALIVE,
+		GATHER_REALMS
 	};
 
 
@@ -56,6 +57,7 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), s.sql("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), s.sql("UPDATE users SET online = ?, last_login = ? WHERE id = ?;"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), s.sql("SELECT 1"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::GATHER_REALMS), s.sql("SELECT id, name, address, port, status FROM necroauth.realmlist ORDER BY name"));
 		}
 
 		int Close() override

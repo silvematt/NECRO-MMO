@@ -122,7 +122,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Lib\libsodium\include;C:\boost_1_88_0;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\Lib\fmt-11.2.0\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROAuth\Server\Auth;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROAuth\Server;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Authentication;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Lib\libsodium\include;C:\boost_1_88_0;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\Lib\fmt-11.2.0\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROAuth\Server\Auth;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROAuth\Server;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Authentication;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROAuth\Server\Realmlist;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -137,11 +137,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Server\Realmlist\RealmList.cpp" />
     <ClCompile Include="Server\Auth\AuthSession.cpp" />
     <ClCompile Include="Server\NECROServer.cpp" />
     <ClCompile Include="Server\Auth\SocketManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Server\Realmlist\RealmList.h" />
     <ClInclude Include="Server\Auth\AuthSession.h" />
     <ClInclude Include="Server\NECROServer.h" />
     <ClInclude Include="Server\Auth\SocketManager.h" />

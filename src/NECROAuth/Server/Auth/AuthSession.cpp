@@ -18,6 +18,7 @@ namespace Auth
 
         handlers[static_cast<int>(PacketIDs::LOGIN_GATHER_INFO)] = { SocketStatus::GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket };
         handlers[static_cast<int>(PacketIDs::LOGIN_ATTEMPT)] = { SocketStatus::LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket };
+        handlers[static_cast<int>(PacketIDs::LOGIN_GATHER_REALMLIST)] = { SocketStatus::AUTHED, sizeof(SPacketGatherRealmlist), &HandleGatherRealmlistPacket };
 
         return handlers;
     }
@@ -192,6 +193,18 @@ namespace Auth
         AsyncRead();
 
         return 0;
+    }
+
+    void AuthSession::AsyncWriteCallback()
+    {
+        // Update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        if (m_closeAfterSend && m_outQueue.size() == 0)
+        {
+            LOG_DEBUG("Send Callback called on m_closeAfterSend.");
+            CloseSocket();
+        }
     }
 
     bool AuthSession::HandleAuthLoginGatherInfoPacket()
@@ -421,8 +434,9 @@ namespace Auth
         else
         {
             // Continue login
-            packet << uint8_t(LoginProofResults::SUCCESS);
+            m_status = SocketStatus::AUTHED;
 
+            packet << uint8_t(LoginProofResults::SUCCESS);
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
             // Calculate this side's IV, making sure it's different from the client's
@@ -480,16 +494,12 @@ namespace Auth
         return true;
     }
 
-    void AuthSession::AsyncWriteCallback()
+    bool AuthSession::HandleGatherRealmlistPacket()
     {
-        // Update last activity
-        m_lastActivity = std::chrono::steady_clock::now();
+        // Get Realms
 
-        if (m_closeAfterSend && m_outQueue.size() == 0)
-        {
-            LOG_DEBUG("Send Callback called on m_closeAfterSend.");
-            CloseSocket();
-        }
+        LOG_OK("HandleGatherRealmlistPacket");
+        return true;
     }
 
 }

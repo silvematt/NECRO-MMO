@@ -56,7 +56,7 @@ namespace Auth
         // For AuthServer we can know exactly how many packets we need the client/server to exchange in order to correctly authenticate.
         // For the WorldServer, we can probably estimate an upperbound packets-per-minute and reset the m_packetsProcessed every minute
         // If m_packetsProcessed exceeds the upperbound, the client is doing something suspicious
-        static constexpr uint32_t MAX_PACKETS_EXCHANGE_PER_CLIENT = 2;
+        static constexpr uint32_t MAX_PACKETS_EXCHANGE_PER_CLIENT = 3;
 
     private:
         AccountData m_data;
@@ -100,6 +100,9 @@ namespace Auth
 
         bool HandleAuthLoginProofPacket();
         bool DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result);
+
+        bool HandleGatherRealmlistPacket();
+        bool DBCallback_GatherRealmlistPacket(std::vector<mysqlx::SqlResult&> result);
 
         AccountData& GetAccountData()
         {

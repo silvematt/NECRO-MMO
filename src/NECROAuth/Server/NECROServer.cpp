@@ -52,13 +52,21 @@ namespace Auth
 		}
 		LOG_OK("Config file {} loaded successfully", AUTH_CONFIG_FILE_PATH);
 
+		// Load RealmList
+		if (RealmList::Instance().Init() != 0)
+		{
+			return -3;
+		}
+		LOG_OK("RealmList object initialized.");
+
+
 		// Apply Server Settings
 		ApplySettings();
 
 		SocketUtility::Initialize();
 
 		if (OpenSSLManager::ServerInit() != 0)
-			return -3;
+			return -4;
 
 		/*
 		if (m_directdb.Init() != 0)
@@ -70,14 +78,14 @@ namespace Auth
 
 		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
-			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
-			return -4;
+			LOG_ERROR("Could not initialize m_loginDbWorker, MySQL may be not running.");
+			return -5;
 		}
 
 		if (m_loginDbWorker.Start() != 0)
 		{
 			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
-			return -5;
+			return -6;
 		}
 
 		// Make TCPSocketManager
@@ -123,23 +131,30 @@ namespace Auth
 		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
 		m_configSettings.HANDSHAKING_AND_IDLE_TIMEOUT_MS = conf.GetInt("HANDSHAKING_AND_IDLE_TIMEOUT_MS", 10000);
 
-		// MySQL related
+		// Realmlist
+		m_configSettings.REALMLIST_UPDATE_INTERVAL_MS = conf.GetInt("REALMLIST_UPDATE_INTERVAL_MS", 60000);
+
+		// DB Connection
 		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 	}
 
 	void Server::Start()
 	{
 		// Post DB Handler
-		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
+		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(1));
 		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Post ip request cleanup
-		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS));
+		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(1));
 		m_ipRequestCleanupTimer.async_wait([this](boost::system::error_code const& ec) { IPRequestCleanupHandler(); });
 
 		// Post database callback check
-		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
+		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(1));
 		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
+
+		// Post Realms Update
+		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(1));
+		m_realmlistUpdateTimer.async_wait([this](boost::system::error_code const& ec) { UpdateRealmlistHandler(); });
 
 		// Start network threads
 		m_socketManager->StartThreads();
@@ -229,6 +244,28 @@ namespace Auth
 				if (reqPtr->m_callback)
 					reqPtr->m_callback(reqPtr->m_sqlResults);
 			});
+		}
+	}
+
+	void Server::UpdateRealmlistHandler()
+	{
+		// LOG_DEBUG("UpdateRealmlistHandler...");
+
+		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(m_configSettings.REALMLIST_UPDATE_INTERVAL_MS));
+		m_realmlistUpdateTimer.async_wait([this](boost::system::error_code const& ec) { UpdateRealmlistHandler(); });
+
+		auto& dbworker = m_loginDbWorker;
+		// Send DB Gather Realms request
+		{
+			DBRequest req(m_ioContext, false);
+			req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::GATHER_REALMS), {} });
+			
+			req.m_callback = [this](std::vector<mysqlx::SqlResult>& res)
+			{
+				return RealmList::Instance().DBCallback_UpdateRealmList(res);
+			};
+			
+			dbworker.Enqueue(std::move(req));
 		}
 	}
 }
