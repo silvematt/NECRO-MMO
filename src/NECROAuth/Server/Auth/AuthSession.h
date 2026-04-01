@@ -102,7 +102,6 @@ namespace Auth
         bool DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result);
 
         bool HandleGatherRealmlistPacket();
-        bool DBCallback_GatherRealmlistPacket(std::vector<mysqlx::SqlResult&> result);
 
         AccountData& GetAccountData()
         {

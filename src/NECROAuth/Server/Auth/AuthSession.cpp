@@ -477,7 +477,6 @@ namespace Auth
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(greetcode.data(), greetcode.size())} });
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::UPD_ON_LOGIN),       {1, Utility::time_stamp(), m_data.accountID} });
 
-
                 dbworker.Enqueue(std::move(req));
             }
 
@@ -496,9 +495,57 @@ namespace Auth
 
     bool AuthSession::HandleGatherRealmlistPacket()
     {
-        // Get Realms
+        // Update activity and Status
+        m_lastActivity = std::chrono::steady_clock::now();
+        m_status = SocketStatus::GATHER_REALMLIST_PENDING;
 
-        LOG_OK("HandleGatherRealmlistPacket");
+        std::vector<Realm> realms = RealmList::Instance().GetRealmList();
+
+        Packet p;
+        p << uint8_t(Auth::PacketIDs::LOGIN_GATHER_REALMLIST);
+        p << uint8_t(Auth::AuthResults::SUCCESS);
+
+        Packet payload; // CRealmData bytes[];
+        uint32_t realmCount = 0;
+
+        // Write Realm
+        for (size_t i = 0; i < realms.size(); i++)
+        {
+            if (realmCount >= MAX_REALMS_N)
+                break;
+
+            uint8_t ipAddr[4];
+            if (inet_pton(AF_INET, realms[i].ip.c_str(), ipAddr) != 1)
+            {
+                LOG_ERROR("Invalid IPv4 for realm '{}', skipping it.", realms[i].name);
+                continue;
+            }
+
+            if (realms[i].name.size() > REALM_MAX_NAME_SIZE)
+            {
+                LOG_ERROR("Realm name too long for '{}', skipping it.", realms[i].name);
+                continue;
+            }
+
+            payload << uint32_t(realms[i].ID);
+            payload << realms[i].status;
+            payload.Append(ipAddr, 4);
+            payload << htons(realms[i].port);
+            payload << uint8_t(realms[i].name.size());
+            payload << realms[i].name;
+
+            realmCount++;
+        }
+
+        // Total Packet Size
+        p << uint16_t(4 + payload.Size()); // +1 is for the realm count that gets written before the payload
+        p << realmCount;
+        p.Append(payload.GetContent(), payload.Size());
+
+        NetworkMessage m(std::move(p));
+        QueuePacket(std::move(m));
+
+        LOG_OK("HandleGatherRealmlistPacket: sent {} realm(s)", realmCount);
         return true;
     }
 

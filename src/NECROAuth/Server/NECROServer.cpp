@@ -152,7 +152,7 @@ namespace Auth
 		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(1));
 		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
-		// Post Realms Update
+		// Post Realms Update (TODO, maybe it's better to do a directdb sync query and gather the realmlist at least once before starting up the server)
 		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(1));
 		m_realmlistUpdateTimer.async_wait([this](boost::system::error_code const& ec) { UpdateRealmlistHandler(); });
 

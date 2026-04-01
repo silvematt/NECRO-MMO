@@ -40,6 +40,7 @@ namespace Client
         // Handlers functions
         bool HandlePacketAuthLoginGatherInfoResponse();
         bool HandlePacketAuthLoginProofResponse();
+        bool HandlePacketGatherRealmsResponse();
     };
 
 }

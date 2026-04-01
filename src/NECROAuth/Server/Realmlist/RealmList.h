@@ -8,7 +8,7 @@
 
 namespace NECRO
 {
-	// Matches DB table structure necroauth.realmlist
+	// Matches DB table structure necroauth.realmlist: TODO unify Realm and RealmEntry on the client side
 	struct Realm
 	{
 		uint32_t ID;

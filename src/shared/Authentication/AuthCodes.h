@@ -121,7 +121,7 @@ namespace Auth
 
     struct CRealmData
     {
-        uint8_t id;
+        uint32_t id;
 
         uint8_t status;
 
@@ -139,12 +139,12 @@ namespace Auth
         uint8_t error;
         uint16_t size;
 
-        uint8_t numOfRealms;
+        uint32_t numOfRealms;
         CRealmData bytes[];
     };
 
-    static_assert(sizeof(CPacketGatherRealmlist) == (1 + 1 + 2 + 1), "CPacketGatherRealmlist size assert failed!");
-    inline constexpr int C_PACKET_GATHERREALMLISTH_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+    static_assert(sizeof(CPacketGatherRealmlist) == (1 + 1 + 2 + 4), "CPacketGatherRealmlist size assert failed!");
+    inline constexpr int C_PACKET_GATHER_REALMLIST_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
     inline constexpr int MAX_REALMS_N = 32;
     #pragma pack(pop)
 }

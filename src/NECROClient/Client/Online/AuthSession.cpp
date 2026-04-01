@@ -21,6 +21,7 @@ namespace Client
         // fill
         handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO)] = { NECRO::Auth::SocketStatus::GATHER_INFO, sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo) , &HandlePacketAuthLoginGatherInfoResponse };
         handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT)] = {NECRO::Auth::SocketStatus::LOGIN_ATTEMPT, NECRO::Auth::C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse};
+        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_REALMLIST)] = { NECRO::Auth::SocketStatus::AUTHED, NECRO::Auth::C_PACKET_GATHER_REALMLIST_INITIAL_SIZE, &HandlePacketGatherRealmsResponse };
 
         return handlers;
     }
@@ -78,7 +79,7 @@ namespace Client
             auto it = Handlers.find(cmd);
             if (it == Handlers.end())
             {
-                LOG_WARNING("Discarding packet.");
+                LOG_WARNING("Discarding packet. CMD: {}", cmd);
 
                 // Discard packet, nothing we should handle
                 packet.Clear();
@@ -114,7 +115,11 @@ namespace Client
                     return -1;
                 }
             }
-
+            else if (cmd == static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_REALMLIST))
+            {
+                NECRO::Auth::CPacketGatherRealmlist* pcktData = reinterpret_cast<NECRO::Auth::CPacketGatherRealmlist*>(packet.GetReadPointer());
+                size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
+            }
 
             // At this point, ensure the read size matches the whole packet size
             if (packet.GetActiveSize() < size)
@@ -252,6 +257,75 @@ namespace Client
         }
 
         return true;
+    }
+
+    bool AuthSession::HandlePacketGatherRealmsResponse()
+    {
+        Console& c = engine.GetConsole();
+        AuthManager& netManager = engine.GetAuthManager();
+
+        NECRO::Auth::CPacketGatherRealmlist* pcktData = reinterpret_cast<NECRO::Auth::CPacketGatherRealmlist*>(m_inBuffer.GetBasePointer());
+
+        if (pcktData->error == static_cast<int>(NECRO::Auth::LoginProofResults::SUCCESS))
+        {
+            status = NECRO::Auth::SocketStatus::GATHER_REALMLIST_PENDING;
+
+            uint8_t numRealms = pcktData->numOfRealms;
+
+            if (numRealms >= NECRO::Auth::MAX_REALMS_N)
+            {
+                LOG_ERROR("Server returned an error while gathering realms.");
+                c.Log("Failed to retrieve realm list.");
+                return false;
+            }
+
+            // Cursor to read realms bytes
+            uint8_t* cursor = reinterpret_cast<uint8_t*>(pcktData->bytes);
+
+            std::vector<RealmEntry>& realmlist = netManager.GetData().realmlist;
+            realmlist.clear();
+
+            for (size_t i = 0; i < numRealms; i++)
+            {
+                NECRO::Auth::CRealmData* realmData = reinterpret_cast<NECRO::Auth::CRealmData*>(cursor);
+
+                RealmEntry entry;
+                entry.id = realmData->id;
+                entry.status = realmData->status;
+
+                // Convert the 4 bytes of the ipAddress to a string
+                char ipBuf[INET_ADDRSTRLEN];
+                inet_ntop(AF_INET, realmData->ipAddress, ipBuf, INET_ADDRSTRLEN);
+                entry.ip = ipBuf;
+
+                entry.port = ntohs(realmData->port);
+                entry.name = std::string(reinterpret_cast<char*>(realmData->name), realmData->nameSize);
+
+                LOG_INFO("Realm: ID={}, Name='{}', Address={}:{}, Status={}", entry.id, entry.name, entry.ip, entry.port, entry.status);
+                c.Log("Realm: " + entry.name + " (" + entry.ip + ":" + std::to_string(entry.port) + ")");
+
+                realmlist.push_back(std::move(entry));
+
+                // Advance cursor past the fixed portion of CRealmData (minus the flexible name[1]) + the actual name size
+                cursor += sizeof(NECRO::Auth::CRealmData) - 1 + realmData->nameSize;
+            }
+
+            LOG_OK("Received {} realm(s).", realmlist.size());
+
+            // Close connection to auth server
+            LOG_DEBUG("Authentication completed! Closing Auth Socket...");
+            Close(); // TODO handle TLS shutdown and shutdhown gracefully
+
+            // We're now ready to connect to the game server
+            netManager.OnAuthenticationCompleted();
+            return true;
+        }
+        else
+        {
+            LOG_ERROR("Server returned an error while gathering realms.");
+            c.Log("Failed to retrieve realm list.");
+            return false;
+        }
     }
 
 }

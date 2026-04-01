@@ -7,10 +7,21 @@
 
 #include "AES.h"
 
+#include <vector>
+
 namespace NECRO
 {
 namespace Client
 {
+	struct RealmEntry
+	{
+		uint8_t id;
+		uint8_t status;
+		std::string ip;
+		uint16_t port;
+		std::string name;
+	};
+
 	struct AuthData
 	{
 		std::string username;
@@ -24,6 +35,8 @@ namespace Client
 		AES::IV iv;
 
 		bool hasAuthenticated = false;
+
+		std::vector<RealmEntry> realmlist;
 	};
 
 	class AuthManager
