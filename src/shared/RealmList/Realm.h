@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string>
 
-// Matches DB table structure necroauth.realmlist: TODO unify Realm and RealmEntry on the client side
+// Matches DB table structure necroauth.realmlist
 struct Realm
 {
 	uint32_t ID;
