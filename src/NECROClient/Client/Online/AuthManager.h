@@ -4,24 +4,15 @@
 #include "AuthSession.h"
 #include "SocketUtility.h"
 #include <array>
+#include <vector>
 
 #include "AES.h"
-
-#include <vector>
+#include "Realm.h"
 
 namespace NECRO
 {
 namespace Client
 {
-	struct RealmEntry
-	{
-		uint8_t id;
-		uint8_t status;
-		std::string ip;
-		uint16_t port;
-		std::string name;
-	};
-
 	struct AuthData
 	{
 		std::string username;
@@ -36,7 +27,7 @@ namespace Client
 
 		bool hasAuthenticated = false;
 
-		std::vector<RealmEntry> realmlist;
+		std::vector<Realm> realmlist;
 	};
 
 	class AuthManager

@@ -134,6 +134,7 @@
   <ItemGroup>
     <ClInclude Include="Authentication\AuthCodes.h" />
     <ClInclude Include="Config\Config.h" />
+    <ClInclude Include="RealmList\Realm.h" />
     <ClInclude Include="Sockets\TCPSocketBoost.h" />
     <ClInclude Include="Encryption\AES.h" />
     <ClInclude Include="Logger\ConsoleLogger.h" />

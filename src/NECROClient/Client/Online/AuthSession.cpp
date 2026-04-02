@@ -282,15 +282,15 @@ namespace Client
             // Cursor to read realms bytes
             uint8_t* cursor = reinterpret_cast<uint8_t*>(pcktData->bytes);
 
-            std::vector<RealmEntry>& realmlist = netManager.GetData().realmlist;
+            std::vector<Realm>& realmlist = netManager.GetData().realmlist;
             realmlist.clear();
 
             for (size_t i = 0; i < numRealms; i++)
             {
                 NECRO::Auth::CRealmData* realmData = reinterpret_cast<NECRO::Auth::CRealmData*>(cursor);
 
-                RealmEntry entry;
-                entry.id = realmData->id;
+                Realm entry;
+                entry.ID = realmData->id;
                 entry.status = realmData->status;
 
                 // Convert the 4 bytes of the ipAddress to a string
@@ -301,7 +301,7 @@ namespace Client
                 entry.port = ntohs(realmData->port);
                 entry.name = std::string(reinterpret_cast<char*>(realmData->name), realmData->nameSize);
 
-                LOG_INFO("Realm: ID={}, Name='{}', Address={}:{}, Status={}", entry.id, entry.name, entry.ip, entry.port, entry.status);
+                LOG_INFO("Realm: ID={}, Name='{}', Address={}:{}, Status={}", entry.ID, entry.name, entry.ip, entry.port, entry.status);
                 c.Log("Realm: " + entry.name + " (" + entry.ip + ":" + std::to_string(entry.port) + ")");
 
                 realmlist.push_back(std::move(entry));

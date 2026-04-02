@@ -6,18 +6,10 @@
 #include <mysqlx/xdevapi.h>
 #include <shared_mutex>
 
+#include "Realm.h"
+
 namespace NECRO
 {
-	// Matches DB table structure necroauth.realmlist: TODO unify Realm and RealmEntry on the client side
-	struct Realm
-	{
-		uint32_t ID;
-		std::string name;
-		std::string ip;
-		uint16_t port;
-		uint8_t status;
-	};
-
 	// --------------------------------------------------------------------------------------------------------------
 	// Contains all the information about all the Realms that will be sent to authenticated clients.
 	// The list retrieved from the DB and updated every REALMLIST_UPDATE_INTERVAL 
