@@ -68,14 +68,6 @@ namespace Auth
 		if (OpenSSLManager::ServerInit() != 0)
 			return -4;
 
-		/*
-		if (m_directdb.Init() != 0)
-		{
-			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
-			return -2;
-		}
-		*/
-
 		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize m_loginDbWorker, MySQL may be not running.");
@@ -152,8 +144,25 @@ namespace Auth
 		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(1));
 		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
-		// Post Realms Update (TODO, maybe it's better to do a directdb sync query and gather the realmlist at least once before starting up the server)
-		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(1));
+		// Get realmlist straight away (DirectExecute)
+		{
+			DBRequest req(m_ioContext, false);
+			req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::GATHER_REALMS), {} });
+
+			std::vector<mysqlx::SqlResult> res = m_loginDbWorker.DirectExecute(std::move(req));
+
+			if (!res.empty())
+				RealmList::Instance().DBCallback_UpdateRealmList(res);
+			else
+			{
+				LOG_ERROR("Could not gather realms.");
+				Stop();
+				return;
+			}
+		}
+
+		// Post Realms Update
+		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(m_configSettings.REALMLIST_UPDATE_INTERVAL_MS));
 		m_realmlistUpdateTimer.async_wait([this](boost::system::error_code const& ec) { UpdateRealmlistHandler(); });
 
 		// Start network threads
@@ -188,8 +197,6 @@ namespace Auth
 		// Shutdown
 		LOG_OK("Shutting down NECROAuth...");
 
-		//m_directdb.Close();
-
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();
@@ -211,6 +218,11 @@ namespace Auth
 		DBRequest req(m_ioContext, true);
 		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
 		m_loginDbWorker.Enqueue(std::move(req));
+
+		// Keep alive the direct connection as well
+		DBRequest directReq(m_ioContext, false);
+		directReq.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDbWorker.DirectExecute(std::move(directReq));
 	}
 
 	void Server::IPRequestCleanupHandler()

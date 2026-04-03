@@ -30,7 +30,7 @@ namespace World
 		// Init DBWorkers (pools?)
 		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
-			LOG_ERROR("Could not initialize directdb, MySQL may be not running.");
+			LOG_ERROR("Could not initialize dbworker, MySQL may be not running.");
 			return -2;
 		}
 

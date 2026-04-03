@@ -21,7 +21,7 @@ namespace NECRO
 
 
 	protected:
-		std::unordered_map<uint32_t, mysqlx::SqlStatement> m_statementsMap;
+		std::unordered_map<uint32_t, std::string> m_statementsMap;
 
 	public:
 		//DBConnection m_conn;
@@ -34,12 +34,12 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		// Registers all the statements for the current Database, to be overriden
 		//-----------------------------------------------------------------------------------------------------
-		virtual void PrepareAllStatements(mysqlx::Session& s) = 0;
+		virtual void PrepareAllStatements() = 0;
 
 		//-----------------------------------------------------------------------------------------------------
 		// Registers a Statement [enumval->SQL string]
 		//-----------------------------------------------------------------------------------------------------
-		void PrepareStatement(uint32_t enumVal, const mysqlx::SqlStatement& statement)
+		void PrepareStatement(uint32_t enumVal, const std::string& statement)
 		{
 			auto it = m_statementsMap.find(enumVal);
 			if (it == m_statementsMap.end())
@@ -51,7 +51,7 @@ namespace NECRO
 		//-----------------------------------------------------------------------------------------------------
 		// Returns a mysqlx::SqlStatement, ready to be bound with parameters and executed by the caller
 		//-----------------------------------------------------------------------------------------------------
-		mysqlx::SqlStatement GetPreparedStatement(uint32_t enum_value)
+		std::string GetPreparedStatement(uint32_t enum_value)
 		{
 			auto it = m_statementsMap.find(enum_value);
 			if (it == m_statementsMap.end())

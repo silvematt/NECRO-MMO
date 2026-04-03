@@ -409,6 +409,7 @@ namespace Auth
         }
 
         // Verify the password with the database
+        // TODO this can't be done here, under high load the NetworkThreads gets overwhelmed, queue grows and even expired DBCallbacks are in the io_context queue and still have to be processed
         bool authenticated = crypto_pwhash_str_verify(row[0].get<std::string>().data(), m_data.pass.data(), m_data.pass.size()) == 0;
 
         // Delete password from memory
@@ -538,7 +539,7 @@ namespace Auth
         }
 
         // Total Packet Size
-        p << uint16_t(4 + payload.Size()); // +1 is for the realm count that gets written before the payload
+        p << uint16_t(4 + payload.Size()); // +4 is for the realm count that gets written before the payload
         p << realmCount;
         p.Append(payload.GetContent(), payload.Size());
 

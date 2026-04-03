@@ -77,8 +77,6 @@ namespace Auth
 		boost::asio::io_context m_ioContext;
 		std::unique_ptr<SocketManager> m_socketManager;
 
-		// directdb will be used for queries that run (and block) on the main thread
-		// LoginDatabase	m_directdb;
 		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
 
 		// Handlers on main ioContext 
@@ -93,7 +91,6 @@ namespace Auth
 		void UpdateRealmlistHandler();
 
 	public:
-		//LoginDatabase&	GetDirectDB();
 		DatabaseWorker<LoginDatabase>& GetLoginDBWorker()
 		{
 			return m_loginDbWorker;

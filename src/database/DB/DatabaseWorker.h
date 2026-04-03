@@ -46,7 +46,13 @@ namespace NECRO
 		std::mutex				m_respMutex;
 		std::vector<DBRequest>	m_respQueue;
 
+		// Session for the DBWorker's own thread
 		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
+
+		// Session for direct (syncronous) requests
+		std::mutex						 m_directPersistentConnMutex;
+		std::unique_ptr<mysqlx::Session> m_directPersistentMysqlSession;
+
 
 	public:
 
@@ -73,7 +79,7 @@ namespace NECRO
 				Join();
 			}
 
-			if (CreatePersistentMySQLSession() == 0)
+			if (CreatePersistentMySQLSession() == 0 && CreateDirectPersistentMySQLSession() == 0)
 			{
 				m_running = true;
 				m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
@@ -90,23 +96,22 @@ namespace NECRO
 			try
 			{
 				m_persistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
-				m_db->PrepareAllStatements(*m_persistentMysqlSession);
 			}
 			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 			{
-				std::cerr << "CreatePersistentMySQLSession MySQL error: " << err.what() << std::endl;
+				LOG_ERROR("CreatePersistentMySQLSession MySQL error: {}", err.what());
 				m_persistentMysqlSession.reset();
 				return -1;
 			}
 			catch (const std::exception& ex)  // catches standard exceptions
 			{
-				std::cerr << "CreatePersistentMySQLSession Standard exception: " << ex.what() << std::endl;
+				LOG_ERROR("CreatePersistentMySQLSession Standard exception: {}", ex.what());
 				m_persistentMysqlSession.reset();
 				return -1;
 			}
 			catch (...)
 			{
-				std::cerr << "CreatePersistentMySQLSession Unknown exception caught!" << std::endl;
+				LOG_ERROR("CreatePersistentMySQLSession Unknown exception caught!");
 				m_persistentMysqlSession.reset();
 				return -1;
 			}
@@ -172,6 +177,13 @@ namespace NECRO
 			{
 				m_persistentMysqlSession->close();
 				m_persistentMysqlSession.reset();
+			}
+
+			// Destroy the direct mysql session
+			if (m_directPersistentMysqlSession)
+			{
+				m_directPersistentMysqlSession->close();
+				m_directPersistentMysqlSession.reset();
 			}
 		}
 
@@ -270,7 +282,7 @@ namespace NECRO
 										m_persistentMysqlSession->startTransaction();
 										for (size_t i = 0; i < req.m_steps.size(); i++)
 										{
-											mysqlx::SqlStatement stmt = m_db->GetPreparedStatement(req.m_steps[i].m_enumVal);
+											mysqlx::SqlStatement stmt = m_persistentMysqlSession->sql(m_db->GetPreparedStatement(req.m_steps[i].m_enumVal));
 											for (auto& param : req.m_steps[i].m_bindParams)
 												stmt.bind(param);
 
@@ -288,7 +300,7 @@ namespace NECRO
 									}
 									else // Single request (m_steps[0] exists because this request IsValid())
 									{
-										mysqlx::SqlStatement stmt = m_db->GetPreparedStatement(req.m_steps[0].m_enumVal);
+										mysqlx::SqlStatement stmt = m_persistentMysqlSession->sql(m_db->GetPreparedStatement(req.m_steps[0].m_enumVal));
 										for (auto& param : req.m_steps[0].m_bindParams)
 											stmt.bind(param);
 
@@ -304,7 +316,7 @@ namespace NECRO
 							}
 							catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
 							{
-								std::cerr << "DBWorker MySQL error: " << err.what() << std::endl;
+								LOG_ERROR("DBWorker MySQL error: {}", err.what());
 
 								if (IsPersistentSessionAlive())
 								{
@@ -321,7 +333,7 @@ namespace NECRO
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
-								std::cerr << "DBWorker Standard exception: " << ex.what() << std::endl;
+								LOG_ERROR("DBWorker Standard exception: {}", ex.what());
 
 								if (IsPersistentSessionAlive())
 								{
@@ -337,7 +349,7 @@ namespace NECRO
 							}
 							catch (...)
 							{
-								std::cerr << "DBWorker Unknown exception caught!" << std::endl;
+								LOG_ERROR("DBWorker Unknown exception caught!");
 
 								try
 								{
@@ -374,6 +386,188 @@ namespace NECRO
 			if (func)
 				func();
 		}
+
+		// -----------------------------------------
+		// Sync direct execution
+		// -----------------------------------------
+		int CreateDirectPersistentMySQLSession()
+		{
+			// Attempt to open the direct persistent mysql session
+			try
+			{
+				m_directPersistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
+			}
+			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
+			{
+				LOG_ERROR("CreateDirectPersistentMySQLSession MySQL error: {}", err.what());
+				m_directPersistentMysqlSession.reset();
+				return -1;
+			}
+			catch (const std::exception& ex)  // catches standard exceptions
+			{
+				LOG_ERROR("CreateDirectPersistentMySQLSession Standard exception: {}", ex.what());
+				m_directPersistentMysqlSession.reset();
+				return -1;
+			}
+			catch (...)
+			{
+				LOG_ERROR("CreateDirectPersistentMySQLSession Unknown exception caught!");
+				m_directPersistentMysqlSession.reset();
+				return -1;
+			}
+
+			return 0;
+		}
+
+		int RecreateDirectPersistentMySQLSession()
+		{
+			// Destroy the direct mysql session
+			if (m_directPersistentMysqlSession)
+			{
+				m_directPersistentMysqlSession->close();
+				m_directPersistentMysqlSession.reset();
+			}
+
+			return CreateDirectPersistentMySQLSession();
+		}
+
+		
+		//---------------------------------------------------------------------------------------------------------
+		// Executes a DBRequest syncronously on the thread that calls this function. Will block the calling thread.
+		// Utilizes a different MySQL connection than the DBWorker's, so it's safe to call while the DBWorker 
+		// itself is running
+		// 
+		// Returns results in req.m_sqlResults. If req.m_sqlResults is empty, DirectExecute failed. (if query returns
+		// 0 rows, sqlResults will still contain a value)
+		//---------------------------------------------------------------------------------------------------------
+		std::vector<mysqlx::SqlResult> DirectExecute(DBRequest&& req)
+		{
+			if (!req.IsValid())
+			{
+				// Return an empty sqlResult, the caller will interpret it as an error
+				req.m_sqlResults.clear();
+				return std::move(req.m_sqlResults);
+			}
+
+			std::unique_lock<std::mutex> lock(m_directPersistentConnMutex);
+
+			try
+			{
+				// If the persistent session died, attempt to fire it back up once, if this doesn't work, notify the caller and he'll decide what to do.
+				if (!m_directPersistentMysqlSession)
+				{
+					if (RecreateDirectPersistentMySQLSession() != 0)
+					{
+						req.m_sqlResults.clear();
+						return std::move(req.m_sqlResults);
+					}
+				}
+
+				if (m_directPersistentMysqlSession)
+				{
+					// Prepare the statement and execute it on the persistent mysql session
+					if (req.IsTransaction())
+					{
+						// Start the transaction
+						m_directPersistentMysqlSession->startTransaction();
+						for (size_t i = 0; i < req.m_steps.size(); i++)
+						{
+							mysqlx::SqlStatement stmt = m_directPersistentMysqlSession->sql(m_db->GetPreparedStatement(req.m_steps[i].m_enumVal));
+							for (auto& param : req.m_steps[i].m_bindParams)
+								stmt.bind(param);
+
+							req.m_sqlResults.push_back(stmt.execute());
+						}
+
+						m_directPersistentMysqlSession->commit();
+						req.m_committed = true;
+
+						return std::move(req.m_sqlResults);
+					}
+					else // Single request (m_steps[0] exists because this request IsValid())
+					{
+						mysqlx::SqlStatement stmt = m_directPersistentMysqlSession->sql(m_db->GetPreparedStatement(req.m_steps[0].m_enumVal));
+						for (auto& param : req.m_steps[0].m_bindParams)
+							stmt.bind(param);
+
+						req.m_sqlResults.push_back(stmt.execute());
+
+						return std::move(req.m_sqlResults);
+					}
+				}
+			}
+			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
+			{
+				LOG_ERROR("DBWorker MySQL error: {}", err.what());
+
+				if (IsDirectPersistentSessionAlive())
+				{
+					// Attempt rollback for failed transactions
+					try
+					{
+						if (req.IsTransaction() && m_directPersistentMysqlSession)
+							m_directPersistentMysqlSession->rollback();
+					}
+					catch (...) {}
+				}
+				else
+					RecreateDirectPersistentMySQLSession();
+			}
+			catch (const std::exception& ex)  // catches standard exceptions
+			{
+				LOG_ERROR("DBWorker Standard exception: {}", ex.what());
+
+				if (IsDirectPersistentSessionAlive())
+				{
+					try
+					{
+						if (req.IsTransaction() && m_directPersistentMysqlSession)
+							m_directPersistentMysqlSession->rollback();
+					}
+					catch (...) {}
+				}
+				else
+					RecreateDirectPersistentMySQLSession();
+			}
+			catch (...)
+			{
+				LOG_ERROR("DBWorker Unknown exception caught!");
+
+				try
+				{
+					if (req.IsTransaction() && m_directPersistentMysqlSession)
+						m_directPersistentMysqlSession->rollback();
+				}
+				catch (...) {}
+
+				// Unknown exception
+				RecreateDirectPersistentMySQLSession();
+			}
+
+			req.m_sqlResults.clear();
+			return std::move(req.m_sqlResults);
+		}
+
+	private:
+		//-------------------------------------------------------------------------------------------------------------------
+		// Returns true if the persistent session is still valid.
+		// This needs to be called from a DirectExecute and NOT freely, because we'd be then sure we'd own the m_directPersistentConnMutex 
+		//-------------------------------------------------------------------------------------------------------------------
+			bool IsDirectPersistentSessionAlive()
+			{
+				if (!m_directPersistentMysqlSession)
+					return false;
+
+				try
+				{
+					m_directPersistentMysqlSession->sql("SELECT 1").execute();
+					return true;
+				}
+				catch (...)
+				{
+					return false;
+				}
+			}
 	};
 
 }
