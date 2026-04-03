@@ -19,7 +19,7 @@ namespace NECRO
 		{
 			LOG_ERROR("Error while setting m_inSocket. Given ptr was invalid!");
 			m_inSocket = nullptr;
-			tID = -1;
+			m_threadID = -1;
 
 			return false;
 		}
