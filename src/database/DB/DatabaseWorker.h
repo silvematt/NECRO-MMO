@@ -51,43 +51,7 @@ namespace NECRO
 		std::mutex						 m_directPersistentConnMutex;
 		std::unique_ptr<mysqlx::Session> m_directPersistentMysqlSession;
 
-
-	public:
-
-		int Setup(const std::string& URI)
-		{
-			m_db = std::make_unique<T>();
-
-			if (m_db->Init(URI) == 0)
-				return 0;
-
-			LOG_ERROR("Could not initialize DatabaseWorker internal db, MySQL may be not running.");
-			return 1;
-		}
-
-		//-----------------------------------------------------------------------------------------------------
-		// Starts the thread with its ThreadRoutine
-		//-----------------------------------------------------------------------------------------------------
-		int Start()
-		{
-			if (m_thread.joinable())
-			{
-				LOG_WARNING("Attempting to start while thread is still joinable. This should not happen. Trying to stop and join.");
-				Stop();
-				Join();
-			}
-
-			if (CreatePersistentMySQLSession() == 0 && CreateDirectPersistentMySQLSession() == 0)
-			{
-				m_running = true;
-				m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
-
-				return 0;
-			}
-			else
-				return -1;
-		}
-
+	private:
 		int CreatePersistentMySQLSession()
 		{
 			// Attempt to open the persistent mysql session
@@ -148,70 +112,6 @@ namespace NECRO
 			}
 		}
 
-		//-----------------------------------------------------------------------------------------------------
-		// Stops the ThreadRoutine when the queue will empty out
-		//-----------------------------------------------------------------------------------------------------
-		void Stop()
-		{
-			// Stop is usually called from the main thread, so acquire lock before changing m_running that gets read by the ThreadRoutine
-			// Even though m_running is atomic, m_execWakeupCond could fail to notify if Stop is called just at the right time when ThreadRoutine is checking the queue
-			{
-				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
-				m_running = false;
-			}
-			m_execWakeupCond.notify_one();
-		}
-
-		// ----------------------------------------------------------------------------------------------------
-		// Joins the thread when it's possible
-		//-----------------------------------------------------------------------------------------------------
-		void Join()
-		{
-			if (m_thread.joinable())
-				m_thread.join();
-
-			// Destroy the mysql session after ThreadRoutine has stopped
-			if (m_persistentMysqlSession)
-			{
-				m_persistentMysqlSession->close();
-				m_persistentMysqlSession.reset();
-			}
-
-			// Destroy the direct mysql session
-			if (m_directPersistentMysqlSession)
-			{
-				m_directPersistentMysqlSession->close();
-				m_directPersistentMysqlSession.reset();
-			}
-		}
-
-		// ----------------------------------------------------------------------------------------------------
-		// Closes the DBConnection session (should happen after worker Joins)
-		//-----------------------------------------------------------------------------------------------------
-		void CloseDB()
-		{
-			m_db->Close();
-		}
-
-		void Enqueue(DBRequest&& req)
-		{
-			{
-				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
-				m_externalQueue.push_back(std::move(req));
-			}
-
-			m_execWakeupCond.notify_one();
-		}
-
-		std::vector<DBRequest> GetResponseQueue()
-		{
-			std::lock_guard guard(m_respMutex);
-
-			std::vector<DBRequest> toReturn;
-			std::swap(toReturn, m_respQueue);
-			return toReturn;
-		}
-
 		void ThreadRoutine()
 		{
 			while (true)
@@ -243,7 +143,7 @@ namespace NECRO
 					// Execute the queue
 					for (auto& req : m_internalQueue)
 					{
-						if(req.IsValid() && (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired())))
+						if (req.IsValid() && (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired())))
 						{
 							// Do stuff
 							try
@@ -408,51 +308,174 @@ namespace NECRO
 				func();
 		}
 
-		// -----------------------------------------
-		// Sync direct execution
-		// -----------------------------------------
-		int CreateDirectPersistentMySQLSession()
-		{
-			// Attempt to open the direct persistent mysql session
-			try
-			{
-				m_directPersistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
-			}
-			catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
-			{
-				LOG_ERROR("CreateDirectPersistentMySQLSession MySQL error: {}", err.what());
-				m_directPersistentMysqlSession.reset();
-				return -1;
-			}
-			catch (const std::exception& ex)  // catches standard exceptions
-			{
-				LOG_ERROR("CreateDirectPersistentMySQLSession Standard exception: {}", ex.what());
-				m_directPersistentMysqlSession.reset();
-				return -1;
-			}
-			catch (...)
-			{
-				LOG_ERROR("CreateDirectPersistentMySQLSession Unknown exception caught!");
-				m_directPersistentMysqlSession.reset();
-				return -1;
-			}
+	public:
 
-			return 0;
+		int Setup(const std::string& URI)
+		{
+			m_db = std::make_unique<T>();
+
+			if (m_db->Init(URI) == 0)
+				return 0;
+
+			LOG_ERROR("Could not initialize DatabaseWorker internal db, MySQL may be not running.");
+			return 1;
 		}
 
-		int RecreateDirectPersistentMySQLSession()
+		//-----------------------------------------------------------------------------------------------------
+		// Starts the thread with its ThreadRoutine
+		//-----------------------------------------------------------------------------------------------------
+		int Start()
 		{
+			if (m_thread.joinable())
+			{
+				LOG_WARNING("Attempting to start while thread is still joinable. This should not happen. Trying to stop and join.");
+				Stop();
+				Join();
+			}
+
+			if (CreatePersistentMySQLSession() == 0 && CreateDirectPersistentMySQLSession() == 0)
+			{
+				m_running = true;
+				m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
+
+				return 0;
+			}
+			else
+				return -1;
+		}
+
+		//-----------------------------------------------------------------------------------------------------
+		// Stops the ThreadRoutine when the queue will empty out
+		//-----------------------------------------------------------------------------------------------------
+		void Stop()
+		{
+			// Stop is usually called from the main thread, so acquire lock before changing m_running that gets read by the ThreadRoutine
+			// Even though m_running is atomic, m_execWakeupCond could fail to notify if Stop is called just at the right time when ThreadRoutine is checking the queue
+			{
+				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
+				m_running = false;
+			}
+			m_execWakeupCond.notify_one();
+		}
+
+		// ----------------------------------------------------------------------------------------------------
+		// Joins the thread when it's possible
+		//-----------------------------------------------------------------------------------------------------
+		void Join()
+		{
+			if (m_thread.joinable())
+				m_thread.join();
+
+			// Destroy the mysql session after ThreadRoutine has stopped
+			if (m_persistentMysqlSession)
+			{
+				m_persistentMysqlSession->close();
+				m_persistentMysqlSession.reset();
+			}
+
 			// Destroy the direct mysql session
 			if (m_directPersistentMysqlSession)
 			{
 				m_directPersistentMysqlSession->close();
 				m_directPersistentMysqlSession.reset();
 			}
+		}
 
-			return CreateDirectPersistentMySQLSession();
+		// ----------------------------------------------------------------------------------------------------
+		// Closes the DBConnection session (should happen after worker Joins)
+		//-----------------------------------------------------------------------------------------------------
+		void CloseDB()
+		{
+			m_db->Close();
+		}
+
+		void Enqueue(DBRequest&& req)
+		{
+			{
+				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
+				m_externalQueue.push_back(std::move(req));
+			}
+
+			m_execWakeupCond.notify_one();
+		}
+
+		std::vector<DBRequest> GetResponseQueue()
+		{
+			std::lock_guard guard(m_respMutex);
+
+			std::vector<DBRequest> toReturn;
+			std::swap(toReturn, m_respQueue);
+			return toReturn;
 		}
 
 		
+
+		// -----------------------------------------
+		// DIRECT DB
+		// -----------------------------------------
+	private:
+			int CreateDirectPersistentMySQLSession()
+			{
+				// Attempt to open the direct persistent mysql session
+				try
+				{
+					m_directPersistentMysqlSession = std::make_unique<mysqlx::Session>(m_db->m_pool.m_client->getSession());
+				}
+				catch (const mysqlx::Error& err)  // catches MySQL Connector/C++ specific exceptions
+				{
+					LOG_ERROR("CreateDirectPersistentMySQLSession MySQL error: {}", err.what());
+					m_directPersistentMysqlSession.reset();
+					return -1;
+				}
+				catch (const std::exception& ex)  // catches standard exceptions
+				{
+					LOG_ERROR("CreateDirectPersistentMySQLSession Standard exception: {}", ex.what());
+					m_directPersistentMysqlSession.reset();
+					return -1;
+				}
+				catch (...)
+				{
+					LOG_ERROR("CreateDirectPersistentMySQLSession Unknown exception caught!");
+					m_directPersistentMysqlSession.reset();
+					return -1;
+				}
+
+				return 0;
+			}
+
+			int RecreateDirectPersistentMySQLSession()
+			{
+				// Destroy the direct mysql session
+				if (m_directPersistentMysqlSession)
+				{
+					m_directPersistentMysqlSession->close();
+					m_directPersistentMysqlSession.reset();
+				}
+
+				return CreateDirectPersistentMySQLSession();
+			}
+
+			//-------------------------------------------------------------------------------------------------------------------
+			// Returns true if the persistent session is still valid.
+			// This needs to be called from a DirectExecute and NOT freely, because we'd be then sure we'd own the m_directPersistentConnMutex 
+			//-------------------------------------------------------------------------------------------------------------------
+			bool IsDirectPersistentSessionAlive()
+			{
+				if (!m_directPersistentMysqlSession)
+					return false;
+
+				try
+				{
+					m_directPersistentMysqlSession->sql("SELECT 1").execute();
+					return true;
+				}
+				catch (...)
+				{
+					return false;
+				}
+			}
+
+	public:
 		//---------------------------------------------------------------------------------------------------------
 		// Executes a DBRequest syncronously on the thread that calls this function. Will block the calling thread.
 		// Utilizes a different MySQL connection than the DBWorker's, so it's safe to call while the DBWorker 
@@ -569,27 +592,6 @@ namespace NECRO
 			results.clear();
 			return results;
 		}
-
-	private:
-		//-------------------------------------------------------------------------------------------------------------------
-		// Returns true if the persistent session is still valid.
-		// This needs to be called from a DirectExecute and NOT freely, because we'd be then sure we'd own the m_directPersistentConnMutex 
-		//-------------------------------------------------------------------------------------------------------------------
-			bool IsDirectPersistentSessionAlive()
-			{
-				if (!m_directPersistentMysqlSession)
-					return false;
-
-				try
-				{
-					m_directPersistentMysqlSession->sql("SELECT 1").execute();
-					return true;
-				}
-				catch (...)
-				{
-					return false;
-				}
-			}
 	};
 
 }
