@@ -20,8 +20,14 @@ namespace NECRO
 	}
 
 
-	bool RealmList::DBCallback_UpdateRealmList(std::vector<mysqlx::SqlResult>& result)
+	bool RealmList::DBCallback_UpdateRealmList(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
 	{
+		if (ec != 0)
+		{
+			LOG_ERROR("DBCallback_UpdateRealmList called with error code {}", ec);
+			return false;
+		}
+
 		LOG_INFO("Executing DBCallback_UpdateRealmList");
 
 		// Build a new list

@@ -19,10 +19,8 @@ namespace NECRO
 	// 
 	// TODO 
 	// 1.One dbworker on multiple databases? 
-	// 2. Instead of waiting for the NetworkThread to timeout clients that had failed DBRequests, we should call the callback with the error and handle that
-	//    If the error is critical, we can kick them right away without having to wait for timeout, but if the error isn't critical (like inventory fetch), we could just display a "TryAgain" message.
-	// 3. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
-	// 4. Pool of DBWorkers that share the requests queue
+	// 2. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
+	// 3. Pool of DBWorkers that share the requests queue
 	//-----------------------------------------------------------------------------------------------------
 	template<class T>
 	class DatabaseWorker
@@ -460,16 +458,17 @@ namespace NECRO
 		// Utilizes a different MySQL connection than the DBWorker's, so it's safe to call while the DBWorker 
 		// itself is running
 		// 
-		// Returns results in req.m_sqlResults. If req.m_sqlResults is empty, DirectExecute failed. (if query returns
+		// Returns a freshly built vector of results. If results is empty, DirectExecute failed. (even if query returns
 		// 0 rows, sqlResults will still contain a value)
 		//---------------------------------------------------------------------------------------------------------
-		std::vector<mysqlx::SqlResult> DirectExecute(DBRequest&& req)
+		std::vector<mysqlx::SqlResult> DirectExecute(const DBRequest& req)
 		{
+			std::vector<mysqlx::SqlResult> results;
+
 			if (!req.IsValid())
 			{
 				// Return an empty sqlResult, the caller will interpret it as an error
-				req.m_sqlResults.clear();
-				return std::move(req.m_sqlResults);
+				return results;
 			}
 
 			std::unique_lock<std::mutex> lock(m_directPersistentConnMutex);
@@ -481,8 +480,8 @@ namespace NECRO
 				{
 					if (RecreateDirectPersistentMySQLSession() != 0)
 					{
-						req.m_sqlResults.clear();
-						return std::move(req.m_sqlResults);
+						results.clear();
+						return results;
 					}
 				}
 
@@ -499,13 +498,13 @@ namespace NECRO
 							for (auto& param : req.m_steps[i].m_bindParams)
 								stmt.bind(param);
 
-							req.m_sqlResults.push_back(stmt.execute());
+							results.push_back(stmt.execute());
 						}
 
 						m_directPersistentMysqlSession->commit();
-						req.m_committed = true;
+						//req.m_committed = true; unused, const DBRequest& req prevents this anyways but m_committed is never checked or used anywhere
 
-						return std::move(req.m_sqlResults);
+						return results;
 					}
 					else // Single request (m_steps[0] exists because this request IsValid())
 					{
@@ -513,9 +512,9 @@ namespace NECRO
 						for (auto& param : req.m_steps[0].m_bindParams)
 							stmt.bind(param);
 
-						req.m_sqlResults.push_back(stmt.execute());
+						results.push_back(stmt.execute());
 
-						return std::move(req.m_sqlResults);
+						return results;
 					}
 				}
 			}
@@ -567,8 +566,8 @@ namespace NECRO
 				RecreateDirectPersistentMySQLSession();
 			}
 
-			req.m_sqlResults.clear();
-			return std::move(req.m_sqlResults);
+			results.clear();
+			return results;
 		}
 
 	private:

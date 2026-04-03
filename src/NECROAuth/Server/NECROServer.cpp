@@ -149,10 +149,10 @@ namespace Auth
 			DBRequest req(m_ioContext, false);
 			req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::GATHER_REALMS), {} });
 
-			std::vector<mysqlx::SqlResult> res = m_loginDbWorker.DirectExecute(std::move(req));
+			std::vector<mysqlx::SqlResult> res = m_loginDbWorker.DirectExecute(req);
 
 			if (!res.empty())
-				RealmList::Instance().DBCallback_UpdateRealmList(res);
+				RealmList::Instance().DBCallback_UpdateRealmList(req.m_errorCode, res);
 			else
 			{
 				LOG_ERROR("Could not gather realms.");
@@ -222,7 +222,7 @@ namespace Auth
 		// Keep alive the direct connection as well
 		DBRequest directReq(m_ioContext, false);
 		directReq.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_loginDbWorker.DirectExecute(std::move(directReq));
+		m_loginDbWorker.DirectExecute(directReq);
 	}
 
 	void Server::IPRequestCleanupHandler()
@@ -274,7 +274,7 @@ namespace Auth
 			
 			req.m_callback = [this](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
 			{
-				return RealmList::Instance().DBCallback_UpdateRealmList(res);
+				return RealmList::Instance().DBCallback_UpdateRealmList(ec, res);
 			};
 			
 			dbworker.Enqueue(std::move(req));

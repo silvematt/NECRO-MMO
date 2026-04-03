@@ -32,6 +32,6 @@ namespace NECRO
 		int Init();
 
 		// Called by the main thread during UpdateRealmlistHandler
-		bool DBCallback_UpdateRealmList(std::vector<mysqlx::SqlResult>& result);
+		bool DBCallback_UpdateRealmList(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 	};
 }

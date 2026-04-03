@@ -62,12 +62,12 @@ public:
 		m_errorCode = 0;
 	}
 
-	bool IsTransaction()
+	bool IsTransaction() const
 	{
 		return m_steps.size() > 1;
 	}
 
-	bool IsValid()
+	bool IsValid() const
 	{
 		return !m_steps.empty();
 	}
