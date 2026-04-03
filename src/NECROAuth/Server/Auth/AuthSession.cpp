@@ -243,10 +243,10 @@ namespace Auth
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](std::vector<mysqlx::SqlResult>& res)
+            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
             {
                 if (auto lockedSelf = weakSelf.lock()) 
-                    return lockedSelf->DBCallback_AuthLoginGatherInfoPacket(res);
+                    return lockedSelf->DBCallback_AuthLoginGatherInfoPacket(ec, res);
 
                 return false; // AuthSession is destroyed (disconnect)
             };
@@ -268,9 +268,16 @@ namespace Auth
         return true;
     }
 
-    bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(std::vector<mysqlx::SqlResult>& result)
+    bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
-        LOG_CRITICAL("Handling DBCallback_AuthLoginGatherInfoPacket for user {}!!", m_data.username);
+        if (ec != 0)
+        {
+            LOG_DEBUG("DBCallback_AuthLoginGatherInfoPacket's query returned an error. There's no way to continue authentication. Dropping socket.");
+            CloseSocket();
+            return false;
+        }
+
+        LOG_DEBUG("Handling DBCallback_AuthLoginGatherInfoPacket for user {}!!", m_data.username);
 
         // DB callbacks should also update last activity
         m_lastActivity = std::chrono::steady_clock::now();
@@ -279,8 +286,6 @@ namespace Auth
         Packet packet;
         packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
 
-        // TODO at this point it's safe to assume results[0] exists, ThreadRoutine always calls m_sqlResults.push_back(...) before calling this DBCallback.
-        // If in the future we allow callbacks to be called even on errors, results[0] could cause a crash
         // Let's just add this check for now
         mysqlx::Row row = result[0].fetchOne();
 
@@ -358,10 +363,10 @@ namespace Auth
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](std::vector<mysqlx::SqlResult>& res) 
+            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res) 
             {
                 if (auto lockedSelf = weakSelf.lock()) 
-                    return lockedSelf->DBCallback_AuthLoginProofPacket(res);
+                    return lockedSelf->DBCallback_AuthLoginProofPacket(ec, res);
 
                 return false; // AuthSession is destroyed (disconnect)
             };
@@ -384,9 +389,16 @@ namespace Auth
         return true;
     }
 
-    bool AuthSession::DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result)
+    bool AuthSession::DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
-        LOG_CRITICAL("Handling DBCallback_AuthLoginProofPacket for user {}!!", m_data.username);
+        if (ec != 0)
+        {
+            LOG_DEBUG("DBCallback_AuthLoginProofPacket's query returned an error. There's no way to continue authentication. Dropping socket.");
+            CloseSocket();
+            return false;
+        }
+
+        LOG_DEBUG("Handling DBCallback_AuthLoginProofPacket for user {}!!", m_data.username);
 
         // DB callbacks should also update last activity
         m_lastActivity = std::chrono::steady_clock::now();

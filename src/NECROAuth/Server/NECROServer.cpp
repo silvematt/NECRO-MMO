@@ -254,7 +254,7 @@ namespace Auth
 			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
 			{
 				if (reqPtr->m_callback)
-					reqPtr->m_callback(reqPtr->m_sqlResults);
+					reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
 			});
 		}
 	}
@@ -272,7 +272,7 @@ namespace Auth
 			DBRequest req(m_ioContext, false);
 			req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::GATHER_REALMS), {} });
 			
-			req.m_callback = [this](std::vector<mysqlx::SqlResult>& res)
+			req.m_callback = [this](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
 			{
 				return RealmList::Instance().DBCallback_UpdateRealmList(res);
 			};

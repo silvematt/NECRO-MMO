@@ -96,10 +96,10 @@ namespace Auth
 
         // Handlers functions
         bool HandleAuthLoginGatherInfoPacket();
-        bool DBCallback_AuthLoginGatherInfoPacket(std::vector<mysqlx::SqlResult>& result);
+        bool DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
         bool HandleAuthLoginProofPacket();
-        bool DBCallback_AuthLoginProofPacket(std::vector<mysqlx::SqlResult>& result);
+        bool DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
         bool HandleGatherRealmlistPacket();
 

@@ -28,7 +28,7 @@ namespace NECRO
 	class DatabaseWorker
 	{
 	private:
-		std::unique_ptr<T>	m_db;
+		std::unique_ptr<T>			m_db;
 		std::thread					m_thread;
 
 		std::atomic<bool>			m_running{ false };
@@ -250,25 +250,21 @@ namespace NECRO
 							// Do stuff
 							try
 							{
-								// If the persistent session died, attempt to fire it back up as long as the request is servable (idle timeout will not trigger)
+								// If the persistent session died, attempt to fire it back up once
 								if (!m_persistentMysqlSession)
 								{
-									while (RecreatePersistentMySQLSession() != 0)
+									if (RecreatePersistentMySQLSession() != 0)
 									{
-										// If the connection could not be made, wait for one second
-										std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+										// If firing it back fails, drop this request: set error code and push the response to let it arrive to the DBCallback handler 
+										req.m_errorCode = 1;
 
-										// Then check if it's still worth to try and save this request (idle timeout will not trigger for the socket that initiated this request)
-										auto now = std::chrono::steady_clock::now();
-										if ((now - req.m_creationTime > std::chrono::milliseconds(DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS)) ||
-											(req.m_cancelToken.has_value() && req.m_cancelToken->expired()))
+										// If the request requires a callback, push it
+										if (!req.m_fireAndForget)
 										{
-											break; // drop the request
+											ThreadPushResponse(std::move(req));
 										}
 
-										// Try again
-										// TODO if databse is down and game server still runs, we may have lots of db enqueues while we're stuck here
-										// we need to stress load and see if we should limit how much the external queue can grow while we are here
+										continue;
 									}
 								}
 
@@ -330,6 +326,15 @@ namespace NECRO
 								}
 								else
 									RecreatePersistentMySQLSession();
+
+								// Drop this request: set error code and push the response to let it arrive to the DBCallback handler 
+								req.m_errorCode = 1;
+
+								// If the request requires a callback, push it
+								if (!req.m_fireAndForget)
+								{
+									ThreadPushResponse(std::move(req));
+								}
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
@@ -346,6 +351,15 @@ namespace NECRO
 								}
 								else
 									RecreatePersistentMySQLSession();
+
+								// Drop this request: set error code and push the response to let it arrive to the DBCallback handler 
+								req.m_errorCode = 1;
+
+								// If the request requires a callback, push it
+								if (!req.m_fireAndForget)
+								{
+									ThreadPushResponse(std::move(req));
+								}
 							}
 							catch (...)
 							{
@@ -360,6 +374,15 @@ namespace NECRO
 
 								// Unknown exception
 								RecreatePersistentMySQLSession();
+
+								// Drop this request: set error code and push the response to let it arrive to the DBCallback handler 
+								req.m_errorCode = 1;
+
+								// If the request requires a callback, push it
+								if (!req.m_fireAndForget)
+								{
+									ThreadPushResponse(std::move(req));
+								}
 							}
 						}
 					}
