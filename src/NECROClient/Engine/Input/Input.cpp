@@ -143,7 +143,7 @@ namespace Client
 
 	int Input::GetKeyHeld(SDL_Scancode key) const
 	{
-		if (key < 0 || key > m_numKeys)
+		if (key < 0 || key >= m_numKeys)
 			return -1;
 
 		return m_keys[key];
@@ -151,7 +151,7 @@ namespace Client
 
 	int Input::GetKeyDown(SDL_Scancode key) const
 	{
-		if (key < 0 || key > m_numKeys)
+		if (key < 0 || key >= m_numKeys)
 			return -1;
 
 		return (m_keys[key] & ~m_prevKeys[key]);
