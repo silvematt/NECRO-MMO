@@ -7,9 +7,19 @@
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 #include "DatabaseWorker.h"
+#include "AsioThreadPool.h"
 
 namespace NECRO
 {
+// ------------------------------------------------------------------------------------------------------------------------
+// NECROWorld:
+// 
+// - Main Thread runs the WorldLoop, updates the game representation
+// - N ASIO threads will handle I/O in a shared io_context, handlers and will distribute connections to NetworkThreads
+// - M NetworkThreads will manage the connected clients
+// - X DBWorkers threads <Login><Character><World>
+// - Optional CLI thread
+// ------------------------------------------------------------------------------------------------------------------------
 namespace World
 {
 	inline constexpr const char* WORLD_CONFIG_FILE_PATH = "worldserver.conf";
@@ -27,15 +37,15 @@ namespace World
 			// Handler Updates
 			uint32_t DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = 60000;
 
-			int NETWORK_THREADS_COUNT = -1; //-1 equals to std::thread::hardware_concurrency()
+			int ASIO_THREADS_COUNT = 1;
+			int NETWORK_THREADS_COUNT = 1;
 
 			std::string LOGIN_DATABASE_URI;
 			std::string SESSIONS_DATABASE_URI;
 		};
 
-		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_ioContext)
+		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_asioPool.m_ioContext)
 		{
-
 		}
 
 		static Server& Instance()
@@ -49,14 +59,13 @@ namespace World
 		bool m_isRunning;
 		ConfigSettings	m_configSettings;
 
-		boost::asio::io_context m_ioContext;
-
-		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
-
-		// Handlers on main ioContext
+		// Asio
+		AsioThreadPool m_asioPool;
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
+		void KeepDatabasesAliveHandler();
 
-		void KeepDatabaseAliveHandler();
+		// Databases
+		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
 
 
 	public:

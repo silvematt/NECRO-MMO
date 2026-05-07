@@ -132,6 +132,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AsioThreads\AsioThreadPool.h" />
     <ClInclude Include="Authentication\AuthCodes.h" />
     <ClInclude Include="Config\Config.h" />
     <ClInclude Include="RealmList\Realm.h" />

@@ -40,11 +40,6 @@ namespace World
 			return -3;
 		}
 
-		int threadsCount = std::thread::hardware_concurrency();
-
-		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
-			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
-
 		return 0;
 	}
 
@@ -66,7 +61,8 @@ namespace World
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
 
-		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", -1);
+		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", 1);
+		m_configSettings.ASIO_THREADS_COUNT = conf.GetInt("ASIO_THREADS_COUNT", 1);
 
 		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 		m_configSettings.SESSIONS_DATABASE_URI = conf.GetString("SESSIONS_DATABASE_URI", "");
@@ -74,9 +70,11 @@ namespace World
 
 	void Server::Start()
 	{
-		// Post DB Handler
-		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
-		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
+		// Start ASIO threads
+		m_asioPool.Start(m_configSettings.ASIO_THREADS_COUNT);
+
+		// Post work on ASIO threads
+		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
 
 		// Start network threads
 
@@ -86,10 +84,12 @@ namespace World
 
 	void Server::Update()
 	{
-		// Boost Event Loop
-		m_ioContext.run();
+		while (1)
+		{
 
-		// Here if somebody called Server::Stop() or the m_ioContext ran out of work
+		}
+
+		// Here if somebody called Server::Stop()
 		Shutdown();
 	}
 
@@ -98,13 +98,14 @@ namespace World
 		LOG_OK("Stopping NECROWorld...");
 
 		m_isRunning = false;
-		m_ioContext.stop();
 	}
 
 	int Server::Shutdown()
 	{
 		// Shutdown
 		LOG_OK("Shutting down NECROWorld...");
+
+		m_asioPool.Stop();
 
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
@@ -115,19 +116,19 @@ namespace World
 		return 0;
 	}
 
-	void Server::KeepDatabaseAliveHandler()
+	// Asio
+	void Server::KeepDatabasesAliveHandler()
 	{
-		//LOG_DEBUG("KeepDatabaseAliveHandler...");
+		LOG_DEBUG("KeepDatabasesAliveHandler...");
 
 		// Calls itself again
 		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
-		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
+		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabasesAliveHandler(); });
 
 		// Enqueue a keep alive packet
-		DBRequest req(m_ioContext, true);
+		DBRequest req(m_asioPool.m_ioContext, true);
 		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
 		m_loginDbWorker.Enqueue(std::move(req));
 	}
-
 }
 }

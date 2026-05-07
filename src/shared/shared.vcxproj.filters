@@ -69,6 +69,7 @@
     <ClInclude Include="Utility\inerithable_shared_from_this.h" />
     <ClInclude Include="Sockets\TCPAcceptor.h" />
     <ClInclude Include="RealmList\Realm.h" />
+    <ClInclude Include="AsioThreads\AsioThreadPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">

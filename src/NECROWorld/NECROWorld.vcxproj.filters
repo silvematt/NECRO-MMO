@@ -7,6 +7,9 @@
     <Filter Include="NECROWorld\Server">
       <UniqueIdentifier>{74e2c4c2-280d-4795-8204-aa11d46ea08b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NECROWorld\Server\ASIO">
+      <UniqueIdentifier>{5e00ae9d-3592-442f-82b1-caacd2258e84}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
