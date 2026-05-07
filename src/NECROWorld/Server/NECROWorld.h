@@ -8,6 +8,7 @@
 #include "FileLogger.h"
 #include "DatabaseWorker.h"
 #include "AsioThreadPool.h"
+#include "SocketManager.h"
 
 namespace NECRO
 {
@@ -37,8 +38,16 @@ namespace World
 			// Handler Updates
 			uint32_t DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = 60000;
 
+			// Server Settings
+			uint16_t MANAGER_SERVER_PORT = 61532;
 			int ASIO_THREADS_COUNT = 1;
 			int NETWORK_THREADS_COUNT = 1;
+			int	MAX_CONNECTED_CLIENTS_PER_THREAD = -1; //-1 equals to no check
+
+			// Spam prevention
+			bool		ENABLE_SPAM_PREVENTION = 1;
+			uint32_t	CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = 1;
+			uint32_t	MAX_CONNECTION_ATTEMPTS_PER_MINUTE = 10;
 
 			std::string LOGIN_DATABASE_URI;
 			std::string SESSIONS_DATABASE_URI;
@@ -59,10 +68,13 @@ namespace World
 		bool m_isRunning;
 		ConfigSettings	m_configSettings;
 
-		// Asio
+		// Asio - AsioThreadPool owns its own m_ioContext
 		AsioThreadPool m_asioPool;
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
 		void KeepDatabasesAliveHandler();
+
+		// NetworkThreads
+		std::unique_ptr<SocketManager> m_socketManager;
 
 		// Databases
 		DatabaseWorker<LoginDatabase>	m_loginDbWorker;

@@ -28,8 +28,6 @@ namespace NECRO
 	template<class SocketType>
 	class NetworkThread
 	{
-		typedef stream<tcp::socket> ssl_socket;
-
 	private:
 		int											m_threadID;
 		std::unique_ptr<std::thread>				m_thread;
@@ -46,7 +44,7 @@ namespace NECRO
 		std::vector<std::shared_ptr<SocketType>>	m_queuedSockets; // sockets queued up for insertion in the main m_sockets list
 		std::mutex									m_queuedSocketsMutex;
 
-		boost::asio::ip::tcp::socket				m_acceptSocket;		// the acceptor (that runs on the main thread's context) can choose to use this tcp::socket to pull in the new connection
+		boost::asio::ip::tcp::socket				m_acceptSocket;		// the acceptor (that runs on the main thread's context in the AuthServer) can choose to use this tcp::socket to pull in the new connection
 
 	public:
 		NetworkThread(int id, bool server) : 

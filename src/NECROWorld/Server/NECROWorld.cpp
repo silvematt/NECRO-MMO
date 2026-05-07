@@ -40,6 +40,14 @@ namespace World
 			return -3;
 		}
 
+		// Start network threads
+		int threadsCount = std::thread::hardware_concurrency();
+
+		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
+			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
+
+		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
+
 		return 0;
 	}
 
@@ -61,8 +69,15 @@ namespace World
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
 
+		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61532);
 		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", 1);
 		m_configSettings.ASIO_THREADS_COUNT = conf.GetInt("ASIO_THREADS_COUNT", 1);
+		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
+
+		// Spam prevention
+		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
+		m_configSettings.CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = conf.GetInt("CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN", 1);
+		m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_MINUTE = conf.GetInt("MAX_CONNECTION_ATTEMPTS_PER_MINUTE", 10);
 
 		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 		m_configSettings.SESSIONS_DATABASE_URI = conf.GetString("SESSIONS_DATABASE_URI", "");
@@ -77,6 +92,10 @@ namespace World
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
 
 		// Start network threads
+		m_socketManager->StartThreads();
+
+		// Start the socket's manager work
+		m_socketManager->Start();
 
 		m_isRunning = true;
 		LOG_OK("NECROWorld is running...");

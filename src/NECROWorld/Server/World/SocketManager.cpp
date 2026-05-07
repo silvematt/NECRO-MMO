@@ -1,0 +1,104 @@
+#include "SocketManager.h"
+#include "NECROWorld.h"
+
+namespace NECRO
+{
+namespace World
+{
+void SocketManager::Start()
+{
+	SocketManagerHandler();
+}
+
+// This runs in the ASIO's io_context
+void SocketManager::SocketManagerHandler()
+{
+	// Selects the socket that will receive
+	int tID = -1;
+	int minSockNum = std::numeric_limits<int>::max();
+
+	for (int i = 0; i < m_networkThreadsCount; i++)
+		if (minSockNum > m_networkThreads[i]->GetSocketsSize())
+		{
+			tID = i;
+			minSockNum = m_networkThreads[i]->GetSocketsSize();
+		}
+
+	m_acceptor.SetInSocket(m_networkThreads[tID]->GetAcceptSocketPtr(), tID);
+	m_acceptor.AsyncAccept<SocketManager, &SocketManager::AsyncAcceptCallback>(this);
+}
+
+void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
+{
+	auto config = Server::Instance().GetSettings();
+
+	// Check for max connected clients setting
+	if (config.MAX_CONNECTED_CLIENTS_PER_THREAD == -1 || m_networkThreads[tID]->GetSocketsSize() < config.MAX_CONNECTED_CLIENTS_PER_THREAD)
+	{
+		// IP-based spam prevention
+		bool couldBeSpam = false;
+		std::string clientIP = sock.remote_endpoint().address().to_string();
+
+		auto now = std::chrono::steady_clock::now();
+
+		// Check if the requesting IP already made requests in the last time window
+		if (m_ipRequestMap.find(clientIP) != m_ipRequestMap.end())
+		{
+			// If the number of tries exceed the limit, block this request
+			if (m_ipRequestMap[clientIP].tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+				couldBeSpam = true;
+			else
+			{
+				// If so, update both activity and last try
+				m_ipRequestMap[clientIP].lastUpdate = now;
+				m_ipRequestMap[clientIP].tries++;
+			}
+		}
+		else
+			m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
+
+		if (!config.ENABLE_SPAM_PREVENTION)
+			couldBeSpam = false;
+
+		if (!couldBeSpam)
+		{
+			LOG_DEBUG("New client accepted! Put into {}", tID);
+			std::shared_ptr<WorldSession> newConn = std::make_shared<WorldSession>(std::move(sock));
+
+			m_networkThreads[tID]->QueueNewSocket(newConn);
+		}
+		else
+		{
+			LOG_DEBUG("IP {} made too many requests ({})! Dropping connection.", clientIP, m_ipRequestMap[clientIP].tries);
+			sock.close();
+		}
+	}
+	else
+	{
+		// MAX_CONNECTED_CLIENTS_PER_THREAD reached
+		LOG_DEBUG("MAX_CONNECTED_CLIENTS_PER_THREAD reached! Dropping connection.");
+		sock.close();
+	}
+
+	SocketManagerHandler();
+}
+
+void SocketManager::StartThreads()
+{
+	for (int i = 0; i < m_networkThreadsCount; i++)
+		m_networkThreads[i]->Start();
+}
+
+void SocketManager::StopThreads()
+{
+	for (int i = 0; i < m_networkThreadsCount; i++)
+		m_networkThreads[i]->Stop();
+}
+
+void SocketManager::JoinThreads()
+{
+	for (int i = 0; i < m_networkThreadsCount; i++)
+		m_networkThreads[i]->Join();
+}
+}
+}

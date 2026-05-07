@@ -79,14 +79,15 @@ namespace NECRO
 		TCPSocket(sock_t inSocket);
 
 		virtual void	OnConnectedCallback() {};
+		virtual int		Update(std::chrono::steady_clock::time_point now) { return 0; };
 		virtual int		ReadCallback() { return 0; };
 		virtual void	SendCallback() {};
 
-		bool						IsOpen();
-		bool						IsShutDown();
+		bool			IsOpen();
+		bool			IsShutDown();
 
-		int							Bind(const SocketAddress& addr);
-		int							Listen(int backlog = TCP_LISTEN_DEFUALT_BACKLOG);
+		int				Bind(const SocketAddress& addr);
+		int				Listen(int backlog = TCP_LISTEN_DEFUALT_BACKLOG);
 
 		// Templated Accept
 		template<typename T = TCPSocket>

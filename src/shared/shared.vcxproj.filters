@@ -70,6 +70,8 @@
     <ClInclude Include="Sockets\TCPAcceptor.h" />
     <ClInclude Include="RealmList\Realm.h" />
     <ClInclude Include="AsioThreads\AsioThreadPool.h" />
+    <ClInclude Include="World\WorldCodes.h" />
+    <ClInclude Include="Utility\IPRequestData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">

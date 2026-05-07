@@ -22,8 +22,6 @@ namespace NECRO
 	//-----------------------------------------------------------------------------------------------------
 	class TCPAcceptor
 	{
-		typedef stream<tcp::socket> ssl_socket;
-
 	private:
 		boost::asio::io_context& m_ioContextRef;
 
@@ -66,7 +64,7 @@ namespace NECRO
 				}
 				else
 				{
-					LOG_ERROR("Error while accepting client socket.");
+					LOG_ERROR("Error while accepting client socket. {}", ec.what());
 				}
 			}
 			);

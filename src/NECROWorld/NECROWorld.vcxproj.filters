@@ -16,10 +16,14 @@
     <ClCompile Include="Server\NECROWorld.cpp">
       <Filter>NECROWorld\Server</Filter>
     </ClCompile>
+    <ClCompile Include="Server\World\SocketManager.cpp" />
+    <ClCompile Include="Server\World\WorldSession.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\NECROWorld.h">
       <Filter>NECROWorld\Server</Filter>
     </ClInclude>
+    <ClInclude Include="Server\World\SocketManager.h" />
+    <ClInclude Include="Server\World\WorldSession.h" />
   </ItemGroup>
 </Project>
