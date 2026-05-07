@@ -21,6 +21,5 @@ void WorldSession::AsyncWriteCallback()
 
 }
 
-
 }
 }
