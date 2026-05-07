@@ -30,6 +30,7 @@ namespace Client
 		int		Cmd_QuitApplication(const std::vector<std::string>& args);
 
 		int		Cmd_ConnectToAuthServer(const std::vector<std::string>& args);
+		int		Cmd_ConnectToWorldServer(const std::vector<std::string>& args);
 
 		// Debug
 		int		Cmd_ToggleCollisionDebug(const std::vector<std::string>& args);

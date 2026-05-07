@@ -25,6 +25,7 @@ namespace Client
 	void Game::Update()
 	{
 		engine.GetAuthManager().NetworkUpdate(); // TODO this does both send and receive, let's split it and have data sent at the end of this frame
+		engine.GetWorldManager().NetworkUpdate();
 
 		HandleInput();
 

@@ -77,6 +77,13 @@ namespace Client
 			return -8;
 		}
 
+		// Initialize World Network
+		if (m_worldManager.Init() != 0)
+		{
+			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Failed to Initialize World Network SubSystem.\n");
+			return -9;
+		}
+
 		srand(time(NULL));
 
 		m_lastUpdate = 0;

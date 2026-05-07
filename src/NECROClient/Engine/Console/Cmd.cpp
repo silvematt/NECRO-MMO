@@ -27,12 +27,13 @@ namespace Client
 	{
 		Console& c = engine.GetConsole();
 
-		c.Log("'teleport' (x, y): teleports the player to the x,y grid coordinates.");
-		c.Log("'noclip' (): toggles collision detection for the player.");
-		c.Log("'dcoll' (): toggles collision debug for all entities.");
-		c.Log("'doccl' (): toggles occlusion debug for entities that can occlude the player.");
-		c.Log("'qqq' (): quits the game.");
-		c.Log("'authconnect' (): connects to the auth server.");
+		c.Log("'/teleport' (x, y): teleports the player to the x,y grid coordinates.");
+		c.Log("'/noclip' (): toggles collision detection for the player.");
+		c.Log("'/dcoll' (): toggles collision debug for all entities.");
+		c.Log("'/doccl' (): toggles occlusion debug for entities that can occlude the player.");
+		c.Log("'/qqq' (): quits the game.");
+		c.Log("'/authconnect' (): connects to the auth server.");
+		c.Log("'/authworld' (ip, port): connects to a world server (run after 'authconnect').");
 
 		return 1; // return 1 to not close the console after this function
 	}
@@ -130,6 +131,9 @@ namespace Client
 		return 0;
 	}
 
+	//----------------------------------------------------------------------------------------------
+	// Connects to the AuthServer
+	//----------------------------------------------------------------------------------------------
 
 	int Cmd::Cmd_ConnectToAuthServer(const std::vector<std::string>& args)
 	{
@@ -147,6 +151,36 @@ namespace Client
 		engine.GetAuthManager().SetAuthDataPassword(args[2]);
 
 		engine.GetAuthManager().ConnectToAuthServer();
+
+		return 0;
+	}
+
+	//----------------------------------------------------------------------------------------------
+	// Connects to a World Server at the given <ip> <port>
+	//----------------------------------------------------------------------------------------------
+	int Cmd::Cmd_ConnectToWorldServer(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (args.size() < 3)
+		{
+			c.Log("CMD_ConnectToWorldServer: requires 2 arguments [ip, port].");
+			return 1;
+		}
+
+		if (!engine.GetAuthManager().GetData().hasAuthenticated)
+		{
+			c.Log("Not authenticated. Run 'authconnect [user, pass]' first.");
+			return 1;
+		}
+
+		const std::string& ip = args[1];
+		int parsedPort = ClientUtility::TryParseInt(args[2]);
+		uint16_t port = static_cast<uint16_t>(parsedPort);
+
+		c.Log("Attempting to connect to world server " + ip + ":" + std::to_string(port) + "...");
+
+		engine.GetWorldManager().ConnectToWorldServer(ip, port);
 
 		return 0;
 	}

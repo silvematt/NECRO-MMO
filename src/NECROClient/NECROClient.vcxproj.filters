@@ -10,6 +10,9 @@
     <Filter Include="NECROClient\Client\Online">
       <UniqueIdentifier>{a59d1977-6e14-4176-82ae-a64c8ed9b72a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NECROClient\Client\Online\World">
+      <UniqueIdentifier>{4a1b2c3d-7e7f-4d10-9b21-1f8a4c8d0e01}</UniqueIdentifier>
+    </Filter>
     <Filter Include="NECROClient\Engine">
       <UniqueIdentifier>{744bc419-f9c7-40f2-a6de-6d26d51b3543}</UniqueIdentifier>
     </Filter>
@@ -56,6 +59,12 @@
     </ClCompile>
     <ClCompile Include="Client\Online\AuthSession.cpp">
       <Filter>NECROClient\Client\Online</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Online\World\WorldManager.cpp">
+      <Filter>NECROClient\Client\Online\World</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Online\World\WorldSession.cpp">
+      <Filter>NECROClient\Client\Online\World</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Animation\Animator.cpp">
       <Filter>NECROClient\Engine\Animation</Filter>
@@ -136,6 +145,12 @@
     </ClInclude>
     <ClInclude Include="Client\Online\AuthSession.h">
       <Filter>NECROClient\Client\Online</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\Online\World\WorldManager.h">
+      <Filter>NECROClient\Client\Online\World</Filter>
+    </ClInclude>
+    <ClInclude Include="Client\Online\World\WorldSession.h">
+      <Filter>NECROClient\Client\Online\World</Filter>
     </ClInclude>
     <ClInclude Include="Engine\Animation\Animator.h">
       <Filter>NECROClient\Engine\Animation</Filter>

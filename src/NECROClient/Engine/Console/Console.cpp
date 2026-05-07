@@ -16,13 +16,14 @@ namespace Client
 	{
 		m_inputField.Init(SDL_Rect{ 0,0,309,52 }, SDL_Rect{ 25, SCREEN_HEIGHT - 120, 380,35 }, "", engine.GetAssetsManager().GetImage("default_input_field.png"), engine.GetAssetsManager().GetImage("default_active_input_field.png"), 0);
 
-		m_cmds.insert({ "help", Cmd(&Cmd::Cmd_Help) });
-		m_cmds.insert({ "tel", Cmd(&Cmd::Cmd_TeleportToGrid) });
-		m_cmds.insert({ "noclip", Cmd(&Cmd::Cmd_NoClip) });
-		m_cmds.insert({ "dcoll", Cmd(&Cmd::Cmd_ToggleCollisionDebug) });
-		m_cmds.insert({ "doccl", Cmd(&Cmd::Cmd_ToggleOcclusionDebug) });
-		m_cmds.insert({ "qqq", Cmd(&Cmd::Cmd_QuitApplication) });
-		m_cmds.insert({ "authconnect", Cmd(&Cmd::Cmd_ConnectToAuthServer) });
+		m_cmds.insert({ "/help", Cmd(&Cmd::Cmd_Help) });
+		m_cmds.insert({ "/tel", Cmd(&Cmd::Cmd_TeleportToGrid) });
+		m_cmds.insert({ "/noclip", Cmd(&Cmd::Cmd_NoClip) });
+		m_cmds.insert({ "/dcoll", Cmd(&Cmd::Cmd_ToggleCollisionDebug) });
+		m_cmds.insert({ "/doccl", Cmd(&Cmd::Cmd_ToggleOcclusionDebug) });
+		m_cmds.insert({ "/qqq", Cmd(&Cmd::Cmd_QuitApplication) });
+		m_cmds.insert({ "/authconnect", Cmd(&Cmd::Cmd_ConnectToAuthServer) });
+		m_cmds.insert({ "/authworld", Cmd(&Cmd::Cmd_ConnectToWorldServer) });
 
 		// Load history if present
 		m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::in);
@@ -39,7 +40,7 @@ namespace Client
 			while (std::getline(m_cmdsLogFile, line))
 			{
 				if (!line.empty())
-					m_history.push_back(std::move(line));
+					m_history.push_back(line);
 			}
 		}
 

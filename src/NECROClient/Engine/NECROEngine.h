@@ -10,6 +10,7 @@
 #include "Console.h"
 #include "NMath.h"
 #include "AuthManager.h"
+#include "WorldManager.h"
 #include "Config.h"
 
 namespace NECRO
@@ -46,6 +47,7 @@ namespace Client
 		AssetsManager	m_assetsManager;
 		Console			m_console;
 		AuthManager		m_netManager;
+		WorldManager	m_worldManager;
 
 		int				Shutdown();
 
@@ -56,6 +58,7 @@ namespace Client
 		AssetsManager&		GetAssetsManager();
 		Console&			GetConsole();
 		AuthManager&		GetAuthManager();
+		WorldManager&		GetWorldManager();
 
 		const double		GetDeltaTime() const;
 		const float			GetFPS() const;
@@ -98,6 +101,11 @@ namespace Client
 	inline AuthManager& Engine::GetAuthManager()
 	{
 		return m_netManager;
+	}
+
+	inline WorldManager& Engine::GetWorldManager()
+	{
+		return m_worldManager;
 	}
 
 	inline const double Engine::GetDeltaTime() const
