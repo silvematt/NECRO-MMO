@@ -4,6 +4,7 @@
 #include "NetworkThread.h"
 #include "AuthSession.h"
 #include "TCPAcceptor.h"
+#include <IPRequestData.h>
 
 #include <boost/asio.hpp>
 #include <limits>
@@ -18,13 +19,6 @@ namespace Auth
 	class SocketManager
 	{
 		typedef std::vector<std::unique_ptr<NetworkThread<AuthSession>>> NetworkThreadList;
-
-		// IP-based spam prevention <ip, last attempt>
-		struct IPRequestData
-		{
-			std::chrono::steady_clock::time_point lastUpdate;
-			size_t tries;
-		};
 
 	private:
 		boost::asio::io_context&	m_ioContextRef; // main thread's io_context reference

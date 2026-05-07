@@ -95,13 +95,13 @@ namespace Auth
         void    AsyncWriteCallback() override;
 
         // Handlers functions
-        bool HandleAuthLoginGatherInfoPacket();
-        bool DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+        bool    HandleAuthLoginGatherInfoPacket();
+        bool    DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
-        bool HandleAuthLoginProofPacket();
-        bool DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+        bool    HandleAuthLoginProofPacket();
+        bool    DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
-        bool HandleGatherRealmlistPacket();
+        bool    HandleGatherRealmlistPacket();
 
         AccountData& GetAccountData()
         {
