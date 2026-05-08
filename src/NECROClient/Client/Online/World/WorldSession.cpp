@@ -52,7 +52,8 @@ namespace Client
         NetworkMessage m(std::move(packet));
         QueuePacket(std::move(m));
 
-        m_status = NECRO::World::WorldSocketStatus::GATHER_INFO_PENDING;
+        m_status = NECRO::World::WorldSocketStatus::GATHER_SESSIONKEY_PENDING;
+        LOG_DEBUG("WorldGreet packet sent, my prefix is: {}", authMgr.GetData().iv.prefix);
         c.Log("World Greet sent.");
     }
 

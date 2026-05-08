@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.11.35312.102
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11612.150 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "shared", "src\shared\shared.vcxproj", "{D999CD81-B931-4125-873A-EACF23CAF087}"
 EndProject
@@ -70,7 +70,6 @@ Global
 		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Debug|x86.ActiveCfg = Debug|Win32
 		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Debug|x86.Build.0 = Debug|Win32
 		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Release|x64.ActiveCfg = Release|x64
-		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Release|x64.Build.0 = Release|x64
 		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Release|x86.ActiveCfg = Release|Win32
 		{A94A6D2A-A254-4C5C-91FB-D329A7340758}.Release|x86.Build.0 = Release|Win32
 		{52A2888D-8A77-4F74-B94F-D352F1EAD63D}.Debug|x64.ActiveCfg = Debug|x64

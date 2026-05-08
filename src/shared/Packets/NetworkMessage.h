@@ -14,6 +14,10 @@ namespace NECRO
     class NetworkMessage
     {
     private:
+        // Upper bound on the packet size (IV + TAG + CIPHERTEXT) accepted by AESDecrypt (used in the WorldServer). 
+        // Guards against oversized/hostile packets.
+        static constexpr uint32_t MAX_PACKET_SIZE_AES_DECRYPT = 256;
+
         size_t m_rpos;          // Read Pos
         size_t m_wpos;          // Write Pos 
         // ReadPos in the NetworkMessage can be viewed as "consumed" pos, 
@@ -122,20 +126,30 @@ namespace NECRO
 
         int AESDecrypt(unsigned char* key, unsigned char* aad, int aadLen)
         {
-            if (GetActiveSize() < sizeof(uint32_t)) // not enough data to event start decrypting
+            if (GetActiveSize() < sizeof(uint32_t)) // not enough data to even start decrypting
                 return -1;
 
             uint32_t packetSize;
             std::memcpy(&packetSize, GetReadPointer(), sizeof(uint32_t));
             packetSize = ntohl(packetSize); // Convert from network to host byte order
 
+            // Check if packetSize is whitin our protocol reasonable bounds
+            if (packetSize > MAX_PACKET_SIZE_AES_DECRYPT)
+                return -2; // malformed packet, drop the connection
+
+            // Check if all the packet arrived or if we're in a short send
             if (GetActiveSize() < sizeof(uint32_t) + packetSize)
-                return -1; // not enough data to event start decrypting
+                return -1; // not enough data to event start decrypting, -1 
 
-            int cipherTextLen = packetSize - (GCM_IV_SIZE + GCM_TAG_SIZE);
+            // Reject packets too small
+            if (packetSize < GCM_IV_SIZE + GCM_TAG_SIZE)
+                return -3; // malformed packet
 
+            int cipherTextLen = static_cast<int>(packetSize - (GCM_IV_SIZE + GCM_TAG_SIZE));
+
+            // Make sure there is content in the packet
             if (cipherTextLen < 0)
-                return -2; // malformed packet
+                return -4; // malformed packet
 
             // Read packet [PCKT_SIZE | IV | TAG | CIPHERTEXT]
             unsigned char* ivPtr = GetReadPointer() + sizeof(packetSize);
@@ -143,16 +157,17 @@ namespace NECRO
             unsigned char* cipherPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE + GCM_TAG_SIZE;
 
             // Decrypt
+            m_cipherData.clear();
             m_cipherData.resize(cipherTextLen);
             int plainTextLen = AES::Decrypt(cipherPtr, cipherTextLen, aad, aadLen, tagPtr, key, ivPtr, GCM_IV_SIZE, m_cipherData.data());
 
             if (plainTextLen < 0)
-                return -3; // decryption failed
+                return -5; // decryption failed
 
-            // Replace internal buffer with plaintext
-            SoftClear();
-            Write(m_cipherData.data(), plainTextLen);
+            // Advance ReadPos
+            ReadCompleted(sizeof(uint32_t) + packetSize);
 
+            // Return plainTextLen, user will call GetDecryptedPacketPtr() to get the decrypted packet
             return plainTextLen;
         }
 
@@ -221,10 +236,18 @@ namespace NECRO
         //--------------------------------------------------------------------------------------------------------------------------------------------------------
         void EnlargeBufferIfNeeded()
         {
+            // TODO, if size is 0 (after a Clear(), for example), this won't actually enlarge anything
+            //if (Size() == 0)
+            //  pick a base size?
+
             if (GetRemainingSpace() == 0)
                 m_data.resize(Size() + (Size() / 2));
         }
 
+        uint8_t* GetDecryptedPacketPtr()
+        {
+            return m_cipherData.data();
+        }
     };
 }
 #endif

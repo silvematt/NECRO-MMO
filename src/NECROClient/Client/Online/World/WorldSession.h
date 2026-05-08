@@ -28,8 +28,8 @@ namespace Client
     class WorldSession : public TCPSocket
     {
     public:
-        WorldSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::World::WorldSocketStatus::GATHER_INFO) {}
-        WorldSession(sock_t socket) : TCPSocket(socket), m_status(NECRO::World::WorldSocketStatus::GATHER_INFO) {}
+        WorldSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::World::WorldSocketStatus::GATHER_SESSIONKEY) {}
+        WorldSession(sock_t socket) : TCPSocket(socket), m_status(NECRO::World::WorldSocketStatus::GATHER_SESSIONKEY) {}
 
         NECRO::World::WorldSocketStatus m_status;
 

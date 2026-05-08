@@ -68,11 +68,13 @@ namespace World
 		m_configSettings.CLIENT_VERSION_REVISION = conf.GetInt("CLIENT_VERSION_REVISION", 0);
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
+		m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS = conf.GetInt("DATABASE_CALLBACK_CHECK_INTERVAL_MS", 1000);
 
 		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61532);
 		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", 1);
 		m_configSettings.ASIO_THREADS_COUNT = conf.GetInt("ASIO_THREADS_COUNT", 1);
 		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
+		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
 
 		// Spam prevention
 		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
@@ -90,6 +92,7 @@ namespace World
 
 		// Post work on ASIO threads
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
+		m_asioPool.PostWork([this]() {LoginDBCallbackCheckHandler(); });
 
 		// Start network threads
 		m_socketManager->StartThreads();
@@ -148,6 +151,30 @@ namespace World
 		DBRequest req(m_asioPool.m_ioContext, true);
 		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
 		m_loginDbWorker.Enqueue(std::move(req));
+	}
+
+	void Server::LoginDBCallbackCheckHandler()
+	{
+		//LOG_DEBUG("LoginDBCallbackCheckHandler...");
+
+		// Calls itself again
+		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
+		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
+
+		// Execute the callbacks
+		std::vector<DBRequest> requests = m_loginDbWorker.GetResponseQueue();
+
+		// Callbacks are executed on the NetworkThread's io_context associated with the WorldSocket that created the DBRequest originally, so there's no risk of race conditions
+		for (auto& req : requests)
+		{
+			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
+
+			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
+			{
+				if (reqPtr->m_callback)
+					reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
+			});
+		}
 	}
 }
 }
