@@ -135,7 +135,7 @@ namespace Auth
             if (m_status != it->second.status)
             {
                 LOG_WARNING("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status));
-
+                
                 return -1;
             }
 
@@ -453,6 +453,7 @@ namespace Auth
             packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
             // Calculate this side's IV, making sure it's different from the client's
+            m_data.iv.RandomizePrefix();
             while (m_data.randIVPrefix == m_data.iv.prefix)
                 m_data.iv.RandomizePrefix();
 
