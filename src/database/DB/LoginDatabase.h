@@ -18,7 +18,9 @@ namespace NECRO
 		INS_NEW_SESSION,			// userid(uint32_t), sessionKey(binary), authip(string), greetcode(binary)
 		UPD_ON_LOGIN,
 		KEEP_ALIVE,
-		GATHER_REALMS
+		GATHER_REALMS,
+		SEL_SESSIONKEY_BY_GREETCODE,
+		INVALIDATE_GREETCODE
 	};
 
 
@@ -59,6 +61,8 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), ("UPDATE users SET online = ?, last_login = ? WHERE id = ?;"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), ("SELECT 1"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::GATHER_REALMS), ("SELECT id, name, address, port, status FROM necroauth.realmlist ORDER BY name"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), "SELECT userid, sessionKey, starttime, authip FROM necroauth.active_sessions WHERE greetcode IS NOT NULL AND greetcode = ?;");
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INVALIDATE_GREETCODE), "UPDATE necroauth.active_sessions SET greetcode = NULL WHERE greetcode = ?;");
 		}
 
 		int Close() override

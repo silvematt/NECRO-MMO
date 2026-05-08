@@ -13,10 +13,10 @@ CREATE TABLE `active_sessions` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `userid` int unsigned NOT NULL,
   `starttime` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `sessionkey` binary(40) NOT NULL,
+  `sessionkey` binary(16) NOT NULL,
   `authip` varchar(45) DEFAULT NULL,
   `lastupdate` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `greetcode` binary(40) DEFAULT NULL,
+  `greetcode` binary(16) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `sessionKey_UNIQUE` (`sessionkey`),
   UNIQUE KEY `userid_UNIQUE` (`userid`)
