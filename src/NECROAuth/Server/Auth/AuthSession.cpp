@@ -125,7 +125,7 @@ namespace Auth
             if (it == Handlers.end())
             {
                 // Discard packet, nothing we should handle
-                LOG_DEBUG("Discarding the packet.");
+                LOG_DEBUG("Discarding the packet CMD: '{}' and disconnecting the client...", cmd);
                 packet.Clear();
                 return -1;
                 // No tolerance for the Auth server. For WorldServer we may have some tolerance for messages that gets corrupted in flight
@@ -216,12 +216,16 @@ namespace Auth
 
         // Pre-checks
         // Check for username size
-        if (pcktData->usernameSize > Auth::MAX_USERNAME_LENGTH)
+        if (pcktData->usernameSize == 0 || pcktData->usernameSize > Auth::MAX_USERNAME_LENGTH)
+            return false;
+
+        // Check if client lied about the packet's size
+        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize - 1)
             return false;
 
         // Check for username value (input validation)
         for(int i = 0; i < pcktData->usernameSize; i++)
-            if(!std::isalnum(pcktData->username[i]))
+            if (!std::isalnum(static_cast<unsigned char>(pcktData->username[i])))
                 return false;
 
         // Fill data
@@ -341,12 +345,16 @@ namespace Auth
 
         // Pre-checks
         // Check for password size
-        if (pcktData->passwordSize > Auth::MAX_PASSWORD_LENGTH)
+        if (pcktData->passwordSize == 0 || pcktData->passwordSize > Auth::MAX_PASSWORD_LENGTH)
+            return false;
+
+        // Check if client lied about the packet's size
+        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginProof) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize - 1)
             return false;
 
         // Check for password value (input validation)
         for (int i = 0; i < pcktData->passwordSize; i++)
-            if (!std::isalnum(pcktData->password[i]))
+            if (!std::isalnum(static_cast<unsigned char>(pcktData->password[i])))
                 return false;
 
         LOG_OK("Handling AuthLoginProof for user {}", m_data.username);
@@ -422,6 +430,8 @@ namespace Auth
 
         // Verify the password with the database
         // TODO this can't be done here, under high load the NetworkThreads gets overwhelmed, queue grows and even expired DBCallbacks are in the io_context queue and still have to be processed
+        // Another line of protection against this is allowing password checks only for "verified" users (like users that paid the subscription (if any but dont pls) or that verified the phone number on the website, or 2FA)
+        // On top of that, 3 or x failed attempts can block the account and require email verification or temp lockout
         bool authenticated = crypto_pwhash_str_verify(row[0].get<std::string>().data(), m_data.pass.data(), m_data.pass.size()) == 0;
 
         // Delete password from memory

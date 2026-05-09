@@ -240,6 +240,8 @@ namespace NECRO
             //if (Size() == 0)
             //  pick a base size?
 
+            // TODO it's probably a good idea to have an upperbound for how much this can grow
+
             if (GetRemainingSpace() == 0)
                 m_data.resize(Size() + (Size() / 2));
         }

@@ -37,25 +37,47 @@ namespace Auth
 		{
 			// IP-based spam prevention
 			bool couldBeSpam = false;
-			std::string clientIP = sock.remote_endpoint().address().to_string();
+
+			// Attempt to get the remote endpoint
+			boost::system::error_code ec;
+			boost::asio::ip::tcp::endpoint endpoint = sock.remote_endpoint(ec);
+			if (ec)
+			{
+				// An error occurred, bail out
+				SocketManagerHandler();
+				return;
+			}
+			std::string clientIP = endpoint.address().to_string();
 
 			auto now = std::chrono::steady_clock::now();
 
-			// Check if the requesting IP already made requests in the last time window
-			if (m_ipRequestMap.find(clientIP) != m_ipRequestMap.end())
+			// Check if the requesting IP already made requests in the last time window (IP_BASED_REQUEST_CLEANUP_INTERVAL_MS)
+			auto it = m_ipRequestMap.find(clientIP);
+			if (it != m_ipRequestMap.end())
 			{
 				// If the number of tries exceed the limit, block this request
-				if (m_ipRequestMap[clientIP].tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
 					couldBeSpam = true;
 				else
 				{
 					// If so, update both activity and last try
-					m_ipRequestMap[clientIP].lastUpdate = now;
-					m_ipRequestMap[clientIP].tries++;
+					it->second.lastUpdate = now;
+					it->second.tries++;
 				}
 			}
 			else
-				m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
+			{
+				if (m_ipRequestMap.size() < IP_REQUEST_MAP_MAX_SIZE)
+				{
+					m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
+				}
+				else
+				{
+					// TODO this log must happen once per cleanup cycle, otherwise if the map fills and requests keep coming we keep wasting time logging this
+					LOG_DEBUG("Reached {} in IPRequestMap", IP_REQUEST_MAP_MAX_SIZE);
+					couldBeSpam = true;
+				}
+			}
 
 			if (!config.ENABLE_SPAM_PREVENTION)
 				couldBeSpam = false;
@@ -69,7 +91,8 @@ namespace Auth
 			}
 			else
 			{
-				LOG_DEBUG("IP {} made too many requests ({})! Dropping connection.", clientIP, m_ipRequestMap[clientIP].tries);
+				// TODO if iprequestmap size fills, this is spammed as well
+				LOG_DEBUG("IP {} made too many requests {}! Dropping connection.", clientIP, config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE);
 				sock.close();
 			}
 		}
@@ -86,16 +109,8 @@ namespace Auth
 	// Called by boost::asio timer started in Server's main thread
 	void SocketManager::IPRequestMapCleanup()
 	{
-		auto now = std::chrono::steady_clock::now();
-
-		// Clean old IPs beyond time window
-		for (auto it = m_ipRequestMap.begin(); it != m_ipRequestMap.end();)
-		{
-			if (now - it->second.lastUpdate > std::chrono::minutes(Server::Instance().GetSettings().CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN))
-				it = m_ipRequestMap.erase(it);
-			else
-				it++;
-		}
+		// Just clear the map after the interval
+		m_ipRequestMap.clear();
 	}
 
 	void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)

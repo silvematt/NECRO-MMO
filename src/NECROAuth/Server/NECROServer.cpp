@@ -108,7 +108,7 @@ namespace Auth
 		m_configSettings.CLIENT_VERSION_REVISION	= conf.GetInt("CLIENT_VERSION_REVISION", 0);
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
-		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 60000);
+		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
 		m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS = conf.GetInt("DATABASE_CALLBACK_CHECK_INTERVAL_MS", 1000);
 
 		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
@@ -232,7 +232,7 @@ namespace Auth
 		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS));
 		m_ipRequestCleanupTimer.async_wait([this](boost::system::error_code const& ec) { IPRequestCleanupHandler(); });
 
-		// Clear the ip-request map (m_socketManager is constructed on the same io_context, so no race conditions)
+		// Clear the ip-request map (m_socketManager is constructed on the same io_context, so no race conditions since only the main thread runs io_context.run())
 		m_socketManager->IPRequestMapCleanup();
 	}
 
