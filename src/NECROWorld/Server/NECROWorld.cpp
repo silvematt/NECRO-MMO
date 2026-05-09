@@ -69,6 +69,7 @@ namespace World
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
 		m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS = conf.GetInt("DATABASE_CALLBACK_CHECK_INTERVAL_MS", 1000);
+		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
 
 		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61532);
 		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", 1);
@@ -93,6 +94,7 @@ namespace World
 		// Post work on ASIO threads
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
 		m_asioPool.PostWork([this]() {LoginDBCallbackCheckHandler(); });
+		m_asioPool.PostWork([this]() {IPRequestMapCleanupHandler(); });
 
 		// Start network threads
 		m_socketManager->StartThreads();
@@ -175,6 +177,16 @@ namespace World
 					reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
 			});
 		}
+	}
+
+	void Server::IPRequestMapCleanupHandler()
+	{
+		//LOG_DEBUG("IPRequestCleanupHandler...");
+
+		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS));
+		m_ipRequestCleanupTimer.async_wait([this](boost::system::error_code const& ec) { IPRequestMapCleanupHandler(); });
+
+		m_socketManager->IPRequestMapCleanup();
 	}
 }
 }

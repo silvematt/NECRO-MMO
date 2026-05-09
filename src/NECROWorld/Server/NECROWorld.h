@@ -38,6 +38,7 @@ namespace World
 			// Handler Updates
 			uint32_t DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = 60000;
 			uint32_t DATABASE_CALLBACK_CHECK_INTERVAL_MS = 1000;
+			uint32_t IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = 120000;
 
 			// Server Settings
 			uint16_t MANAGER_SERVER_PORT = 61532;
@@ -55,7 +56,7 @@ namespace World
 			std::string SESSIONS_DATABASE_URI;
 		};
 
-		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_asioPool.m_ioContext), m_dbCallbackCheckTimer(m_asioPool.m_ioContext)
+		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_asioPool.m_ioContext), m_dbCallbackCheckTimer(m_asioPool.m_ioContext), m_ipRequestCleanupTimer(m_asioPool.m_ioContext)
 		{
 		}
 
@@ -73,10 +74,12 @@ namespace World
 		// Asio - AsioThreadPool owns its own m_ioContext
 		AsioThreadPool m_asioPool;
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
+		boost::asio::steady_timer m_ipRequestCleanupTimer;
 		boost::asio::steady_timer m_dbCallbackCheckTimer;
 
 		void KeepDatabasesAliveHandler();
 		void LoginDBCallbackCheckHandler();
+		void IPRequestMapCleanupHandler();
 
 		// NetworkThreads
 		std::unique_ptr<SocketManager> m_socketManager;

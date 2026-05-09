@@ -37,25 +37,52 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 	{
 		// IP-based spam prevention
 		bool couldBeSpam = false;
-		std::string clientIP = sock.remote_endpoint().address().to_string();
+		
+		// Attempt to get the remote endpoint
+		boost::system::error_code ec;
+		boost::asio::ip::tcp::endpoint endpoint = sock.remote_endpoint(ec);
+		if (ec)
+		{
+			// An error occurred, we bail out 
+			SocketManagerHandler();
+			return;
+		}
+		std::string clientIP = endpoint.address().to_string();
 
 		auto now = std::chrono::steady_clock::now();
 
 		// Check if the requesting IP already made requests in the last time window
-		if (m_ipRequestMap.find(clientIP) != m_ipRequestMap.end())
+		// Acquire mutex on m_ipRequestMap
 		{
-			// If the number of tries exceed the limit, block this request
-			if (m_ipRequestMap[clientIP].tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
-				couldBeSpam = true;
+			std::lock_guard<std::mutex> lock(m_ipRequestMapMutex);
+
+			auto it = m_ipRequestMap.find(clientIP);
+			if (it != m_ipRequestMap.end())
+			{
+				// If the number of tries exceed the limit, block this request
+				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+					couldBeSpam = true;
+				else
+				{
+					// If so, update both activity and last try
+					it->second.lastUpdate = now;
+					it->second.tries++;
+				}
+			}
 			else
 			{
-				// If so, update both activity and last try
-				m_ipRequestMap[clientIP].lastUpdate = now;
-				m_ipRequestMap[clientIP].tries++;
+				if (m_ipRequestMap.size() < IP_REQUEST_MAP_MAX_SIZE)
+				{
+					m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
+				}
+				else
+				{
+					// TODO this log must happen once per cleanup cycle, otherwise if the map fills and requests keep coming we keep wasting time logging this - or just disable debug on a deployed server? this is true for the next logs as well
+					LOG_DEBUG("Reached {} in IPRequestMap", IP_REQUEST_MAP_MAX_SIZE);
+					couldBeSpam = true;
+				}
 			}
-		}
-		else
-			m_ipRequestMap.emplace(clientIP, IPRequestData{ now, 1 });
+		} // m_ipRequestMapMutex released
 
 		if (!config.ENABLE_SPAM_PREVENTION)
 			couldBeSpam = false;
@@ -69,7 +96,8 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		}
 		else
 		{
-			LOG_DEBUG("IP {} made too many requests ({})! Dropping connection.", clientIP, m_ipRequestMap[clientIP].tries);
+			// TODO if iprequestmap size fills, this is spammed as well
+			LOG_DEBUG("IP {} made too many requests {}! Dropping connection.", clientIP, config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE);
 			sock.close();
 		}
 	}
@@ -81,6 +109,16 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 	}
 
 	SocketManagerHandler();
+}
+
+// This is executed by a ASIOThread, meaning that there could be a datarace with another thread that's doing an AsyncAcceptCallback
+void SocketManager::IPRequestMapCleanup()
+{
+	// Just clear the map after the interval expired
+	{
+		std::lock_guard<std::mutex> lock(m_ipRequestMapMutex);
+		m_ipRequestMap.clear();
+	}
 }
 
 void SocketManager::StartThreads()
