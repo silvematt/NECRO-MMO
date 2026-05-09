@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="shared">
+      <UniqueIdentifier>{a1111111-1111-1111-1111-111111111111}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="database">
+      <UniqueIdentifier>{a2222222-2222-2222-2222-222222222222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROAuth">
+      <UniqueIdentifier>{a3333333-3333-3333-3333-333333333333}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROWorld">
+      <UniqueIdentifier>{a4444444-4444-4444-4444-444444444444}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient">
+      <UniqueIdentifier>{a5555555-5555-5555-5555-555555555555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROHammer">
+      <UniqueIdentifier>{a6666666-6666-6666-6666-666666666666}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="shared\test_networkmessage.cpp">
+      <Filter>shared</Filter>
+    </ClCompile>
+    <ClCompile Include="database\test_database.cpp">
+      <Filter>database</Filter>
+    </ClCompile>
+    <ClCompile Include="NECROAuth\test_authsession.cpp">
+      <Filter>NECROAuth</Filter>
+    </ClCompile>
+    <ClCompile Include="NECROWorld\test_worldsession.cpp">
+      <Filter>NECROWorld</Filter>
+    </ClCompile>
+    <ClCompile Include="NECROClient\test_client.cpp">
+      <Filter>NECROClient</Filter>
+    </ClCompile>
+    <ClCompile Include="NECROHammer\test_hammer.cpp">
+      <Filter>NECROHammer</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
