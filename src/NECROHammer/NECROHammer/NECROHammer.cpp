@@ -29,6 +29,12 @@ namespace Hammer
 
 		if (m_configSettings.THREADS_COUNT != -1)
 			threadsCount = m_configSettings.THREADS_COUNT;
+		
+		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover msiconfig as well
+		{
+			LOG_WARNING("While making TCPSocketManager, std::thread::hardware_concurrency could not be computed! Explicit THREADS_COUNT in the config file.");
+			return -2;
+		}
 
 		m_sockManager = std::make_unique<SocketManager>(threadsCount, m_ioContext);
 
