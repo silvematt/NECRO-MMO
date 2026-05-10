@@ -150,22 +150,18 @@ namespace Auth
                 SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
 
-                // Check for size
-                if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
-                {
+                // Check for size - checks for packets that are too big but also packet that are too small
+                if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE || size < sizeof(SPacketAuthLoginGatherInfo))
                     return -1;
-                }
             }
             else if (cmd == static_cast<int>(PacketIDs::LOGIN_ATTEMPT))
             {
                 SPacketAuthLoginProof* pcktData = reinterpret_cast<SPacketAuthLoginProof*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
 
-                // Check for size
-                if (size > S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE)
-                {
+                // Check for size - checks for packets that are too big but also packet that are too small
+                if (size > S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE || size < sizeof(SPacketAuthLoginProof))
                     return - 1;
-                }
             }
 
             // At this point, ensure the read size matches the whole packet size
