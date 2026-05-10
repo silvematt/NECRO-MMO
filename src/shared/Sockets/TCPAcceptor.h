@@ -53,7 +53,7 @@ namespace NECRO
 		// Templated Accept, passing the SocketManager instance and the acceptCallback will allow us to define a callback that runs in the SocketManager instance.
 		// That callback will manage the new connection
 		//----------------------------------------------------------------------------------------------------------------------------------------------------------
-		template <typename T, void (T::* acceptCallback)(tcp::socket&&, int)>
+		template <typename T, void (T::* acceptCallback)(tcp::socket&&, int), void (T::* errorCallback)(boost::system::error_code, int)>
 		void AsyncAccept(T* instance)
 		{
 			m_acceptor.async_accept(*m_inSocket, [this, instance](boost::system::error_code ec)
@@ -65,6 +65,11 @@ namespace NECRO
 				else
 				{
 					LOG_ERROR("Error while accepting client socket. {}", ec.what());
+
+					// Make sure, even in the event of an error, that the accept-loop continues so the server doesn't stall
+					// It's the responsability of the SocketManager, so he'll handle it in the errorCallback
+					if(!m_Closed && !m_Closing)
+						(instance->*errorCallback)(ec, m_threadID);
 				}
 			}
 			);

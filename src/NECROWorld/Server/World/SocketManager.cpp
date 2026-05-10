@@ -25,7 +25,7 @@ void SocketManager::SocketManagerHandler()
 		}
 
 	m_acceptor.SetInSocket(m_networkThreads[tID]->GetAcceptSocketPtr(), tID);
-	m_acceptor.AsyncAccept<SocketManager, &SocketManager::AsyncAcceptCallback>(this);
+	m_acceptor.AsyncAccept<SocketManager, &SocketManager::AsyncAcceptCallback, &SocketManager::OnAcceptError>(this);
 }
 
 void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
@@ -107,6 +107,15 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		LOG_DEBUG("MAX_CONNECTED_CLIENTS_PER_THREAD reached! Dropping connection.");
 		sock.close();
 	}
+
+	SocketManagerHandler();
+}
+
+void SocketManager::OnAcceptError(boost::system::error_code ec, int tID)
+{
+	LOG_ERROR("Accept failed on tID {}: {}. Calling SocketManagerHandler again.", tID, ec.what());
+
+	// TODO Maybe sleep a bit?
 
 	SocketManagerHandler();
 }

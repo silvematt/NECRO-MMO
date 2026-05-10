@@ -53,7 +53,7 @@ public:
 
 	// Callbacks when accept happen
 	void AsyncAcceptCallback(tcp::socket&& sock, int tID);
-
+	void OnAcceptError(boost::system::error_code ec, int tID);
 	void IPRequestMapCleanup();
 
 	// NetworkThreads management

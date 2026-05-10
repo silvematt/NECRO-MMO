@@ -80,11 +80,17 @@ namespace Auth
 			return -6;
 		}
 
-		// Make TCPSocketManager
+		// Make SocketManager
 		int threadsCount = std::thread::hardware_concurrency();
 
 		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
 			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
+		
+		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -7;
+		}
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
 
@@ -197,6 +203,11 @@ namespace Auth
 		// Shutdown
 		LOG_OK("Shutting down NECROAuth...");
 
+		// Shutdown NetworkThreads
+		m_socketManager->StopThreads();
+		m_socketManager->JoinThreads();
+
+		// Shutdown DBWorker
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();

@@ -54,6 +54,7 @@ namespace Auth
 
 		// Callbacks when accept happen
 		void AsyncAcceptCallback(tcp::socket&& sock, int tID);
+		void OnAcceptError(boost::system::error_code ec, int tID);
 		void SSLAsyncAcceptCallback(tcp::socket&& sock, int tID);
 
 		void IPRequestMapCleanup();

@@ -25,7 +25,7 @@ namespace Auth
 			}
 
 		m_acceptor.SetInSocket(m_networkThreads[tID]->GetAcceptSocketPtr(), tID);
-		m_acceptor.AsyncAccept<SocketManager, &SocketManager::SSLAsyncAcceptCallback>(this);
+		m_acceptor.AsyncAccept<SocketManager, &SocketManager::SSLAsyncAcceptCallback, &SocketManager::OnAcceptError>(this);
 	}
 
 	void SocketManager::SSLAsyncAcceptCallback(tcp::socket&& sock, int tID)
@@ -102,6 +102,15 @@ namespace Auth
 			LOG_DEBUG("MAX_CONNECTED_CLIENTS_PER_THREAD reached! Dropping connection.");
 			sock.close();
 		}
+
+		SocketManagerHandler();
+	}
+
+	void SocketManager::OnAcceptError(boost::system::error_code ec, int tID)
+	{
+		LOG_ERROR("Accept failed on tID {}: {}. Calling SocketManagerHandler again.", tID, ec.what());
+
+		// TODO Maybe sleep a bit?
 
 		SocketManagerHandler();
 	}

@@ -43,8 +43,15 @@ namespace World
 		// Start network threads
 		int threadsCount = std::thread::hardware_concurrency();
 
+		// Make Socket Manager
 		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
 			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
+		
+		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -4;
+		}
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
 
@@ -130,6 +137,9 @@ namespace World
 		LOG_OK("Shutting down NECROWorld...");
 
 		m_asioPool.Stop();
+
+		m_socketManager->StopThreads();
+		m_socketManager->JoinThreads();
 
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
