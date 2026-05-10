@@ -60,7 +60,7 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 			if (it != m_ipRequestMap.end())
 			{
 				// If the number of tries exceed the limit, block this request
-				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE)
+				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL)
 					couldBeSpam = true;
 				else
 				{
@@ -97,7 +97,7 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		else
 		{
 			// TODO if iprequestmap size fills, this is spammed as well
-			LOG_DEBUG("IP {} made too many requests {}! Dropping connection.", clientIP, config.MAX_CONNECTION_ATTEMPTS_PER_MINUTE);
+			LOG_DEBUG("IP {} made too many requests {}! Dropping connection.", clientIP, config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL);
 			sock.close();
 		}
 	}
