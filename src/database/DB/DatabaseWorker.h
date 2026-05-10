@@ -14,13 +14,19 @@
 namespace NECRO
 {
 	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
+
+
+	// Max m_externalQueue/m_internalQueue/m_respQueue
+	// It's to prevent the server to go OOM by bounding the DB queues sizes
+	inline constexpr int DB_QUEUE_MAX_SIZE = 100000;
+
 	//-----------------------------------------------------------------------------------------------------
 	// An abstraction of a thread that works on a database
 	// 
 	// TODO 
 	// 1.One dbworker on multiple databases? 
 	// 2. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
-	// 3. Pool of DBWorkers that share the requests queue
+	// 3. Pool of DBWorkers that share the requests queue, or a DBWorkersPool that distributes requests
 	//-----------------------------------------------------------------------------------------------------
 	template<class T>
 	class DatabaseWorker
@@ -40,6 +46,9 @@ namespace NECRO
 		// Consumer queue
 		std::vector<DBRequest>		m_internalQueue;
 
+		// Size watch to prevent OOM, trackS both m_internalQueue and m_externalQueue sizes
+		// m_requestsSize is incremented when a new request arrives and is decremented when a requests completes leaves the worker (GetResponseQueue - so where the main thread claims the requests)
+		std::atomic<size_t>			m_requestsSize{0};
 
 		std::mutex				m_respMutex;
 		std::vector<DBRequest>	m_respQueue;
@@ -161,6 +170,8 @@ namespace NECRO
 										{
 											ThreadPushResponse(std::move(req));
 										}
+										else
+											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 
 										continue;
 									}
@@ -191,6 +202,8 @@ namespace NECRO
 										{
 											ThreadPushResponse(std::move(req));
 										}
+										else
+											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 									}
 									else // Single request (m_steps[0] exists because this request IsValid())
 									{
@@ -205,6 +218,8 @@ namespace NECRO
 										{
 											ThreadPushResponse(std::move(req));
 										}
+										else
+											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 									}
 								}
 							}
@@ -233,6 +248,8 @@ namespace NECRO
 								{
 									ThreadPushResponse(std::move(req));
 								}
+								else
+									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 							}
 							catch (const std::exception& ex)  // catches standard exceptions
 							{
@@ -258,6 +275,8 @@ namespace NECRO
 								{
 									ThreadPushResponse(std::move(req));
 								}
+								else
+									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 							}
 							catch (...)
 							{
@@ -281,8 +300,12 @@ namespace NECRO
 								{
 									ThreadPushResponse(std::move(req));
 								}
+								else
+									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 							}
 						}
+						else // invalid requests being skipped must decrement the requests count as well
+							m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 					}
 
 					m_internalQueue.clear();
@@ -336,6 +359,7 @@ namespace NECRO
 			if (CreatePersistentMySQLSession() == 0 && CreateDirectPersistentMySQLSession() == 0)
 			{
 				m_running = true;
+				m_requestsSize = 0;
 				m_thread = std::thread(&DatabaseWorker::ThreadRoutine, this);
 
 				return 0;
@@ -389,26 +413,73 @@ namespace NECRO
 			m_db->Close();
 		}
 
+		// ----------------------------------------------------------------------------------------------------
+		// Enqueues a DBRequest without minding if the queue is full or not
+		//-----------------------------------------------------------------------------------------------------
 		void Enqueue(DBRequest&& req)
 		{
 			{
 				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
 				m_externalQueue.push_back(std::move(req));
+				m_requestsSize.fetch_add(1, std::memory_order_relaxed);
 			}
 
 			m_execWakeupCond.notify_one();
 		}
 
+		// ----------------------------------------------------------------------------------------------------
+		// Tries to Enqueue a new request, fails if the queue is full
+		// 
+		// The caller (session) can decide what to do with failed enqueues attempts
+		// Example, in AuthSession:
+		//	if (!dbworker.TryEnqueue(std::move(req))) 
+		//	{
+		//		Packet packet;
+		//		packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
+		//		packet << uint8_t(AuthResults::FAILED_SERVER_BUSY);
+		//		m_closeAfterSend = true;
+		//		QueuePacket(NetworkMessage(std::move(packet)));
+		//		return true;   // returning false would CloseSocket() before the packet is flushed
+		//	}
+		// 
+		// This would allow the client to know what is happening
+		//-----------------------------------------------------------------------------------------------------
+		bool TryEnqueue(DBRequest&& req)
+		{
+			bool success = false;
+			{
+				std::lock_guard<std::mutex> lock(m_externalQueueMutex);
+
+				// When checking the queue, also check the internal queue, requests that yet have to be processed
+				if (m_requestsSize.load(std::memory_order_relaxed) < DB_QUEUE_MAX_SIZE)
+				{
+					m_externalQueue.push_back(std::move(req));
+					m_requestsSize.fetch_add(1, std::memory_order_relaxed);
+					success = true;
+				}
+			}
+
+			if(success)
+				m_execWakeupCond.notify_one();
+
+			return success;
+		}
+
+		// ----------------------------------------------------------------------------------------------------
+		// Empities the m_respQueue and gives it to the caller to handle
+		//-----------------------------------------------------------------------------------------------------
 		std::vector<DBRequest> GetResponseQueue()
 		{
 			std::lock_guard guard(m_respMutex);
 
+			int respQueueSize = m_respQueue.size();
 			std::vector<DBRequest> toReturn;
 			std::swap(toReturn, m_respQueue);
+
+			// m_requestsSize is decremented now, as the requests are leaving the DBWorker
+			m_requestsSize.fetch_sub(respQueueSize, std::memory_order_relaxed);
 			return toReturn;
 		}
-
-		
 
 		// -----------------------------------------
 		// DIRECT DB
