@@ -183,8 +183,24 @@ namespace World
 
 			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
 			{
-				if (reqPtr->m_callback)
-					reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
+				try
+				{
+					if (reqPtr->m_callback)
+						reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
+				}
+				// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
+				catch (const mysqlx::Error& err)
+				{
+					LOG_CRITICAL("Exception caught during DBCallback handling. MySQL Error: {}", err.what());
+				}
+				catch (const std::exception& err)
+				{
+					LOG_CRITICAL("Exception caught during DBCallback handling. Standard Exception: {}", err.what());
+				}
+				catch (...)
+				{
+					LOG_CRITICAL("Exception caught during DBCallback handling. Unknown exception.");
+				}
 			});
 		}
 	}

@@ -142,8 +142,30 @@ namespace World
             if (m_currentDecryptedPacket.GetActiveSize() != size)
                 return -1; // Make sure packet's size is in line with what's expected
 
-            if (!(*this.*it->second.handler)())
+            try
+            {
+                // Call the Handler's function and ensure it returns true
+                if (!(*this.*it->second.handler)())
+                {
+                    return -1;
+                }
+            }
+            // Exceptions caught during callback handling must close the socket
+            catch (const mysqlx::Error& err) 
+            {
+                LOG_CRITICAL("Exception caught during callback handling. MySQL Error: {}", err.what());
                 return -1;
+            }
+            catch (const std::exception& err) 
+            {
+                LOG_CRITICAL("Exception caught during callback handling. Standard Exception: {}", err.what());
+                return -1;
+            }
+            catch (...) 
+            {
+                LOG_CRITICAL("Exception caught during callback handling. Unknown exception.");
+                return -1;
+            }
 
             // Soft clear the current decrypted packet, getting it ready for the next decryption
             m_currentDecryptedPacket.SoftClear();

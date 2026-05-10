@@ -177,9 +177,28 @@ namespace Auth
                 return -1;
             }
 
-            // Call the Handler's function and ensure it returns true
-            if (!(*this.*it->second.handler)())
+            try
             {
+                // Call the Handler's function and ensure it returns true
+                if (!(*this.*it->second.handler)())
+                {
+                    return -1;
+                }
+            }
+            // Exceptions caught during callback handling must close the socket
+            catch (const mysqlx::Error& err)
+            {
+                LOG_CRITICAL("Exception caught during callback handling. MySQL Error: {}", err.what());
+                return -1;
+            }
+            catch (const std::exception& err)
+            {
+                LOG_CRITICAL("Exception caught during callback handling. Standard Exception: {}", err.what());
+                return -1;
+            }
+            catch (...)
+            {
+                LOG_CRITICAL("Exception caught during callback handling. Unknown exception.");
                 return -1;
             }
 
