@@ -56,7 +56,7 @@ namespace Auth
 			if (it != m_ipRequestMap.end())
 			{
 				// If the number of tries exceed the limit, block this request
-				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL)
+				if (it->second.tries >= config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL)
 					couldBeSpam = true;
 				else
 				{

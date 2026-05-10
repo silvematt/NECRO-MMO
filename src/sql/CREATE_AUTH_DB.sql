@@ -19,7 +19,8 @@ CREATE TABLE `active_sessions` (
   `greetcode` binary(16) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `sessionKey_UNIQUE` (`sessionkey`),
-  UNIQUE KEY `userid_UNIQUE` (`userid`)
+  UNIQUE KEY `userid_UNIQUE` (`userid`),
+  UNIQUE KEY `greetcode_UNIQUE` (`greetcode`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 CREATE TABLE `logs_actions` (
