@@ -34,6 +34,7 @@ namespace Auth
         uint32_t accountID; // accountid in the database
 
         std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
+        std::array<uint8_t, AES_128_KEY_SIZE> greetCode;
         AES::IV iv;
 
         uint8_t versionMajor;

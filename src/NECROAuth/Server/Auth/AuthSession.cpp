@@ -508,14 +508,14 @@ namespace Auth
             }
 
             // Create a new greetcode (RAND_bytes). Greetcode is appended with the first packet the client sends to the server, so the server can understand who's he talking to. ONE USE! Server will clear it after first usage
-            std::array<uint8_t, AES_128_KEY_SIZE> greetcode = AES::GenerateSessionKey();
+            m_data.greetCode = AES::GenerateSessionKey();
 
             // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
             // This is a transaction
             {
                 DBRequest req(m_ioContextRef, true);
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::DEL_PREV_SESSIONS),  {m_data.accountID} });
-                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(greetcode.data(), greetcode.size())} });
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(m_data.greetCode.data(), m_data.greetCode.size())} });
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::UPD_ON_LOGIN),       {1, Utility::time_stamp(), m_data.accountID} });
 
                 if (!dbworker.TryEnqueue(std::move(req)))
@@ -525,7 +525,7 @@ namespace Auth
             // Write the greetcode to the packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
             {
-                packet << greetcode[i];
+                packet << m_data.greetCode[i];
             }
         }
 
