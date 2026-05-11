@@ -78,10 +78,18 @@ namespace Client
 		float oldZoomSizeX = m_zoomSizeX;
 		float oldZoomSizeY = m_zoomSizeY;
 
+		bool zoomChanged = false;
+
 		if (engine.GetInput().GetMouseScroll() > 0)			// Zoom in		
+		{
 			SetZoom(m_zoomLevel + m_zoomSpeed);
+			zoomChanged = true;
+		}
 		else if (engine.GetInput().GetMouseScroll() < 0)	// Zoom out
+		{
 			SetZoom(m_zoomLevel - m_zoomSpeed);
+			zoomChanged = true;
+		}
 
 		// Camera movement
 		float deltaX = 0.0f;
@@ -103,10 +111,22 @@ namespace Client
 			return;
 		}
 
-		// Update position, subtracting ((oldZoomSizeX / 2) - (zoomSizeX / 2)) allows us to keep the camera centered after zooming
-		// It adjusts the camera position by half of the difference in each dimension to keep the view centered.
-		m_pos.x = oldX - ((oldZoomSizeX / 2) - (m_zoomSizeX / 2)) - deltaX;
-		m_pos.y = oldY - ((oldZoomSizeY / 2) - (m_zoomSizeY / 2)) - deltaY;
+		// Keep the existing zoom-centering math as the camera target, then smooth for following the player
+		float targetX = oldX - ((oldZoomSizeX / 2) - (m_zoomSizeX / 2)) - deltaX;
+		float targetY = oldY - ((oldZoomSizeY / 2) - (m_zoomSizeY / 2)) - deltaY;
+
+		// On zoom just set directly
+		if (zoomChanged)
+		{
+			m_pos.x = targetX;
+			m_pos.y = targetY;
+		}
+		else
+		{
+			float followStep = SDL_clamp(static_cast<float>(engine.GetDeltaTime()) * m_followSpeed, 0.0f, 1.0f);
+			m_pos.x += (targetX - m_pos.x) * followStep;
+			m_pos.y += (targetY - m_pos.y) * followStep;
+		}
 	}
 
 	void Camera::FreeMove()

@@ -34,6 +34,8 @@ namespace Client
 
 		float m_zoomLevel = 1.0f;
 		float m_zoomSpeed = 0.2f;
+		float m_followSpeed = 3.0f;
+		bool m_initializedOnPlayer = false;
 
 		float m_panSpeed = 2.0f;
 
