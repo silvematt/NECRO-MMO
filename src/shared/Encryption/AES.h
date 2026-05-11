@@ -6,6 +6,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/err.h>
 
 namespace NECRO
 {
@@ -29,7 +30,13 @@ namespace NECRO
 
 			void RandomizePrefix()
 			{
-				RAND_bytes(reinterpret_cast<unsigned char*>(&prefix), sizeof(prefix));
+				if (RAND_bytes(reinterpret_cast<unsigned char*>(&prefix), sizeof(prefix)) != 1)
+				{
+					char buf[256];
+					unsigned long err = ERR_get_error();
+					ERR_error_string_n(err, buf, sizeof(buf));
+					throw std::runtime_error(std::string("Failed to randomize IV Prefix via RAND_bytes: ") + buf);
+				}
 			}
 
 			void ResetCounter()
@@ -63,6 +70,7 @@ namespace NECRO
 			return k;
 		}
 
+		// TODO Encrypt/Decrypt are boilerplate example with memory leaks on failed attempts and recreation of EVP_CIPHER_CTX_new every op
 		static int Encrypt(unsigned char* plaintext, int plaintext_len,
 			unsigned char* aad, int aad_len,
 			unsigned char* key,

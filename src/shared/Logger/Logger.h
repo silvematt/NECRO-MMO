@@ -61,12 +61,12 @@ namespace NECRO
         #define LOG_FMT(logger, level, ...) (logger).LogFmt(level, __FILE__, __LINE__, __VA_ARGS__)
 
         // LOG uses the default Loggers instances, cLog and fLog (consoleLog, fileLog), by default logging on the console will also log on the file
-        #define LOG_INFO(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__)
-        #define LOG_OK(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_OKSTATUS, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_OKSTATUS, message, ##__VA_ARGS__)
-        #define LOG_DEBUG(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_DEBUG, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_DEBUG, message, ##__VA_ARGS__)
-        #define LOG_WARNING(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_WARNING, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_WARNING, message, ##__VA_ARGS__)
-        #define LOG_ERROR(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_ERROR, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_ERROR, message, ##__VA_ARGS__)
-        #define LOG_CRITICAL(message, ...) LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_CRITICAL, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_CRITICAL, message, ##__VA_ARGS__)
+        #define LOG_INFO(message, ...) do {LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_INFO, message, ##__VA_ARGS__);} while(0)
+        #define LOG_OK(message, ...) do {LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_OKSTATUS, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_OKSTATUS, message, ##__VA_ARGS__);} while(0)
+        #define LOG_DEBUG(message, ...) do {LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_DEBUG, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_DEBUG, message, ##__VA_ARGS__);} while(0)
+        #define LOG_WARNING(message, ...) do{LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_WARNING, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_WARNING, message, ##__VA_ARGS__);} while(0)
+        #define LOG_ERROR(message, ...) do {LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_ERROR, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_ERROR, message, ##__VA_ARGS__);} while(0)
+        #define LOG_CRITICAL(message, ...) do {LOG_FMT(cLog, Logger::LogLevel::LOG_LEVEL_CRITICAL, message, ##__VA_ARGS__); LOG_FMT(fLog, Logger::LogLevel::LOG_LEVEL_CRITICAL, message, ##__VA_ARGS__);} while(0)
 
         // S(PECIFIC) Log, allows to call log on a specific Logger object, may be useful for Daily loggers
         #define SLOG(logger, level, message, ...) (logger).Log(message, level, __FILE__, __LINE__, ##__VA_ARGS__)
