@@ -44,6 +44,7 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		if (ec)
 		{
 			// An error occurred, we bail out 
+			sock.close();
 			SocketManagerHandler();
 			return;
 		}
@@ -60,7 +61,7 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 			if (it != m_ipRequestMap.end())
 			{
 				// If the number of tries exceed the limit, block this request
-				if (it->second.tries > config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL)
+				if (it->second.tries >= config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL)
 					couldBeSpam = true;
 				else
 				{

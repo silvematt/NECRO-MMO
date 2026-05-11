@@ -44,6 +44,7 @@ namespace Auth
 			if (ec)
 			{
 				// An error occurred, bail out
+				sock.close();
 				SocketManagerHandler();
 				return;
 			}
