@@ -31,6 +31,7 @@ void SocketManager::SocketManagerHandler()
 void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 {
 	auto config = Server::Instance().GetSettings();
+	boost::system::error_code closeEc;
 
 	// Check for max connected clients setting
 	if (config.MAX_CONNECTED_CLIENTS_PER_THREAD == -1 || m_networkThreads[tID]->GetSocketsSize() < config.MAX_CONNECTED_CLIENTS_PER_THREAD)
@@ -44,7 +45,7 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		if (ec)
 		{
 			// An error occurred, we bail out 
-			sock.close();
+			sock.close(closeEc);
 			SocketManagerHandler();
 			return;
 		}
@@ -99,14 +100,14 @@ void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 		{
 			// TODO if iprequestmap size fills, this is spammed as well
 			LOG_DEBUG("IP {} made too many requests {}! Dropping connection.", clientIP, config.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL);
-			sock.close();
+			sock.close(closeEc);
 		}
 	}
 	else
 	{
 		// MAX_CONNECTED_CLIENTS_PER_THREAD reached
 		LOG_DEBUG("MAX_CONNECTED_CLIENTS_PER_THREAD reached! Dropping connection.");
-		sock.close();
+		sock.close(closeEc);
 	}
 
 	SocketManagerHandler();
