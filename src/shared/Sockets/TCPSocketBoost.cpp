@@ -99,7 +99,12 @@ namespace NECRO
 			return;
 
 		m_inBuffer.CompactData();
-		m_inBuffer.EnlargeBufferIfNeeded();
+		if (m_inBuffer.EnlargeBufferIfNeeded() != 0)
+		{
+			LOG_ERROR("EnlargeBufferIfNeeded() returned an error!");
+			CloseSocket();
+			return;
+		}
 
 		if (m_usesTLS)
 		{

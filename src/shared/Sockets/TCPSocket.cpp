@@ -193,7 +193,11 @@ namespace NECRO
 			return 0;
 
 		m_inBuffer.CompactData();
-		m_inBuffer.EnlargeBufferIfNeeded();
+		if (m_inBuffer.EnlargeBufferIfNeeded() != 0)
+		{
+			LOG_ERROR("EnlargeBufferIfNeeded() returned an error!");
+			return -1;
+		}
 
 		// Manually write on the inBuffer
 		int bytesReceived = 0;

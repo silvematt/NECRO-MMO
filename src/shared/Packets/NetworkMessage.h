@@ -8,6 +8,9 @@
 
 namespace NECRO
 {
+    // Prevents EnlargeBufferIfNeeded to grow out of bounds
+    inline constexpr size_t NETWORK_MESSAGE_ENLARGE_MAX_SIZE = Packet::DEFAULT_PCKT_SIZE * 16;
+
     //-----------------------------------------------------------------------------------------------------------
     // Higher-level view on packets, used for Network transmission.
     //-----------------------------------------------------------------------------------------------------------
@@ -234,16 +237,24 @@ namespace NECRO
         // Increases the data buffer size by 50% of the current size if it's currently full, useful to the inBuffer of the Sockets,
         // if done before a read it can avoid calling recv without any space left in the inbuffer, and therefore preventing the OS socket buffer from being drained
         //--------------------------------------------------------------------------------------------------------------------------------------------------------
-        void EnlargeBufferIfNeeded()
+        int EnlargeBufferIfNeeded()
         {
-            // TODO, if size is 0 (after a Clear(), for example), this won't actually enlarge anything
-            //if (Size() == 0)
-            //  pick a base size?
-
-            // TODO it's probably a good idea to have an upperbound for how much this can grow
+            // If size is 0 (after a Clear(), for example), this won't actually enlarge anything
+            // It shouldn't happen and if it does classify it as an oversight by the developer
+            if (Size() == 0)
+                return -1;
 
             if (GetRemainingSpace() == 0)
-                m_data.resize(Size() + (Size() / 2));
+            {
+                // It's probably a good idea to have an upperbound for how much this can grow
+                size_t newSize = Size() + (Size() / 2);
+                if (newSize > NETWORK_MESSAGE_ENLARGE_MAX_SIZE)
+                    return -1;
+
+                m_data.resize(newSize);
+            }
+
+            return 0;
         }
 
         uint8_t* GetDecryptedPacketPtr()
