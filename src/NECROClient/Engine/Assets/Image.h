@@ -6,6 +6,7 @@
 #include <memory>
 
 #include <fstream>
+#include <iostream>
 
 namespace NECRO
 {
@@ -27,8 +28,15 @@ namespace Client
 			int tileWidth;
 			int tileHeight;
 
+			// To scale drawing the tilesets (like characters that are too big)
+			float m_xScale;
+			float m_yScale;
+
 			int tileXNum;
 			int tileYNum;
+
+			float computedXScale; // tileWidth * m_xScale
+			float computedYScale; // tileHeight * m_yScale
 		};
 
 	private:
@@ -47,7 +55,7 @@ namespace Client
 
 	public:
 		Image(SDL_Texture* tex, int xOff, int yOff);
-		Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, int tNumX, int tNumY);
+		Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, float xScale, float yScale, int tNumX, int tNumY);
 		Image(SDL_Texture* tex, const std::string& fileDef); // Constructor with img definition
 
 		SDL_Texture* GetSrc() const;
@@ -58,7 +66,7 @@ namespace Client
 		int							GetYOffset() const;
 
 		bool						IsTileset() const;
-		Tileset* GetTileset() const;
+		Tileset*					GetTileset() const;
 
 		int							GetTilesetWidth() const; // shortcut
 		int							GetTilesetHeight() const; // shortcut
@@ -85,7 +93,7 @@ namespace Client
 	//-------------------------------------------------------
 	// Constructor for Tileset
 	//-------------------------------------------------------
-	inline Image::Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, int tNumX, int tNumY) :
+	inline Image::Image(SDL_Texture* tex, int xOff, int yOff, int tWidth, int tHeight, float xScale, float yScale, int tNumX, int tNumY) :
 		m_imgTexture(tex),
 		m_offsetX(xOff),
 		m_offsetY(yOff)
@@ -101,8 +109,14 @@ namespace Client
 
 		m_tileset->tileWidth = tWidth;
 		m_tileset->tileHeight = tHeight;
+		m_tileset->m_xScale = xScale;
+		m_tileset->m_yScale = yScale;
 		m_tileset->tileXNum = tNumX;
 		m_tileset->tileYNum = tNumY;
+
+		// Cache computed scale for faster rendering
+		m_tileset->computedXScale = m_tileset->tileWidth * m_tileset->m_xScale;
+		m_tileset->computedYScale = m_tileset->tileHeight * m_tileset->m_yScale;
 	}
 
 	//--------------------------------------------------------
@@ -173,6 +187,18 @@ namespace Client
 				curValStr = curValStr.substr(0, curValStr.find(";"));
 				m_tileset->tileHeight = ClientUtility::TryParseInt(curValStr);
 
+				// xScale
+				std::getline(stream, curLine);
+				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
+				curValStr = curValStr.substr(0, curValStr.find(";"));
+				m_tileset->m_xScale = ClientUtility::TryParseFloat(curValStr);
+
+				// yScale
+				std::getline(stream, curLine);
+				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
+				curValStr = curValStr.substr(0, curValStr.find(";"));
+				m_tileset->m_yScale = ClientUtility::TryParseFloat(curValStr);
+
 				// tileXNum
 				std::getline(stream, curLine);
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
@@ -184,6 +210,10 @@ namespace Client
 				curValStr = curLine.substr(curLine.find("=") + 2); // key = value;
 				curValStr = curValStr.substr(0, curValStr.find(";"));
 				m_tileset->tileYNum = ClientUtility::TryParseInt(curValStr);
+
+				// Cache computed scale for faster rendering
+				m_tileset->computedXScale = m_tileset->tileWidth * m_tileset->m_xScale;
+				m_tileset->computedYScale = m_tileset->tileHeight * m_tileset->m_yScale;
 			}
 
 			// ifstream is closed by destructor

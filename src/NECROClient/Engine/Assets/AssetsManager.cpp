@@ -85,12 +85,12 @@ namespace Client
 	//-------------------------------------------------
 	// Directly loads a Tileset Image 
 	//-------------------------------------------------
-	bool AssetsManager::LoadTilesetImage(const std::string& filename, int xOffset, int yOffset, int tWidth, int tHeight, int tNumX, int tNumY, const std::string& shortname)
+	bool AssetsManager::LoadTilesetImage(const std::string& filename, int xOffset, int yOffset, int tWidth, int tHeight, float xScale, float yScale, int tNumX, int tNumY, const std::string& shortname)
 	{
 		std::string fullPath = IMGS_FOLDER;
 		fullPath += filename;
 
-		Image img(LoadSDLTexture(fullPath.c_str()), xOffset, yOffset, tWidth, tHeight, tNumX, tNumY);
+		Image img(LoadSDLTexture(fullPath.c_str()), xOffset, yOffset, tWidth, tHeight, xScale, yScale, tNumX, tNumY);
 		if (img.GetSrc() != NULL)
 		{
 			m_images.insert({ shortname.empty() ? filename : shortname, std::move(img) });

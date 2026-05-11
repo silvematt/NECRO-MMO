@@ -245,7 +245,7 @@ namespace Client
 			{
 				Image::Tileset* tset = m_img->GetTileset();
 				SDL_Rect srcRect = { m_tilesetXOff * tset->tileWidth, m_tilesetYOff * tset->tileHeight, tset->tileWidth, tset->tileHeight };
-				SDL_Rect dstRect = { static_cast<int>(m_isoPos.x), static_cast<int>(m_isoPos.y), tset->tileWidth, tset->tileHeight };
+				SDL_Rect dstRect = { static_cast<int>(m_isoPos.x), static_cast<int>(m_isoPos.y), tset->computedXScale, tset->computedYScale };
 				m_occlusionRect = dstRect;
 
 				m_occlusionRect.w -= m_occlModifierX;
