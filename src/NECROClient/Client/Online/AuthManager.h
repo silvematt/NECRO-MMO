@@ -15,19 +15,20 @@ namespace Client
 {
 	struct AuthData
 	{
-		std::string username;
-		std::string password;
+		uint32_t accountid = 0;
+		std::string username = "";
+		std::string password = "";
 
-		std::string ipAddress;
+		std::string ipAddress = "";
 
-		std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
-		std::array<uint8_t, AES_128_KEY_SIZE> greetcode;
+		std::array<uint8_t, AES_128_KEY_SIZE> sessionKey{};
+		std::array<uint8_t, AES_128_KEY_SIZE> greetcode{};
 
 		AES::IV iv;
 
 		bool hasAuthenticated = false;
 
-		std::vector<Realm> realmlist;
+		std::vector<Realm> realmlist{};
 	};
 
 	class AuthManager

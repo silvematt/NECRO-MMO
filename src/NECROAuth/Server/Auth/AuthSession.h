@@ -30,19 +30,19 @@ namespace Auth
 
     struct AccountData
     {
-        std::string username;
-        uint32_t accountID; // accountid in the database
+        std::string username = "";
+        uint32_t accountID = 0; // accountid in the database
 
-        std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
-        std::array<uint8_t, AES_128_KEY_SIZE> greetCode;
+        std::array<uint8_t, AES_128_KEY_SIZE> sessionKey{};
+        std::array<uint8_t, AES_128_KEY_SIZE> greetCode{};
         AES::IV iv;
 
-        uint8_t versionMajor;
-        uint8_t versionMinor;
-        uint8_t versionRevision;
+        uint8_t versionMajor = 0;
+        uint8_t versionMinor = 0;
+        uint8_t versionRevision = 0;
 
-        std::string pass;
-        uint32_t randIVPrefix;
+        std::string pass = "";
+        uint32_t randIVPrefix = 0;
     };
 
     //----------------------------------------------------------------------------------------------------

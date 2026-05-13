@@ -9,6 +9,11 @@
 *.user
 *.userosscache
 *.sln.docstates
+*.crt
+*.pem
+
+# Ignore any files containing "ServerLog" in the name
+*ServerLog*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

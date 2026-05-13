@@ -29,14 +29,14 @@ namespace World
 
     struct WorldSessionData
     {
-        std::string username;
-        uint32_t accountID; // accountid in the database
+        std::string username = "";
+        uint32_t accountID = 0; // accountid in the database
 
-        std::array<uint8_t, AES_128_KEY_SIZE> greetCode;
-        std::array<uint8_t, AES_128_KEY_SIZE> sessionKey;
+        std::array<uint8_t, AES_128_KEY_SIZE> greetCode{};
+        std::array<uint8_t, AES_128_KEY_SIZE> sessionKey{};
         AES::IV iv;
 
-        uint32_t clientsIVPrefix;
+        uint32_t clientsIVPrefix = 0;
     };
 
 class WorldSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<WorldSession>
@@ -72,6 +72,8 @@ public:
 
     bool    DBCallback_GreetcodeLookup(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    HandleGreetPacket();
+    bool    DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+
 };
 }
 }

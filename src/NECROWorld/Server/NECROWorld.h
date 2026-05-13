@@ -53,10 +53,10 @@ namespace World
 			uint32_t	MAX_CONNECTION_ATTEMPTS_PER_INTERVAL = 10;
 
 			std::string LOGIN_DATABASE_URI;
-			std::string SESSIONS_DATABASE_URI;
+			std::string CHARACTERS_DATABASE_URI;
 		};
 
-		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_asioPool.m_ioContext), m_dbCallbackCheckTimer(m_asioPool.m_ioContext), m_ipRequestCleanupTimer(m_asioPool.m_ioContext)
+		Server() : m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_asioPool.m_ioContext), m_dbLoginCallbackCheckTimer(m_asioPool.m_ioContext), m_dbCharactersCallbackCheckTimer(m_asioPool.m_ioContext), m_ipRequestCleanupTimer(m_asioPool.m_ioContext)
 		{
 		}
 
@@ -75,17 +75,20 @@ namespace World
 		AsioThreadPool m_asioPool;
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
 		boost::asio::steady_timer m_ipRequestCleanupTimer;
-		boost::asio::steady_timer m_dbCallbackCheckTimer;
+		boost::asio::steady_timer m_dbLoginCallbackCheckTimer;
+		boost::asio::steady_timer m_dbCharactersCallbackCheckTimer;
 
 		void KeepDatabasesAliveHandler();
 		void LoginDBCallbackCheckHandler();
+		void CharactersDBCallbackCheckHandler();
 		void IPRequestMapCleanupHandler();
 
 		// NetworkThreads
 		std::unique_ptr<SocketManager> m_socketManager;
 
 		// Databases
-		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
+		DatabaseWorker<LoginDatabase>		m_loginDbWorker;
+		DatabaseWorker<CharactersDatabase>	m_charactersDBWorker;
 
 
 	public:
@@ -99,6 +102,11 @@ namespace World
 		DatabaseWorker<LoginDatabase>& GetLoginDBWorker()
 		{
 			return m_loginDbWorker;
+		}
+
+		DatabaseWorker<CharactersDatabase>& GetCharactersDBWorker()
+		{
+			return m_charactersDBWorker;
 		}
 
 		const ConfigSettings& GetSettings() const

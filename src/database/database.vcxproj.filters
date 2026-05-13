@@ -22,6 +22,9 @@
     <ClInclude Include="DB\DBRequest.h">
       <Filter>DB</Filter>
     </ClInclude>
+    <ClInclude Include="DB\CharactersDatabase.h">
+      <Filter>DB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib.cpp" />

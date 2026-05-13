@@ -52,7 +52,7 @@ namespace Client
 
         greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
         greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
-        greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
+        greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght bytes in order to correctly read this packet
 
         greetPacket << CLIENT_VERSION_MAJOR;
         greetPacket << CLIENT_VERSION_MINOR;
@@ -158,7 +158,7 @@ namespace Client
 
             packet << uint8_t(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
             packet << uint8_t(NECRO::Auth::LoginProofResults::SUCCESS);
-            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength - 1); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength-1 bytes in order to correctly read this packet
+            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength in order to correctly read this packet
 
             // Randomize and send the prefix
             net.GetData().iv.RandomizePrefix();
@@ -272,7 +272,7 @@ namespace Client
 
             uint8_t numRealms = pcktData->numOfRealms;
 
-            if (numRealms >= NECRO::Auth::MAX_REALMS_N)
+            if (numRealms > NECRO::Auth::MAX_REALMS_N)
             {
                 LOG_ERROR("Server returned an error while gathering realms.");
                 c.Log("Failed to retrieve realm list.");
@@ -307,7 +307,7 @@ namespace Client
                 realmlist.push_back(std::move(entry));
 
                 // Advance cursor past the fixed portion of CRealmData (minus the flexible name[1]) + the actual name size
-                cursor += sizeof(NECRO::Auth::CRealmData) - 1 + realmData->nameSize;
+                cursor += sizeof(NECRO::Auth::CRealmData)-1 + realmData->nameSize;
             }
 
             LOG_OK("Received {} realm(s).", realmlist.size());

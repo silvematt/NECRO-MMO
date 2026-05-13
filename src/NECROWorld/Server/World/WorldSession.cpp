@@ -207,7 +207,7 @@ namespace World
             return false;
         }
 
-        // [userid, sessionKey, starttime, authip]
+        // [userid, sessionKey, starttime, authip] TODO ADD USERNAME AS WELL
         m_data.accountID = row[0].get<uint32_t>();
 
         mysqlx::bytes keyBytes = row[1].get<mysqlx::bytes>();
@@ -253,13 +253,99 @@ namespace World
 
         m_data.iv.ResetCounter();
 
-        m_status = World::WorldSocketStatus::WAITING_FOR_CHALLENGE;
+        m_status = World::WorldSocketStatus::SELECTING_CHARACTERS;
 
-        LOG_CRITICAL("Greet Packet handled! ClientPrefix: {}", m_data.clientsIVPrefix);
+        LOG_CRITICAL("Greet Packet handled! Gathering characters list... {}", m_data.accountID);
 
-        // Send challenge packet to the client
+        auto& dbworker = Server::Instance().GetCharactersDBWorker();
+        {
+            DBRequest req(m_ioContextRef, false);
+            req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_SEL_ENUM), {m_data.accountID } });
+
+            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
+            std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                {
+                    if (auto lockedSelf = weakSelf.lock())
+                        return lockedSelf->DBCallback_HandleGreetPacket(ec, res);
+
+                    return false; // WorldSession is destroyed (disconnect)
+                };
+
+            req.m_cancelToken = weakSelf;
+
+            if (!dbworker.TryEnqueue(std::move(req)))
+                return false;
+        }
 
         return true;
+    }
+
+    bool WorldSession::DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    {
+        if (ec != 0)
+        {
+            LOG_DEBUG("DBCallback_HandleGreetPacket's query returned an error. There's no way to continue. Dropping socket.");
+            CloseSocket();
+            return false;
+        }
+
+        LOG_DEBUG("Handling DBCallback_AuthLoginProofPacket for user {}!", m_data.accountID);
+
+        // DB callbacks should also update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        // Reply to the client
+        Packet packet;
+        packet << uint8_t(PacketIDs::ENUM_CHARACTERS);
+
+        mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
+
+        // Check if there's at leat one result
+        if (!row)
+        {
+            LOG_DEBUG("Account {} has no characters.", m_data.accountID);
+            packet << uint8_t(WorldResults::FAILED);
+        }
+        else
+        {
+            packet << uint8_t(WorldResults::SUCCESS);
+
+            // Collect all rows first so we can write the count before character data
+            std::vector<mysqlx::Row> rows;
+            rows.push_back(std::move(row)); // first row already fetched
+            while (mysqlx::Row next = result[0].fetchOne())
+                rows.push_back(std::move(next));
+
+            // Write size
+            packet << uint16_t(sizeof(CharacterData) * rows.size());
+
+            // Write number of characters
+            packet << uint8_t(rows.size());
+
+            for (mysqlx::Row& charRow : rows)
+            {
+                packet << charRow[0].get<uint32_t>();       // id
+                packet << charRow[1].get<std::string>();    // name
+                packet << charRow[2].get<int>();            // race
+                packet << charRow[3].get<int>();            // class
+                packet << charRow[4].get<int>();            // gender
+                packet << charRow[5].get<int>();            // level
+                packet << charRow[6].get<uint32_t>();       // xp
+                packet << charRow[7].get<int>();            // zone
+                packet << charRow[8].get<float>();          // pos_x
+                packet << charRow[9].get<float>();          // pos_y
+                packet << charRow[10].get<float>();         // pos_z
+            }
+
+            LOG_DEBUG("Written {} characters for AccountID: {}.", rows.size(), m_data.accountID);
+        }
+
+        NetworkMessage m(std::move(packet));
+        QueuePacket(std::move(m));
+
+        // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet
+        m_status = WorldSocketStatus::AUTHED;
     }
 
 }

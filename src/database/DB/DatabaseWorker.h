@@ -10,6 +10,7 @@
 
 #include "DBRequest.h"
 #include "LoginDatabase.h"
+#include "CharactersDatabase.h"
 
 namespace NECRO
 {

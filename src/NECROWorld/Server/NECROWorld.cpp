@@ -36,9 +36,23 @@ namespace World
 
 		if (m_loginDbWorker.Start() != 0)
 		{
-			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+			LOG_ERROR("Could not start LoginDBWorker, MySQL may be not running.");
 			return -3;
 		}
+		LOG_OK("Login DBWorker started successfully!");
+
+		if (m_charactersDBWorker.Setup(m_configSettings.CHARACTERS_DATABASE_URI) != 0)
+		{
+			LOG_ERROR("Could not initialize CharactersDBWorker, MySQL may be not running.");
+			return -4;
+		}
+
+		if (m_charactersDBWorker.Start() != 0)
+		{
+			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+			return -5;
+		}
+		LOG_OK("Characters DBWorker started successfully!");
 
 		// Start network threads
 		int threadsCount = std::thread::hardware_concurrency();
@@ -90,7 +104,7 @@ namespace World
 		m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL = conf.GetInt("MAX_CONNECTION_ATTEMPTS_PER_INTERVAL", 10);
 
 		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
-		m_configSettings.SESSIONS_DATABASE_URI = conf.GetString("SESSIONS_DATABASE_URI", "");
+		m_configSettings.CHARACTERS_DATABASE_URI = conf.GetString("CHARACTERS_DATABASE_URI", "");
 	}
 
 	void Server::Start()
@@ -101,6 +115,7 @@ namespace World
 		// Post work on ASIO threads
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
 		m_asioPool.PostWork([this]() {LoginDBCallbackCheckHandler(); });
+		m_asioPool.PostWork([this]() {CharactersDBCallbackCheckHandler(); });
 		m_asioPool.PostWork([this]() {IPRequestMapCleanupHandler(); });
 
 		// Start network threads
@@ -145,6 +160,10 @@ namespace World
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();
 
+		m_charactersDBWorker.Stop();
+		m_charactersDBWorker.Join();
+		m_charactersDBWorker.CloseDB();
+
 		LOG_OK("Shut down of NECROWorld completed.");
 
 		return 0;
@@ -159,10 +178,15 @@ namespace World
 		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
 		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabasesAliveHandler(); });
 
-		// Enqueue a keep alive packet
-		DBRequest req(m_asioPool.m_ioContext, true);
-		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_loginDbWorker.Enqueue(std::move(req));
+		// Enqueue a keep alive packet (LoginDatabase)
+		DBRequest logReq(m_asioPool.m_ioContext, true);
+		logReq.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDbWorker.Enqueue(std::move(logReq));
+
+		// Enqueue a keep alive packet (CharactersDatabase)
+		DBRequest charReq(m_asioPool.m_ioContext, true);
+		charReq.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::KEEP_ALIVE), {} });
+		m_charactersDBWorker.Enqueue(std::move(charReq));
 	}
 
 	void Server::LoginDBCallbackCheckHandler()
@@ -170,8 +194,8 @@ namespace World
 		//LOG_DEBUG("LoginDBCallbackCheckHandler...");
 
 		// Calls itself again
-		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
+		m_dbLoginCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
+		m_dbLoginCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
 		// Execute the callbacks
 		std::vector<DBRequest> requests = m_loginDbWorker.GetResponseQueue();
@@ -191,17 +215,57 @@ namespace World
 				// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
 				catch (const mysqlx::Error& err)
 				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. MySQL Error: {}", err.what());
+					LOG_CRITICAL("Exception caught during Login DBCallback handling. MySQL Error: {}", err.what());
 				}
 				catch (const std::exception& err)
 				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. Standard Exception: {}", err.what());
+					LOG_CRITICAL("Exception caught during Login DBCallback handling. Standard Exception: {}", err.what());
 				}
 				catch (...)
 				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. Unknown exception.");
+					LOG_CRITICAL("Exception caught during Login DBCallback handling. Unknown exception.");
 				}
 			});
+		}
+	}
+
+	void Server::CharactersDBCallbackCheckHandler()
+	{
+		//LOG_DEBUG("CharactersDBCallbackCheckHandler...");
+
+		// Calls itself again
+		m_dbCharactersCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
+		m_dbCharactersCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { CharactersDBCallbackCheckHandler(); });
+
+		// Execute the callbacks
+		std::vector<DBRequest> requests = m_charactersDBWorker.GetResponseQueue();
+
+		// Callbacks are executed on the NetworkThread's io_context associated with the WorldSocket that created the DBRequest originally, so there's no risk of race conditions
+		for (auto& req : requests)
+		{
+			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
+
+			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
+				{
+					try
+					{
+						if (reqPtr->m_callback)
+							reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
+					}
+					// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
+					catch (const mysqlx::Error& err)
+					{
+						LOG_CRITICAL("Exception caught during Characters DBCallback handling. MySQL Error: {}", err.what());
+					}
+					catch (const std::exception& err)
+					{
+						LOG_CRITICAL("Exception caught during Characters DBCallback handling. Standard Exception: {}", err.what());
+					}
+					catch (...)
+					{
+						LOG_CRITICAL("Exception caught during Characters DBCallback handling. Unknown exception.");
+					}
+				});
 		}
 	}
 

@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DB\CharactersDatabase.h" />
     <ClInclude Include="DB\Database.h" />
     <ClInclude Include="DB\DatabaseWorker.h" />
     <ClInclude Include="DB\DBConnection.h" />
