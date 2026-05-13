@@ -77,7 +77,7 @@ namespace Auth
                 // Check for size
                 if (size > S_MAX_ACCEPTED_GATHER_INFO_SIZE)
                 {
-                    return - 1;
+                    return -1;
                 }
             }
 

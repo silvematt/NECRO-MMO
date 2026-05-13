@@ -46,7 +46,7 @@ namespace Hammer
 
             greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
             greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
-            greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght - 1); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght-1 bytes in order to correctly read this packet
+            greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght in order to correctly read this packet
 
             greetPacket << uint8_t(1); // versionMajor
             greetPacket << uint8_t(0); // versionMinor
@@ -156,7 +156,7 @@ namespace Hammer
 
             packet << uint8_t(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
             packet << uint8_t(NECRO::Auth::LoginProofResults::SUCCESS);
-            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength - 1); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength-1 bytes in order to correctly read this packet
+            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength in order to correctly read this packet
 
             // Randomize and send the prefix
             m_data.iv.RandomizePrefix();

@@ -235,7 +235,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize - 1)
+        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
             return false;
 
         // Check for username value (input validation)
@@ -365,7 +365,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginProof) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize - 1)
+        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginProof)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
             return false;
 
         // Check for password value (input validation)
@@ -553,7 +553,7 @@ namespace Auth
         // Write Realm
         for (size_t i = 0; i < realms.size(); i++)
         {
-            if (realmCount >= MAX_REALMS_N)
+            if (realmCount > MAX_REALMS_N)
                 break;
 
             uint8_t ipAddr[4];
