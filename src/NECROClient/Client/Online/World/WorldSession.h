@@ -33,7 +33,7 @@ namespace Client
 
         NECRO::World::WorldSocketStatus m_status;
 
-        static std::unordered_map<uint8_t, WorldHandler> InitHandlers();
+        static std::unordered_map<uint16_t, WorldHandler> InitHandlers();
 
         void    OnConnectedCallback() override;
         int     ReadCallback() override;

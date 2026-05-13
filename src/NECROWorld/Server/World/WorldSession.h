@@ -62,7 +62,7 @@ public:
     {
     }
 
-    static std::unordered_map<uint8_t, WorldHandler> InitHandlers();
+    static std::unordered_map<uint16_t, WorldHandler> InitHandlers();
 
     // This runs in the NetworkThread that possess this socket
     int     Update(std::chrono::steady_clock::time_point now) override;

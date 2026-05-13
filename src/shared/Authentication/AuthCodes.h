@@ -21,7 +21,7 @@ namespace Auth
     //----------------------------------------------------------------------------------------------------
     // Define packets structures
     //----------------------------------------------------------------------------------------------------
-    enum class PacketIDs
+    enum class PacketIDs : uint8_t
     {
         LOGIN_GATHER_INFO = 0x00,
         LOGIN_ATTEMPT = 0x01,
@@ -31,7 +31,7 @@ namespace Auth
     //--------------------------------------------------------------------------------------------
     // Results to send as payload to tell the client what happened as a result of the command 
     //--------------------------------------------------------------------------------------------
-    enum class AuthResults
+    enum class AuthResults : uint8_t
     {
         SUCCESS = 0x00,
         FAILED_UNKNOWN_ACCOUNT = 0x01,
@@ -41,7 +41,7 @@ namespace Auth
     };
 
 
-    enum class LoginProofResults
+    enum class LoginProofResults : uint8_t
     {
         SUCCESS = 0x00,
         FAILED = 0X01

@@ -6,15 +6,15 @@ namespace NECRO
 namespace World
 {
 
-    std::unordered_map<uint8_t, WorldHandler> WorldSession::InitHandlers()
+    std::unordered_map<uint16_t, WorldHandler> WorldSession::InitHandlers()
     {
-        std::unordered_map<uint8_t, WorldHandler> handlers;
+        std::unordered_map<uint16_t, WorldHandler> handlers;
 
         handlers[static_cast<int>(World::PacketIDs::AUTH_SESSION)] = { NECRO::World::WorldSocketStatus::SESSIONKEY_GATHERED, sizeof(NECRO::World::SPacketWorldGreet) , &HandleGreetPacket };
 
         return handlers;
     }
-    std::unordered_map<uint8_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
+    std::unordered_map<uint16_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
 
 
     int WorldSession::Update(std::chrono::steady_clock::time_point now)
@@ -120,7 +120,9 @@ namespace World
             m_currentDecryptedPacket.Write(encryptedPacket.GetDecryptedPacketPtr(), plaintextLen);
 
             // Packet is here the decrpyted [CMD | ...] and it arrived fully
-            uint8_t cmd = m_currentDecryptedPacket.GetReadPointer()[0];
+            // TODO, it's probably better to do the same memcpy for reading packets instead of SPacketWorldGreet* pkt = reinterpret_cast<SPacketWorldGreet*>(m_currentDecryptedPacket.GetReadPointer());
+            uint16_t cmd = 0;
+            std::memcpy(&cmd, m_currentDecryptedPacket.GetReadPointer(), sizeof(uint16_t));
 
             auto it = Handlers.find(cmd);
             if (it == Handlers.end())

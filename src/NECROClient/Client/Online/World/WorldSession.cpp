@@ -12,13 +12,13 @@ namespace NECRO
 {
 namespace Client
 {
-    std::unordered_map<uint8_t, WorldHandler> WorldSession::InitHandlers()
+    std::unordered_map<uint16_t, WorldHandler> WorldSession::InitHandlers()
     {
-        std::unordered_map<uint8_t, WorldHandler> handlers;
+        std::unordered_map<uint16_t, WorldHandler> handlers;
 
         return handlers;
     }
-    std::unordered_map<uint8_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
+    std::unordered_map<uint16_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
 
 
     void WorldSession::OnConnectedCallback()
@@ -33,7 +33,7 @@ namespace Client
 
         // Inner (encrypted) packet: [ID | clientsIVRandomPrefix]
         Packet inner;
-        inner << uint8_t(NECRO::World::PacketIDs::AUTH_SESSION);
+        inner << uint16_t(NECRO::World::PacketIDs::AUTH_SESSION);
         inner << uint32_t(authMgr.GetData().iv.prefix);
 
         NetworkMessage encrypted(std::move(inner));
