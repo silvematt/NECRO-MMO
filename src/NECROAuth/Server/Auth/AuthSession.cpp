@@ -140,7 +140,7 @@ namespace Auth
             }
 
             // Check if the passed packet sizes matches the handler's one, otherwise we're not ready to process this yet
-            uint16_t size = uint16_t(it->second.packetSize);
+            uint16_t size = static_cast<uint16_t>(it->second.packetSize);
             if (packet.GetActiveSize() < size)
                 break;
 
@@ -235,7 +235,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
+        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
             return false;
 
         // Check for username value (input validation)
@@ -304,7 +304,7 @@ namespace Auth
 
         // Reply to the client
         Packet packet;
-        packet << uint8_t(PacketIDs::LOGIN_GATHER_INFO);
+        packet << static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO);
 
         // Let's just add this check for now
         mysqlx::Row row = result[0].fetchOne();
@@ -315,7 +315,7 @@ namespace Auth
 
             m_closeAfterSend = true;
 
-            packet << uint8_t(AuthResults::FAILED_UNKNOWN_ACCOUNT);
+            packet << static_cast<uint8_t>(AuthResults::FAILED_UNKNOWN_ACCOUNT);
         }
         else
         {
@@ -324,7 +324,7 @@ namespace Auth
             // Check client version with server's client version
             if (m_data.versionMajor == serverSettings.CLIENT_VERSION_MAJOR && m_data.versionMinor == serverSettings.CLIENT_VERSION_MINOR && m_data.versionRevision == serverSettings.CLIENT_VERSION_REVISION)
             {
-                packet << uint8_t(AuthResults::SUCCESS);
+                packet << static_cast<uint8_t>(AuthResults::SUCCESS);
 
                 m_data.accountID = row[0];
                 LOG_INFO("Account {} has DB AccountID: {}.", m_data.username, m_data.accountID);
@@ -335,7 +335,7 @@ namespace Auth
             else
             {
                 LOG_INFO("User tried to login with an invalid client version.");
-                packet << uint8_t(AuthResults::FAILED_WRONG_CLIENT_VERSION);
+                packet << static_cast<uint8_t>(AuthResults::FAILED_WRONG_CLIENT_VERSION);
             }
         }
 
@@ -365,7 +365,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < sizeof(NECRO::Auth::SPacketAuthLoginProof)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
+        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
             return false;
 
         // Check for password value (input validation)
@@ -431,7 +431,7 @@ namespace Auth
         // Reply to the client
         Packet packet;
 
-        packet << uint8_t(PacketIDs::LOGIN_ATTEMPT);
+        packet << static_cast<uint8_t>(PacketIDs::LOGIN_ATTEMPT);
 
         mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
@@ -467,17 +467,17 @@ namespace Auth
                 dbworker.TryEnqueue(std::move(req));
             }
 
-            packet << uint8_t(LoginProofResults::FAILED);
+            packet << static_cast<uint8_t>(LoginProofResults::FAILED);
             m_closeAfterSend = true;
-            packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
+            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
         }
         else
         {
             // Continue login
             m_status = SocketStatus::AUTHED;
 
-            packet << uint8_t(LoginProofResults::SUCCESS);
-            packet << uint16_t(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
+            packet << static_cast<uint8_t>(LoginProofResults::SUCCESS);
+            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE); // Adjust the size appropriately, here we send the key
 
             // Calculate this side's IV, making sure it's different from the client's
             m_data.iv.RandomizePrefix();
@@ -544,8 +544,8 @@ namespace Auth
         std::vector<Realm> realms = RealmList::Instance().GetRealmList();
 
         Packet p;
-        p << uint8_t(Auth::PacketIDs::LOGIN_GATHER_REALMLIST);
-        p << uint8_t(Auth::AuthResults::SUCCESS);
+        p << static_cast<uint8_t>(Auth::PacketIDs::LOGIN_GATHER_REALMLIST);
+        p << static_cast<uint8_t>(Auth::AuthResults::SUCCESS);
 
         Packet payload; // CRealmData bytes[];
         uint32_t realmCount = 0;
@@ -569,18 +569,18 @@ namespace Auth
                 continue;
             }
 
-            payload << uint32_t(realms[i].ID);
+            payload << static_cast<uint32_t>(realms[i].ID);
             payload << realms[i].status;
             payload.Append(ipAddr, 4);
             payload << htons(realms[i].port);
-            payload << uint8_t(realms[i].name.size());
+            payload << static_cast<uint8_t>(realms[i].name.size());
             payload << realms[i].name;
 
             realmCount++;
         }
 
         // Total Packet Size
-        p << uint16_t(4 + payload.Size()); // +4 is for the realm count that gets written before the payload
+        p << static_cast<uint16_t>(4 + payload.Size()); // +4 is for the realm count that gets written before the payload
         p << realmCount;
         p.Append(payload.GetContent(), payload.Size());
 

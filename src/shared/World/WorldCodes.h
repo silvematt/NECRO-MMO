@@ -47,7 +47,7 @@ static_assert(sizeof(SPacketWorldGreet) == (2 + 4), "SPacketWorldGreet size asse
 // Character data
 struct CCharacterData
 {
-    uint16_t id;
+    uint32_t id;
     
     uint8_t characterNameLength;
     uint8_t characterName[1];

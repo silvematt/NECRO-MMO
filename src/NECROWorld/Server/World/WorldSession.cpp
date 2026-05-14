@@ -139,7 +139,7 @@ namespace World
                 return -1;
             }
 
-            uint16_t size = uint16_t(it->second.packetSize);
+            uint16_t size = static_cast<uint16_t>(it->second.packetSize);
             if (m_currentDecryptedPacket.GetActiveSize() != size)
             {
                 LOG_DEBUG("Discarding client, packet size was {} but active {}", size, m_currentDecryptedPacket.GetActiveSize());
@@ -299,7 +299,7 @@ namespace World
 
         // Reply to the client
         Packet packet;
-        packet << uint16_t(PacketIDs::ENUM_CHARACTERS);
+        packet << static_cast<uint16_t>(PacketIDs::ENUM_CHARACTERS);
 
         mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
@@ -307,11 +307,11 @@ namespace World
         if (!row)
         {
             LOG_DEBUG("Account {} has no characters.", m_data.accountID);
-            packet << uint8_t(WorldResults::NO_CHARACTERS_FOR_THIS_ACCOUNT);
+            packet << static_cast<uint8_t>(WorldResults::NO_CHARACTERS_FOR_THIS_ACCOUNT);
         }
         else
         {
-            packet << uint8_t(WorldResults::SUCCESS);
+            packet << static_cast<uint8_t>(WorldResults::SUCCESS);
 
             // Collect all rows first so we can write the count before character data
             std::vector<mysqlx::Row> rows;
@@ -320,30 +320,36 @@ namespace World
                 rows.push_back(std::move(next));
 
             // Write size
-            packet << uint16_t(sizeof(CCharacterData)-1 * rows.size());
+            // Get all the variable names sizes togheter
+            uint16_t namesSize = 0;
+            for (mysqlx::Row& charRow : rows)
+                namesSize += (charRow[1].get<std::string>()).length();
+
+            // 1 is the byte to represent charactersNumber
+            packet << static_cast<uint16_t>(1 + namesSize + (sizeof(CCharacterData)-1) * rows.size());
 
             // Write number of characters
-            packet << uint8_t(rows.size());
+            packet << static_cast<uint8_t>(rows.size());
 
             for (mysqlx::Row& charRow : rows)
             {
                 std::string characterName = charRow[1].get<std::string>();
 
-                packet << uint16_t(charRow[0].get<uint32_t>()); // id
-                packet << uint8_t(characterName.length());      // characterNameLength
-                packet << characterName;                        // characterName
+                packet << charRow[0].get<uint32_t>();                       // id
+                packet << static_cast<uint8_t>(characterName.length());     // characterNameLength
+                packet << characterName;                                    // characterName
 
-                packet << uint8_t(charRow[2].get<int>());       // race
-                packet << uint8_t(charRow[3].get<int>());       // gameClass
-                packet << uint8_t(charRow[4].get<int>());       // gender
+                packet << static_cast<uint8_t>(charRow[2].get<int>());       // race
+                packet << static_cast<uint8_t>(charRow[3].get<int>());       // gameClass
+                packet << static_cast<uint8_t>(charRow[4].get<int>());       // gender
 
-                packet << uint8_t(charRow[5].get<int>());       // level
-                packet << charRow[6].get<uint32_t>();           // xp
+                packet << static_cast<uint8_t>(charRow[5].get<int>());       // level
+                packet << charRow[6].get<uint32_t>();                        // xp
 
-                packet << uint8_t(charRow[7].get<int>());       // zone
-                packet << charRow[8].get<float>();              // pos_x
-                packet << charRow[9].get<float>();              // pos_y
-                packet << charRow[10].get<float>();             // pos_z
+                packet << static_cast<uint8_t>(charRow[7].get<int>());       // zone
+                packet << charRow[8].get<float>();                           // pos_x
+                packet << charRow[9].get<float>();                           // pos_y
+                packet << charRow[10].get<float>();                          // pos_z
             }
 
             LOG_DEBUG("Written {} characters for AccountID: {}.", rows.size(), m_data.accountID);

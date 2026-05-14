@@ -36,8 +36,8 @@ namespace Client
 
         // Inner (encrypted) packet: [ID | clientsIVRandomPrefix]
         Packet inner;
-        inner << uint16_t(NECRO::World::PacketIDs::AUTH_SESSION);
-        inner << uint32_t(authMgr.GetData().iv.prefix);
+        inner << static_cast<uint16_t>(NECRO::World::PacketIDs::AUTH_SESSION);
+        inner << static_cast<uint32_t>(authMgr.GetData().iv.prefix);
 
         NetworkMessage encrypted(std::move(inner));
         if (encrypted.AESEncrypt(authMgr.GetData().sessionKey.data(), authMgr.GetData().iv, nullptr, 0) < 0)
@@ -103,6 +103,8 @@ namespace Client
                     static_cast<int>(it->second.status));
                 return -1;
             }
+
+            LOG_DEBUG("Whole Decrypted Packet Size (with header): {}", m_currentDecryptedPacket.GetActiveSize());
 
             /* Drop size check, we already have the full packet - we do data validation in the Handlers.
             uint16_t size = uint16_t(it->second.packetSize);
@@ -170,10 +172,14 @@ namespace Client
             // Jump to Character Creation Screen
             return true;
         }
-
+        
         // Pre checks
+        LOG_DEBUG("Inner packet size (without header): {}", pckData->size);
+
         if (pckData->charactersNumber == 0 || pckData->charactersNumber > NECRO::World::MAX_CHARACTERS_N)
             return false;
+
+        // TODO Check if the sizes match before reading anything (if server lied or not)
 
         // This is a more involved way of reading the packet, but it allows to read more than one variable length array
         uint8_t* cursor = reinterpret_cast<uint8_t*>(&pckData->characters);
@@ -230,7 +236,7 @@ namespace Client
         {
             const auto& ch = worldManager.GetData().characters[i];
 
-            c.Log(fmt::format("[{}] ID={} Name={} Race={} Class={} Gender={} Level={} XP={} Zone={} Pos=({:.1f},{:.1f},{:.1f})",
+            c.Log(fmt::format("[{}] ID={}, Name={}, Race={}, Class={}, Gender={}, Level={}, XP={}, Zone={}, Pos=({:.1f},{:.1f},{:.1f})",
                 i,
                 ch.id,
                 ch.characterName,

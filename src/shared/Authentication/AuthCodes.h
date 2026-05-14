@@ -1,6 +1,8 @@
 #ifndef AUTH_CODES_H
 #define AUTH_CODES_H
 
+#include "AES.h"
+
 namespace NECRO
 {
 namespace Auth
@@ -72,7 +74,7 @@ namespace Auth
     };
     static_assert(sizeof(SPacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 1), "SPacketAuthLoginGatherInfo size assert failed!");
     inline constexpr int MAX_USERNAME_LENGTH  = 16;
-    inline constexpr int S_MAX_ACCEPTED_GATHER_INFO_SIZE = (sizeof(SPacketAuthLoginGatherInfo)-1 + MAX_USERNAME_LENGTH);    // 16 is username length
+    inline constexpr int S_MAX_ACCEPTED_GATHER_INFO_SIZE = ((sizeof(SPacketAuthLoginGatherInfo)-1) + MAX_USERNAME_LENGTH);    // 16 is username length
     inline constexpr int S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 
@@ -96,7 +98,7 @@ namespace Auth
     };
     static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 4 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
     inline constexpr int MAX_PASSWORD_LENGTH = 16; 
-    inline constexpr int S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE = (sizeof(SPacketAuthLoginProof)-1 + MAX_PASSWORD_LENGTH); // 16 is username length
+    inline constexpr int S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE = ((sizeof(SPacketAuthLoginProof)-1) + MAX_PASSWORD_LENGTH); // 16 is username length
     inline constexpr int S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
     struct CPacketAuthLoginProof

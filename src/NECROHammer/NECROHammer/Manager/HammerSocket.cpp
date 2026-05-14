@@ -44,13 +44,13 @@ namespace Hammer
             Packet greetPacket;
             uint8_t usernameLenght = static_cast<uint8_t>(m_data.username.size());;
 
-            greetPacket << uint8_t(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
-            greetPacket << uint8_t(NECRO::Auth::AuthResults::SUCCESS);
-            greetPacket << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght in order to correctly read this packet
+            greetPacket << static_cast<uint8_t>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO);
+            greetPacket << static_cast<uint8_t>(NECRO::Auth::AuthResults::SUCCESS);
+            greetPacket << static_cast<uint16_t>((sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght); // this means that after having read the first PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE bytes, the server will have to wait for sizeof(PacketAuthLoginGatherInfo) - PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + usernameLenght in order to correctly read this packet
 
-            greetPacket << uint8_t(1); // versionMajor
-            greetPacket << uint8_t(0); // versionMinor
-            greetPacket << uint8_t(0); // versionRevision
+            greetPacket << static_cast<uint8_t>(1); // versionMajor
+            greetPacket << static_cast<uint8_t>(0); // versionMinor
+            greetPacket << static_cast<uint8_t>(0); // versionRevision
 
             greetPacket << usernameLenght;
             greetPacket << m_data.username; // string is and should be without null terminator!
@@ -95,7 +95,7 @@ namespace Hammer
             }
 
             // Check if the passed packet sizes matches the handler's one, otherwise we're not ready to process this yet
-            uint16_t size = uint16_t(it->second.packetSize);
+            uint16_t size = static_cast<uint16_t>(it->second.packetSize);
             if (packet.GetActiveSize() < size)
                 break;
 
@@ -154,15 +154,15 @@ namespace Hammer
             // Send the random IV prefix so the server can make sure it's not the same as the client
             Packet packet;
 
-            packet << uint8_t(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
-            packet << uint8_t(NECRO::Auth::LoginProofResults::SUCCESS);
-            packet << uint16_t(sizeof(NECRO::Auth::SPacketAuthLoginProof)-1 - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength in order to correctly read this packet
+            packet << static_cast<uint8_t>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
+            packet << static_cast<uint8_t>(NECRO::Auth::LoginProofResults::SUCCESS);
+            packet << static_cast<uint16_t>((sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength in order to correctly read this packet
 
             // Randomize and send the prefix
             m_data.iv.RandomizePrefix();
             m_data.iv.ResetCounter();
 
-            packet << uint32_t(m_data.iv.prefix);
+            packet << static_cast<uint32_t>(m_data.iv.prefix);
 
             packet << passwordLength;
             packet << m_data.password; // string is and should be without null terminator!
