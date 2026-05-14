@@ -119,6 +119,8 @@ namespace Client
         m_worldSocket->Close();
         m_worldSocket.reset();
 
+        m_data.Zero();
+
         CreateWorldSocket();
 
         m_worldSocketConnected = false;

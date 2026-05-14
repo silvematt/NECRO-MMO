@@ -28,9 +28,9 @@ namespace Client
     class AuthSession : public TCPSocket
     {
     public:
-        AuthSession(SocketAddressesFamily fam) : TCPSocket(fam), status(NECRO::Auth::SocketStatus::GATHER_INFO) {}
-        AuthSession(sock_t socket) : TCPSocket(socket), status(NECRO::Auth::SocketStatus::GATHER_INFO) {}
-        NECRO::Auth::SocketStatus status;
+        AuthSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::Auth::SocketStatus::GATHER_INFO) {}
+        AuthSession(sock_t socket) : TCPSocket(socket), m_status(NECRO::Auth::SocketStatus::GATHER_INFO) {}
+        NECRO::Auth::SocketStatus m_status;
 
         static std::unordered_map<uint8_t, AuthHandler> InitHandlers();
 

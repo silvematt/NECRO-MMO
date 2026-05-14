@@ -72,6 +72,7 @@
     <ClInclude Include="AsioThreads\AsioThreadPool.h" />
     <ClInclude Include="World\WorldCodes.h" />
     <ClInclude Include="Utility\IPRequestData.h" />
+    <ClInclude Include="Characters\CharacterData.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">

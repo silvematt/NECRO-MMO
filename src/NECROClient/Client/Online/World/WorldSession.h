@@ -27,17 +27,25 @@ namespace Client
     //----------------------------------------------------------------------------------------------------
     class WorldSession : public TCPSocket
     {
-    public:
-        WorldSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::World::WorldSocketStatus::GATHER_SESSIONKEY) {}
-        WorldSession(sock_t socket) : TCPSocket(socket), m_status(NECRO::World::WorldSocketStatus::GATHER_SESSIONKEY) {}
+    private:
+        // When an encrypted packet arrives [size, iv, tag, ciphertext(innerpacket)], it gets decrypted and the innerpacket gets put into here
+        // To read the innerpacket, the handlers use m_currentDecryptedPacket. The content of m_currentDecryptedPacket is valid only for the current handler's execution
+        NetworkMessage m_currentDecryptedPacket;
 
         NECRO::World::WorldSocketStatus m_status;
+
+    public:
+        WorldSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS) {}
+        WorldSession(sock_t socket) : TCPSocket(socket), m_status(NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS) {}
 
         static std::unordered_map<uint16_t, WorldHandler> InitHandlers();
 
         void    OnConnectedCallback() override;
         int     ReadCallback() override;
         void    SendCallback() override;
+
+        bool    HandlePacketEnumCharacters();
+
     };
 
 }

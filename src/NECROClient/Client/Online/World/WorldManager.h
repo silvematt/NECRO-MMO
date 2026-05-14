@@ -3,6 +3,7 @@
 
 #include "WorldSession.h"
 #include "SocketUtility.h"
+#include "CharacterData.h"
 
 #include <memory>
 #include <string>
@@ -12,12 +13,26 @@ namespace NECRO
 {
 namespace Client
 {
+    struct OnlineData
+    {
+        bool hasConnectedToWorld = false;
+        std::vector<NECRO::CharacterData> characters{};
+
+        void Zero()
+        {
+            hasConnectedToWorld = false;
+            characters.clear();
+        }
+    };
+
     class WorldManager
     {
     private:
         std::unique_ptr<WorldSession> m_worldSocket;
         bool m_worldSocketConnected = false;
         bool m_isConnecting = false;
+
+        OnlineData m_data;
 
     public:
         int Init();
@@ -33,6 +48,11 @@ namespace Client
         void OnDisconnect();
 
         int OnConnectedToWorldServer();
+
+        OnlineData& GetData()
+        {
+            return m_data;
+        }
     };
 
 }

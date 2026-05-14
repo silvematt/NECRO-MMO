@@ -3,12 +3,15 @@
 #include <cstdint>
 #include <string>
 
-// Matches DB table structure necroauth.realmlist
+namespace NECRO
+{
+// Matches DB table structure necroauth.realmlist, parsed from CRealmData
 struct Realm
 {
 	uint32_t ID;
-	std::string name;
+	uint8_t status;
 	std::string ip;
 	uint16_t port;
-	uint8_t status;
+	std::string name;
 };
+}

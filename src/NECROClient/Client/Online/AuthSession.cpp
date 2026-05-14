@@ -87,9 +87,9 @@ namespace Client
             }
 
             // Check if the current cmd matches our state
-            if (status != it->second.status)
+            if (m_status != it->second.status)
             {
-                LOG_WARNING("Status mismatch. Status is: '{}' but should have been '{}'. Closing the connection.", static_cast<int>(status), static_cast<int>(it->second.status));
+                LOG_WARNING("Status mismatch. Status is: '{}' but should have been '{}'. Closing the connection.", static_cast<int>(m_status), static_cast<int>(it->second.status));
 
                 Shutdown();
                 Close();
@@ -148,7 +148,7 @@ namespace Client
         {
             // Continue authentication
             c.Log("Gather info succeded...");
-            status = NECRO::Auth::SocketStatus::LOGIN_ATTEMPT;
+            m_status = NECRO::Auth::SocketStatus::LOGIN_ATTEMPT;
 
             uint8_t passwordLength = static_cast<uint8_t>(net.GetData().password.size());;
 
@@ -211,7 +211,7 @@ namespace Client
         {
             // Continue authentication
             c.Log("Authentication succeeded.");
-            status = NECRO::Auth::SocketStatus::AUTHED;
+            m_status = NECRO::Auth::SocketStatus::AUTHED;
 
             // Save the session key in the netManager data
             std::copy(std::begin(pckData->sessionKey), std::end(pckData->sessionKey), std::begin(netManager.GetData().sessionKey));
@@ -268,7 +268,7 @@ namespace Client
 
         if (pcktData->error == static_cast<int>(NECRO::Auth::LoginProofResults::SUCCESS))
         {
-            status = NECRO::Auth::SocketStatus::GATHER_REALMLIST_PENDING;
+            m_status = NECRO::Auth::SocketStatus::GATHER_REALMLIST_PENDING;
 
             uint8_t numRealms = pcktData->numOfRealms;
 

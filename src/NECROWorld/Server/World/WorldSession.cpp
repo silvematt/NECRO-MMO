@@ -111,8 +111,7 @@ namespace World
                 if (plaintextLen == -1) // Short receive
                     break;
                 
-                LOG_WARNING("Decrypt failed for session {} (code {}). Closing.",
-                    m_data.accountID, plaintextLen);
+                LOG_WARNING("Decrypt failed for session {} (code {}). Closing.", m_data.accountID, plaintextLen);
                 return -1;
             }
 
@@ -142,7 +141,10 @@ namespace World
 
             uint16_t size = uint16_t(it->second.packetSize);
             if (m_currentDecryptedPacket.GetActiveSize() != size)
+            {
+                LOG_DEBUG("Discarding client, packet size was {} but active {}", size, m_currentDecryptedPacket.GetActiveSize());
                 return -1; // Make sure packet's size is in line with what's expected
+            }
 
             try
             {
@@ -297,7 +299,7 @@ namespace World
 
         // Reply to the client
         Packet packet;
-        packet << uint8_t(PacketIDs::ENUM_CHARACTERS);
+        packet << uint16_t(PacketIDs::ENUM_CHARACTERS);
 
         mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
@@ -305,7 +307,7 @@ namespace World
         if (!row)
         {
             LOG_DEBUG("Account {} has no characters.", m_data.accountID);
-            packet << uint8_t(WorldResults::FAILED);
+            packet << uint8_t(WorldResults::NO_CHARACTERS_FOR_THIS_ACCOUNT);
         }
         else
         {
@@ -318,30 +320,41 @@ namespace World
                 rows.push_back(std::move(next));
 
             // Write size
-            packet << uint16_t(sizeof(CharacterData) * rows.size());
+            packet << uint16_t(sizeof(CCharacterData)-1 * rows.size());
 
             // Write number of characters
             packet << uint8_t(rows.size());
 
             for (mysqlx::Row& charRow : rows)
             {
-                packet << charRow[0].get<uint32_t>();       // id
-                packet << charRow[1].get<std::string>();    // name
-                packet << charRow[2].get<int>();            // race
-                packet << charRow[3].get<int>();            // class
-                packet << charRow[4].get<int>();            // gender
-                packet << charRow[5].get<int>();            // level
-                packet << charRow[6].get<uint32_t>();       // xp
-                packet << charRow[7].get<int>();            // zone
-                packet << charRow[8].get<float>();          // pos_x
-                packet << charRow[9].get<float>();          // pos_y
-                packet << charRow[10].get<float>();         // pos_z
+                std::string characterName = charRow[1].get<std::string>();
+
+                packet << uint16_t(charRow[0].get<uint32_t>()); // id
+                packet << uint8_t(characterName.length());      // characterNameLength
+                packet << characterName;                        // characterName
+
+                packet << uint8_t(charRow[2].get<int>());       // race
+                packet << uint8_t(charRow[3].get<int>());       // gameClass
+                packet << uint8_t(charRow[4].get<int>());       // gender
+
+                packet << uint8_t(charRow[5].get<int>());       // level
+                packet << charRow[6].get<uint32_t>();           // xp
+
+                packet << uint8_t(charRow[7].get<int>());       // zone
+                packet << charRow[8].get<float>();              // pos_x
+                packet << charRow[9].get<float>();              // pos_y
+                packet << charRow[10].get<float>();             // pos_z
             }
 
             LOG_DEBUG("Written {} characters for AccountID: {}.", rows.size(), m_data.accountID);
         }
 
         NetworkMessage m(std::move(packet));
+        if (int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0) < 0)
+        {
+            LOG_ERROR("Failed to encrypt packet, returned {}", encryptRes);
+            return -1;
+        }
         QueuePacket(std::move(m));
 
         // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet

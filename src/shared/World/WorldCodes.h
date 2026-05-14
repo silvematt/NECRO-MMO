@@ -27,6 +27,7 @@ enum class WorldResults : uint16_t
 {
     FAILED = 0x00,
     SUCCESS = 0x01,
+    NO_CHARACTERS_FOR_THIS_ACCOUNT = 0x2
 };
 
 // Packets
@@ -44,7 +45,7 @@ struct SPacketWorldGreet
 static_assert(sizeof(SPacketWorldGreet) == (2 + 4), "SPacketWorldGreet size assert failed!");
 
 // Character data
-struct CharacterData
+struct CCharacterData
 {
     uint16_t id;
     
@@ -67,14 +68,15 @@ struct CharacterData
 struct CPacketEnumCharacters
 {
     uint16_t    id;
-    uint8_t     errorCode; // WorldResults
+    uint8_t     error; // WorldResults
     uint16_t    size;
 
-    uint8_t         charactersNumber;
-    CharacterData   characters[];
+    uint8_t        charactersNumber;
+    CCharacterData characters[];
 };
 static_assert(sizeof(CPacketEnumCharacters) == (2 + 1 + 2 + 1), "CPacketEnumCharacters size assert failed!");
-inline constexpr int C_PACKET_GATHER_REALMLIST_INITIAL_SIZE = 5; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+inline constexpr int C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE = 5; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+inline constexpr int CHARACTER_MAX_NAME_LENGTH = 12;
 inline constexpr int MAX_CHARACTERS_N = 10;
 
 #pragma pack(pop)
