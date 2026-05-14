@@ -44,8 +44,8 @@ struct SPacketWorldGreet
 };
 static_assert(sizeof(SPacketWorldGreet) == (2 + 4), "SPacketWorldGreet size assert failed!");
 
-// Character data
-struct CCharacterData
+// Character data on the wire
+struct CharacterDataOnWire
 {
     uint32_t id;
     
@@ -71,8 +71,8 @@ struct CPacketEnumCharacters
     uint8_t     error; // WorldResults
     uint16_t    size;
 
-    uint8_t        charactersNumber;
-    CCharacterData characters[];
+    uint8_t             charactersNumber;
+    CharacterDataOnWire characters[];
 };
 static_assert(sizeof(CPacketEnumCharacters) == (2 + 1 + 2 + 1), "CPacketEnumCharacters size assert failed!");
 inline constexpr int C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE = 5; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet

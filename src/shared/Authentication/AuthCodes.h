@@ -121,7 +121,7 @@ namespace Auth
     static_assert(sizeof(SPacketGatherRealmlist) == (1 + 1), "SPacketGatherRealmlist size assert failed!");
 
 
-    struct CRealmData
+    struct RealmDataOnWire
     {
         uint32_t id;
 
@@ -141,8 +141,8 @@ namespace Auth
         uint8_t error;
         uint16_t size;
 
-        uint32_t numOfRealms;
-        CRealmData bytes[];
+        uint32_t        numOfRealms;
+        RealmDataOnWire bytes[];
     };
 
     static_assert(sizeof(CPacketGatherRealmlist) == (1 + 1 + 2 + 4), "CPacketGatherRealmlist size assert failed!");

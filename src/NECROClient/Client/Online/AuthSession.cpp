@@ -287,7 +287,7 @@ namespace Client
 
             for (size_t i = 0; i < numRealms; i++)
             {
-                NECRO::Auth::CRealmData* realmData = reinterpret_cast<NECRO::Auth::CRealmData*>(cursor);
+                NECRO::Auth::RealmDataOnWire* realmData = reinterpret_cast<NECRO::Auth::RealmDataOnWire*>(cursor);
 
                 Realm entry;
                 entry.ID = realmData->id;
@@ -307,7 +307,7 @@ namespace Client
                 realmlist.push_back(std::move(entry));
 
                 // Advance cursor past the fixed portion of CRealmData (minus the flexible name[1]) + the actual name size
-                cursor += (sizeof(NECRO::Auth::CRealmData)-1) + realmData->nameSize;
+                cursor += (sizeof(NECRO::Auth::RealmDataOnWire)-1) + realmData->nameSize;
             }
 
             LOG_OK("Received {} realm(s).", realmlist.size());

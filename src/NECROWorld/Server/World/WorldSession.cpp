@@ -326,7 +326,7 @@ namespace World
                 namesSize += (charRow[1].get<std::string>()).length();
 
             // 1 is the byte to represent charactersNumber
-            packet << static_cast<uint16_t>(1 + namesSize + (sizeof(CCharacterData)-1) * rows.size());
+            packet << static_cast<uint16_t>(1 + namesSize + (sizeof(CharacterDataOnWire)-1) * rows.size());
 
             // Write number of characters
             packet << static_cast<uint8_t>(rows.size());
