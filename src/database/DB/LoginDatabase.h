@@ -57,11 +57,11 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::CHECK_PASSWORD), ("SELECT password FROM necroauth.users WHERE id = ?;"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), ("INSERT INTO necroauth.logs_actions (ip, username, action) VALUES (?, ?, ?);"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::DEL_PREV_SESSIONS), ("DELETE FROM necroauth.active_sessions WHERE userid = ?;"));
-			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), ("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode) VALUES (?, ?, ?, ?);"));
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INS_NEW_SESSION), ("INSERT INTO necroauth.active_sessions (userid, sessionkey, authip, greetcode, starttime) VALUES (?, ?, ?, ?, UNIX_TIMESTAMP());")); // TODO, need to properly manage the locale across the whole project
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::UPD_ON_LOGIN), ("UPDATE users SET online = ?, last_login = ? WHERE id = ?;"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::KEEP_ALIVE), ("SELECT 1"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::GATHER_REALMS), ("SELECT id, name, address, port, status FROM necroauth.realmlist ORDER BY name"));
-			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), "SELECT userid, sessionKey, starttime, authip FROM necroauth.active_sessions WHERE greetcode IS NOT NULL AND greetcode = ?;");
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), "SELECT userid, sessionKey, starttime, authip FROM necroauth.active_sessions WHERE greetcode = ?;");
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INVALIDATE_GREETCODE), "UPDATE necroauth.active_sessions SET greetcode = NULL WHERE greetcode = ?;");
 		}
 

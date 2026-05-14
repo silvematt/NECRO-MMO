@@ -16,6 +16,9 @@ namespace NECRO
 {
 namespace World
 {
+    // GreetCode is valid for 30 seconds from its creation
+    inline constexpr const uint32_t GREETCODE_VALIDITY_TIME_WINDOW_SECONDS = 30;
+
     class WorldSession;
 
 #pragma pack(push, 1)

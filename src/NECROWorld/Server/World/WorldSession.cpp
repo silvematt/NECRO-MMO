@@ -210,6 +210,21 @@ namespace World
         }
 
         // [userid, sessionKey, starttime, authip] TODO ADD USERNAME AS WELL
+
+        // Make sure greetcode is still valid using starttime
+        time_t now = time(nullptr);
+        time_t requestStartTime = static_cast<time_t>(row[2].get<uint32_t>());
+
+        if (now > requestStartTime + GREETCODE_VALIDITY_TIME_WINDOW_SECONDS)
+        {
+            LOG_DEBUG("Request is too old, dropping the socket.");
+            CloseSocket();
+            return false;
+        }
+
+        // We could use a machine fingerprint check to compare who made the auth request and who made this request, it may be reduntant security wise 
+        // but it could be an early rejection before the AES decrypt + GCM tag verification fails
+
         m_data.accountID = row[0].get<uint32_t>();
 
         mysqlx::bytes keyBytes = row[1].get<mysqlx::bytes>();
@@ -220,10 +235,6 @@ namespace World
             return false;
         }
         std::memcpy(m_data.sessionKey.data(), keyBytes.begin(), AES_128_KEY_SIZE);
-
-        // TODO Make sure greetcode is still valid using starttime
-
-        // TODO Make sure the AuthIP that authenticated is the same as the one that connected to the worldserver
 
         // Now we're ready to receive the encrypted AUTH_SESSION packet, and greetCode is invalidated.
         m_status = WorldSocketStatus::SESSIONKEY_GATHERED;
