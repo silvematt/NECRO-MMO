@@ -367,15 +367,18 @@ namespace World
         }
 
         NetworkMessage m(std::move(packet));
-        if (int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0) < 0)
+        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+        if (encryptRes < 0)
         {
-            LOG_ERROR("Failed to encrypt packet, returned {}", encryptRes);
-            return -1;
+            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            return false;
         }
         QueuePacket(std::move(m));
 
         // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet
         m_status = WorldSocketStatus::AUTHED;
+
+        return true;
     }
 
 }
