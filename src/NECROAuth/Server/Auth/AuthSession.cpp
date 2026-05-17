@@ -449,6 +449,7 @@ namespace Auth
         // TODO this can't be done here, under high load the NetworkThreads gets overwhelmed, queue grows and even expired DBCallbacks are in the io_context queue and still have to be processed
         // Another line of protection against this is allowing password checks only for "verified" users (like users that paid the subscription (if any but dont pls) or that verified the phone number on the website, or 2FA)
         // On top of that, 3 or x failed attempts can block the account and require email verification or temp lockout
+        // We can also request Proof of Work and have a reconnect challenge for users that already logged in and are re-connecting
         bool authenticated = crypto_pwhash_str_verify(row[0].get<std::string>().data(), m_data.pass.data(), m_data.pass.size()) == 0;
 
         // Delete password from memory

@@ -30,7 +30,7 @@ namespace Auth
 		TCPAcceptor m_acceptor;
 
 		// IP-Request spam prevention
-		std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
+		std::unordered_map<uint32_t, IPRequestData> m_ipRequestMap;
 
 	public:
 		SocketManager(const uint32_t threadCount, boost::asio::io_context& io, uint16_t port) : m_ioContextRef(io), m_acceptor(m_ioContextRef, port)
@@ -51,6 +51,7 @@ namespace Auth
 
 		// Handles the Accept loop
 		void SocketManagerHandler();
+		bool DoIPSpamPrevention(uint32_t clientIP);
 
 		// Callbacks when accept happen
 		void AsyncAcceptCallback(tcp::socket&& sock, int tID);

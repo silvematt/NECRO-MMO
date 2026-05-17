@@ -4,16 +4,16 @@
 namespace NECRO
 {
 // The maximum the m_ipRequestMap can grow
-inline constexpr int IP_REQUEST_MAP_MAX_SIZE = 100000;
+inline constexpr int IP_REQUEST_MAP_MAX_SIZE = 1000000;
 
-// IP-based spam prevention <ip, last attempt>
+// IP-based spam prevention <ip, tries>
+// This simply limits the number of connections (not attempts) an IP can perform within a given window
 struct IPRequestData
 {
-	std::chrono::steady_clock::time_point lastUpdate;
-	size_t tries;
+	uint32_t tries;
 };
 
 // IP-Request spam prevention
 // Usage:
-//	std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
+//	std::unordered_map<uint32_t, IPRequestData> m_ipRequestMap;
 }

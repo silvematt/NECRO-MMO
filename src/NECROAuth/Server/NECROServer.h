@@ -16,6 +16,25 @@
 #define SODIUM_STATIC
 #include <sodium.h>
 
+// Some thoughts
+// 
+// It could be beneficial to have SSLAccept not do any work at all, just distribute the socket across network threads, and let the network threads run thigs like IPMapChecks or offload that somewhere else
+// Could also explore multi-accept on multiple threads
+// 
+// Instead of running the LoginDBCallbackCheckHandler on the main thread, DBThreads could post directly on the network thread, and NetworkThread.Update would pickup the callbacks.
+// 
+// TODO: Add per account rate limit:
+// If three times a password is guessed wrong, and the user "lastip" in the db is different that NULL, we flag the account and prevent new requests (either for x mins, or until real user confirms an email, see explaination)
+// To prevent DoS at username level, we can do this: when a user registers his account table will have a "lastip" used.
+// lastip used is updated on every successful authentication
+// if the current request's ip matches the "lastip" in the DB, we don't care if the account is flagged or not
+// if the account is flagged and the legit user changed his IP, we can put in place a way to clear "lastip" from the DB so the per-account-rate-limit is going to be disabled until a new successful authentication, like an email-confirmation step on the next attempt "we noticed unusual login activity, click this link"
+// we could also let set lastip in the same transaction that consumes the email token, so write lastip = <IP that requested the recovery>
+// 
+// TODO: Add client proof of work before TLS setup
+// 
+// TODO: Add per ip concurrent connections limit, stricter than m_ipRequestMap so that we can make the m_ipRequestMap more generous
+
 namespace NECRO
 {
 namespace Auth

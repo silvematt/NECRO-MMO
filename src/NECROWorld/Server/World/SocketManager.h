@@ -29,7 +29,8 @@ private:
 	// IP-Request spam prevention
 	std::mutex	m_ipRequestMapMutex; // In the WorldServer, IPRequestMapCleanup is executed by a ASIOThread, meaning that there could be a datarace with another thread that's doing an AsyncAcceptCallback
 									 // In the AuthServer the mutex is not needed because only the main thread runs AsyncAcceptCallback and IPRequestMapCleanup so only one can happen at a given time
-	std::unordered_map<std::string, IPRequestData> m_ipRequestMap;
+	
+	std::unordered_map<uint32_t, IPRequestData> m_ipRequestMap;
 
 public:
 	SocketManager(const uint32_t threadCount, boost::asio::io_context& io, uint16_t port) : m_ioContextRef(io), m_acceptor(m_ioContextRef, port)
@@ -54,6 +55,8 @@ public:
 	// Callbacks when accept happen
 	void AsyncAcceptCallback(tcp::socket&& sock, int tID);
 	void OnAcceptError(boost::system::error_code ec, int tID);
+
+	bool DoIPSpamPrevention(uint32_t clientIP);
 	void IPRequestMapCleanup();
 
 	// NetworkThreads management
