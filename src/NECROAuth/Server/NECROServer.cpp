@@ -115,7 +115,6 @@ namespace Auth
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
 		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
-		m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS = conf.GetInt("DATABASE_CALLBACK_CHECK_INTERVAL_MS", 1000);
 
 		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
 		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61531);
@@ -145,10 +144,6 @@ namespace Auth
 		// Post ip request cleanup
 		m_ipRequestCleanupTimer.expires_after(std::chrono::milliseconds(1));
 		m_ipRequestCleanupTimer.async_wait([this](boost::system::error_code const& ec) { IPRequestCleanupHandler(); });
-
-		// Post database callback check
-		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(1));
-		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
 
 		// Get realmlist straight away (DirectExecute)
 		{
@@ -203,14 +198,14 @@ namespace Auth
 		// Shutdown
 		LOG_OK("Shutting down NECROAuth...");
 
-		// Shutdown NetworkThreads
-		m_socketManager->StopThreads();
-		m_socketManager->JoinThreads();
-
 		// Shutdown DBWorker
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();
+
+		// Shutdown NetworkThreads
+		m_socketManager->StopThreads();
+		m_socketManager->JoinThreads();
 
 		LOG_OK("Shut down of the NECROAuth completed.");
 		return 0;
@@ -245,45 +240,6 @@ namespace Auth
 
 		// Clear the ip-request map (m_socketManager is constructed on the same io_context, so no race conditions since only the main thread runs io_context.run())
 		m_socketManager->IPRequestMapCleanup();
-	}
-
-	void Server::LoginDBCallbackCheckHandler()
-	{
-		//LOG_DEBUG("DBCallbackCheckHandler...");
-
-		m_dbCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
-
-		// Execute the callbacks
-		std::vector<DBRequest> requests = m_loginDbWorker.GetResponseQueue();
-
-		// Callbacks are executed on the NetworkThread's io_context associated with the AuthSocket that created the DBRequest originally, so there's no risk of race conditions
-		for (auto& req : requests)
-		{
-			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
-
-			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
-			{
-				try
-				{
-					if (reqPtr->m_callback)
-						reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
-				}
-				// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
-				catch (const mysqlx::Error& err)
-				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. MySQL Error: {}", err.what());
-				}
-				catch (const std::exception& err)
-				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. Standard Exception: {}", err.what());
-				}
-				catch (...)
-				{
-					LOG_CRITICAL("Exception caught during DBCallback handling. Unknown exception.");
-				}
-			});
-		}
 	}
 
 	void Server::UpdateRealmlistHandler()

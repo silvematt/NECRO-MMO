@@ -193,6 +193,9 @@ namespace World
 
     bool WorldSession::DBCallback_GreetcodeLookup(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
+        if (!IsOpen())
+            return false;
+
         if (ec != 0)
         {
             LOG_DEBUG("Greetcode lookup query failed. Dropping socket.");
@@ -296,6 +299,9 @@ namespace World
 
     bool WorldSession::DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
+        if (!IsOpen())
+            return false;
+
         if (ec != 0)
         {
             LOG_DEBUG("DBCallback_HandleGreetPacket's query returned an error. There's no way to continue. Dropping socket.");

@@ -89,7 +89,6 @@ namespace World
 		m_configSettings.CLIENT_VERSION_REVISION = conf.GetInt("CLIENT_VERSION_REVISION", 0);
 
 		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
-		m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS = conf.GetInt("DATABASE_CALLBACK_CHECK_INTERVAL_MS", 1000);
 		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
 
 		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61532);
@@ -114,8 +113,6 @@ namespace World
 
 		// Post work on ASIO threads
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
-		m_asioPool.PostWork([this]() {LoginDBCallbackCheckHandler(); });
-		m_asioPool.PostWork([this]() {CharactersDBCallbackCheckHandler(); });
 		m_asioPool.PostWork([this]() {IPRequestMapCleanupHandler(); });
 
 		// Start network threads
@@ -153,9 +150,7 @@ namespace World
 
 		m_asioPool.Stop();
 
-		m_socketManager->StopThreads();
-		m_socketManager->JoinThreads();
-
+		// Shutdown DBWorkers
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();
@@ -163,6 +158,10 @@ namespace World
 		m_charactersDBWorker.Stop();
 		m_charactersDBWorker.Join();
 		m_charactersDBWorker.CloseDB();
+
+		// Shutdown Network Threads
+		m_socketManager->StopThreads();
+		m_socketManager->JoinThreads();
 
 		LOG_OK("Shut down of NECROWorld completed.");
 
@@ -189,85 +188,6 @@ namespace World
 		m_charactersDBWorker.Enqueue(std::move(charReq));
 	}
 
-	void Server::LoginDBCallbackCheckHandler()
-	{
-		//LOG_DEBUG("LoginDBCallbackCheckHandler...");
-
-		// Calls itself again
-		m_dbLoginCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbLoginCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { LoginDBCallbackCheckHandler(); });
-
-		// Execute the callbacks
-		std::vector<DBRequest> requests = m_loginDbWorker.GetResponseQueue();
-
-		// Callbacks are executed on the NetworkThread's io_context associated with the WorldSocket that created the DBRequest originally, so there's no risk of race conditions
-		for (auto& req : requests)
-		{
-			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
-
-			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
-			{
-				try
-				{
-					if (reqPtr->m_callback)
-						reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
-				}
-				// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
-				catch (const mysqlx::Error& err)
-				{
-					LOG_CRITICAL("Exception caught during Login DBCallback handling. MySQL Error: {}", err.what());
-				}
-				catch (const std::exception& err)
-				{
-					LOG_CRITICAL("Exception caught during Login DBCallback handling. Standard Exception: {}", err.what());
-				}
-				catch (...)
-				{
-					LOG_CRITICAL("Exception caught during Login DBCallback handling. Unknown exception.");
-				}
-			});
-		}
-	}
-
-	void Server::CharactersDBCallbackCheckHandler()
-	{
-		//LOG_DEBUG("CharactersDBCallbackCheckHandler...");
-
-		// Calls itself again
-		m_dbCharactersCallbackCheckTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_CALLBACK_CHECK_INTERVAL_MS));
-		m_dbCharactersCallbackCheckTimer.async_wait([this](boost::system::error_code const& ec) { CharactersDBCallbackCheckHandler(); });
-
-		// Execute the callbacks
-		std::vector<DBRequest> requests = m_charactersDBWorker.GetResponseQueue();
-
-		// Callbacks are executed on the NetworkThread's io_context associated with the WorldSocket that created the DBRequest originally, so there's no risk of race conditions
-		for (auto& req : requests)
-		{
-			std::shared_ptr reqPtr = std::make_shared<DBRequest>(std::move(req));
-
-			boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
-				{
-					try
-					{
-						if (reqPtr->m_callback)
-							reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults);
-					}
-					// TODO Exceptions caught during DBCallback handling could close the socket immediately instead of waiting for timeout
-					catch (const mysqlx::Error& err)
-					{
-						LOG_CRITICAL("Exception caught during Characters DBCallback handling. MySQL Error: {}", err.what());
-					}
-					catch (const std::exception& err)
-					{
-						LOG_CRITICAL("Exception caught during Characters DBCallback handling. Standard Exception: {}", err.what());
-					}
-					catch (...)
-					{
-						LOG_CRITICAL("Exception caught during Characters DBCallback handling. Unknown exception.");
-					}
-				});
-		}
-	}
 
 	void Server::IPRequestMapCleanupHandler()
 	{

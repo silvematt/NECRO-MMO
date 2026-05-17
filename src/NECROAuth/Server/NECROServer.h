@@ -21,8 +21,6 @@
 // It could be beneficial to have SSLAccept not do any work at all, just distribute the socket across network threads, and let the network threads run thigs like IPMapChecks or offload that somewhere else
 // Could also explore multi-accept on multiple threads
 // 
-// Instead of running the LoginDBCallbackCheckHandler on the main thread, DBThreads could post directly on the network thread, and NetworkThread.Update would pickup the callbacks.
-// 
 // TODO: Add per account rate limit:
 // If three times a password is guessed wrong, and the user "lastip" in the db is different that NULL, we flag the account and prevent new requests (either for x mins, or until real user confirms an email, see explaination)
 // To prevent DoS at username level, we can do this: when a user registers his account table will have a "lastip" used.
@@ -54,7 +52,6 @@ namespace Auth
 			// Handler updates
 			uint32_t DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = 60000;
 			uint32_t IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = 120000;
-			uint32_t DATABASE_CALLBACK_CHECK_INTERVAL_MS = 1000;
 
 			// Server settings
 			uint16_t	MANAGER_SERVER_PORT = 61531;
@@ -77,7 +74,7 @@ namespace Auth
 
 	public:
 		Server() :
-			m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_dbCallbackCheckTimer(m_ioContext), m_realmlistUpdateTimer(m_ioContext)
+			m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_realmlistUpdateTimer(m_ioContext)
 		{
 
 		}
@@ -101,12 +98,10 @@ namespace Auth
 		// Handlers on main ioContext 
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
 		boost::asio::steady_timer m_ipRequestCleanupTimer;
-		boost::asio::steady_timer m_dbCallbackCheckTimer;
 		boost::asio::steady_timer m_realmlistUpdateTimer;
 
 		void KeepDatabaseAliveHandler();
 		void IPRequestCleanupHandler();
-		void LoginDBCallbackCheckHandler();
 		void UpdateRealmlistHandler();
 
 	public:

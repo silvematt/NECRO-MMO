@@ -47,12 +47,9 @@ namespace NECRO
 		// Consumer queue
 		std::vector<DBRequest>		m_internalQueue;
 
-		// Size watch to prevent OOM, trackS both m_internalQueue and m_externalQueue sizes
-		// m_requestsSize is incremented when a new request arrives and is decremented when a requests completes leaves the worker (GetResponseQueue - so where the main thread claims the requests)
+		// Size watch to prevent OOM, limits the amount of active requests
+		// m_requestsSize is incremented when a new request arrives and is decremented when a requests is posted on the asio thread that originated the request
 		std::atomic<size_t>			m_requestsSize{0};
-
-		std::mutex				m_respMutex;
-		std::vector<DBRequest>	m_respQueue;
 
 		// Session for the DBWorker's own thread
 		std::unique_ptr<mysqlx::Session> m_persistentMysqlSession;
@@ -153,7 +150,7 @@ namespace NECRO
 					// Execute the queue
 					for (auto& req : m_internalQueue)
 					{
-						if (req.IsValid() && (!req.m_cancelToken.has_value() || (req.m_cancelToken.has_value() && !req.m_cancelToken->expired())))
+						if (req.IsValid() && (!req.m_cancelToken || !req.m_cancelToken->expired()))
 						{
 							// Do stuff
 							try
@@ -169,7 +166,7 @@ namespace NECRO
 										// If the request requires a callback, push it
 										if (!req.m_fireAndForget)
 										{
-											ThreadPushResponse(std::move(req));
+											ThreadPostResponse(std::move(req));
 										}
 										else
 											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -201,7 +198,7 @@ namespace NECRO
 										// If the request requires a callback, set things up
 										if (!req.m_fireAndForget)
 										{
-											ThreadPushResponse(std::move(req));
+											ThreadPostResponse(std::move(req));
 										}
 										else
 											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -217,7 +214,7 @@ namespace NECRO
 										// If the request requires a callback, set things up
 										if (!req.m_fireAndForget)
 										{
-											ThreadPushResponse(std::move(req));
+											ThreadPostResponse(std::move(req));
 										}
 										else
 											m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -247,7 +244,7 @@ namespace NECRO
 								// If the request requires a callback, push it
 								if (!req.m_fireAndForget)
 								{
-									ThreadPushResponse(std::move(req));
+									ThreadPostResponse(std::move(req));
 								}
 								else
 									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -274,7 +271,7 @@ namespace NECRO
 								// If the request requires a callback, push it
 								if (!req.m_fireAndForget)
 								{
-									ThreadPushResponse(std::move(req));
+									ThreadPostResponse(std::move(req));
 								}
 								else
 									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -299,7 +296,7 @@ namespace NECRO
 								// If the request requires a callback, push it
 								if (!req.m_fireAndForget)
 								{
-									ThreadPushResponse(std::move(req));
+									ThreadPostResponse(std::move(req));
 								}
 								else
 									m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
@@ -315,21 +312,33 @@ namespace NECRO
 		}
 
 		//-----------------------------------------------------------------------------------------------------
-		// Pushes a DBRequest that was exectued by the ThreadRoutine in the responseQueue
+		// Posts an executed (or failed) DBRequest to the io_context that originated the request
 		//-----------------------------------------------------------------------------------------------------
-		void ThreadPushResponse(DBRequest&& req)
+		void ThreadPostResponse(DBRequest&& req)
 		{
-			std::unique_lock<std::mutex> resGuard(m_respMutex);
-
 			// Preserve the life of the m_noticeFunc in this scope before it gets moved
 			std::function<void()> func = std::move(req.m_noticeFunc);
-			m_respQueue.push_back(std::move(req));
 
-			resGuard.unlock();
+			// Post the callback on the thread that originated the request
+			if (req.m_callback)
+			{
+				// Capture the request
+				auto reqPtr = std::make_shared<DBRequest>(std::move(req));
+				boost::asio::post(reqPtr->m_callbackContexRef, [reqPtr]()
+					{
+						try { reqPtr->m_callback(reqPtr->m_errorCode, reqPtr->m_sqlResults); }
+						catch (const mysqlx::Error& err) { LOG_CRITICAL("Exception caught during DBCallback handling. MySQL Error: {}", err.what()); }
+						catch (const std::exception& err) { LOG_CRITICAL("Exception caught during DBCallback handling. Standard: {}", err.what()); }
+						catch (...) { LOG_CRITICAL("Exception caught during DBCallback handling: Unknown"); }
+					});
+			}
 
 			// Call notice function if set
 			if (func)
 				func();
+
+			// Request completed
+			m_requestsSize.fetch_sub(1, std::memory_order_relaxed);
 		}
 
 	public:
@@ -464,22 +473,6 @@ namespace NECRO
 				m_execWakeupCond.notify_one();
 
 			return success;
-		}
-
-		// ----------------------------------------------------------------------------------------------------
-		// Empities the m_respQueue and gives it to the caller to handle
-		//-----------------------------------------------------------------------------------------------------
-		std::vector<DBRequest> GetResponseQueue()
-		{
-			std::lock_guard guard(m_respMutex);
-
-			int respQueueSize = m_respQueue.size();
-			std::vector<DBRequest> toReturn;
-			std::swap(toReturn, m_respQueue);
-
-			// m_requestsSize is decremented now, as the requests are leaving the DBWorker
-			m_requestsSize.fetch_sub(respQueueSize, std::memory_order_relaxed);
-			return toReturn;
 		}
 
 		// -----------------------------------------

@@ -290,6 +290,9 @@ namespace Auth
 
     bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
+        if (!IsOpen())
+            return false;
+
         if (ec != 0)
         {
             LOG_DEBUG("DBCallback_AuthLoginGatherInfoPacket's query returned an error. There's no way to continue authentication. Dropping socket.");
@@ -416,6 +419,9 @@ namespace Auth
 
     bool AuthSession::DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
+        if (!IsOpen())
+            return false;
+
         if (ec != 0)
         {
             LOG_DEBUG("DBCallback_AuthLoginProofPacket's query returned an error. There's no way to continue authentication. Dropping socket.");
