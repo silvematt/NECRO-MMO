@@ -109,7 +109,17 @@ namespace World
 	void Server::Start()
 	{
 		// Start ASIO threads
-		m_asioPool.Start(m_configSettings.ASIO_THREADS_COUNT);
+		int asioThreadCount = std::thread::hardware_concurrency();
+
+		if (m_configSettings.ASIO_THREADS_COUNT != -1)
+			asioThreadCount = m_configSettings.ASIO_THREADS_COUNT;
+
+		if (asioThreadCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While starting AsioThreads, std::thread::hardware_concurrency could not be computed! Explicit ASIO_THREADS_COUNT in the config file. Running 1 AsioThread for this execution...");
+			asioThreadCount = 1;
+		}
+		m_asioPool.Start(asioThreadCount);
 
 		// Post work on ASIO threads
 		m_asioPool.PostWork([this]() {KeepDatabasesAliveHandler(); });
