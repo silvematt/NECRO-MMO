@@ -434,11 +434,6 @@ namespace Auth
         // DB callbacks should also update last activity
         m_lastActivity = std::chrono::steady_clock::now();
 
-        // Reply to the client
-        Packet packet;
-
-        packet << static_cast<uint8_t>(PacketIDs::LOGIN_ATTEMPT);
-
         mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
         // Extra precaution, if somehow the account is deleted between GATHER_INFO and this query, result.fetchOne could return null
@@ -451,12 +446,35 @@ namespace Auth
             return false;
         }
 
-        // Verify the password with the database
-        // TODO this can't be done here, under high load the NetworkThreads gets overwhelmed, queue grows and even expired DBCallbacks are in the io_context queue and still have to be processed
-        // Another line of protection against this is allowing password checks only for "verified" users (like users that paid the subscription (if any but dont pls) or that verified the phone number on the website, or 2FA)
-        // On top of that, 3 or x failed attempts can block the account and require email verification or temp lockout
-        // We can also request Proof of Work and have a reconnect challenge for users that already logged in and are re-connecting
-        bool authenticated = crypto_pwhash_str_verify(row[0].get<std::string>().data(), m_data.pass.data(), m_data.pass.size()) == 0;
+        // TODO manage in ram password properly
+        std::string hash = row[0].get<std::string>();
+        std::string pass = m_data.pass;
+
+        // Password check
+        std::weak_ptr<AuthSession> weakSelf = shared_from_this();
+        Server::Instance().GetCryptoThreads().PostWork([weakSelf, hash, pass]()
+        {
+            if (auto lockedSelf = weakSelf.lock())
+            {
+                bool authenticated = crypto_pwhash_str_verify(hash.data(), pass.data(), pass.size()) == 0;
+
+                boost::asio::post(lockedSelf->m_ioContextRef, [self = lockedSelf, authenticated]()
+                {
+                    if (self->IsOpen()) 
+                        self->HandlePasswordHashResult(authenticated);
+                });
+            }
+        });
+
+        return true;
+    }
+
+    bool AuthSession::HandlePasswordHashResult(bool authenticated)
+    {
+        // Reply to the client
+        Packet packet;
+
+        packet << static_cast<uint8_t>(PacketIDs::LOGIN_ATTEMPT);
 
         // Delete password from memory
         sodium_memzero(m_data.pass.data(), m_data.pass.size());
@@ -525,8 +543,13 @@ namespace Auth
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_NEW_SESSION),    {m_data.accountID, mysqlx::bytes(m_data.sessionKey.data(), m_data.sessionKey.size()), this->GetRemoteAddress(), mysqlx::bytes(m_data.greetCode.data(), m_data.greetCode.size())} });
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::UPD_ON_LOGIN),       {1, Utility::time_stamp(), m_data.accountID} });
 
+                // Handle failure, this is posted on this io_context from the cryptoThreads so return false won't close the socket
                 if (!dbworker.TryEnqueue(std::move(req)))
+                {
+                    LOG_DEBUG("DBWorker was full after password hash verification for {}.", m_data.username);
+                    CloseSocket();
                     return false;
+                }
             }
 
             // Write the greetcode to the packet

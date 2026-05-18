@@ -101,6 +101,7 @@ namespace Auth
 
         bool    HandleAuthLoginProofPacket();
         bool    DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+        bool    HandlePasswordHashResult(bool authenticated);
 
         bool    HandleGatherRealmlistPacket();
 

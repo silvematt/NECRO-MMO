@@ -119,6 +119,7 @@ namespace Auth
 		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
 		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61531);
 		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", -1);
+		m_configSettings.CRYPTO_THREADS_COUNT = conf.GetInt("CRYPTO_THREADS_COUNT", 1);
 
 		// Spam prevention
 		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
@@ -137,6 +138,20 @@ namespace Auth
 
 	void Server::Start()
 	{
+		// Start CryptoThreads
+		int cryptoThreadsCount = std::thread::hardware_concurrency();
+
+		if (m_configSettings.CRYPTO_THREADS_COUNT != -1)
+			cryptoThreadsCount = m_configSettings.CRYPTO_THREADS_COUNT;
+
+		if (cryptoThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While starting CryptoThreads, std::thread::hardware_concurrency could not be computed! Explicit CRYPTO_THREADS_COUNT in the config file. Running 1 CryptoThread for this execution...");
+			cryptoThreadsCount = 1;
+		}
+
+		m_cryptoThreads.Start(cryptoThreadsCount);
+
 		// Post DB Handler
 		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(1));
 		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
@@ -202,6 +217,9 @@ namespace Auth
 		m_loginDbWorker.Stop();
 		m_loginDbWorker.Join();
 		m_loginDbWorker.CloseDB();
+
+		// Stop crypto threads
+		m_cryptoThreads.Stop();
 
 		// Shutdown NetworkThreads
 		m_socketManager->StopThreads();

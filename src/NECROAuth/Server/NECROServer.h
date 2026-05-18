@@ -10,6 +10,7 @@
 
 #include "LoginDatabase.h"
 #include "DatabaseWorker.h"
+#include "AsioThreadPool.h"
 
 #include "RealmList.h"
 
@@ -59,6 +60,7 @@ namespace Auth
 			int			NETWORK_THREADS_COUNT = -1; //-1 equals to std::thread::hardware_concurrency()
 			int			CONNECTED_AND_IDLE_TIMEOUT_MS = 10000; // After CONNECTED_AND_IDLE_TIMEOUT_MS, kick the client if he doesn't proceed with the communication
 			int			HANDSHAKING_AND_IDLE_TIMEOUT_MS = 10000;
+			int			CRYPTO_THREADS_COUNT = 1;
 
 			// Spam prevention
 			bool		ENABLE_SPAM_PREVENTION = 1;
@@ -86,6 +88,10 @@ namespace Auth
 		}
 
 	private:
+		// AsioThreadPool owns its own m_ioContext
+		// Used to compute password hashes posted by AuthSessions
+		AsioThreadPool m_cryptoThreads;
+
 		// Status
 		bool			m_isRunning;
 		ConfigSettings	m_configSettings;
@@ -121,6 +127,11 @@ namespace Auth
 		const ConfigSettings& GetSettings() const
 		{
 			return m_configSettings;
+		}
+
+		AsioThreadPool& GetCryptoThreads()
+		{
+			return m_cryptoThreads;
 		}
 	};
 }
