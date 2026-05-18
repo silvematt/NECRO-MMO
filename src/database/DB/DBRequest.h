@@ -37,7 +37,7 @@ public:
 	// For requests that are not fire-and-forget, we need to capture the sql result and execute a callback that will process it and 
 	// let more code be executed. DB request->DB Callback
 	std::vector<mysqlx::SqlResult>										m_sqlResults; // Store one for each step
-	boost::asio::io_context&											m_callbackContexRef; // the io_context that should execute the callback. This context is the same context that was used by the socket that made this DBRequest. Server::DBCallbackCheckHandler will post the callback function to this context
+	boost::asio::io_context&											m_callbackContexRef; // the io_context that should execute the callback. This context is the same context that was used by the socket that made this DBRequest.
 	std::function<bool(uint32_t ec, std::vector<mysqlx::SqlResult>&)>	m_callback; // One callback for the whole transaction, with all the results from all the steps as parameter
 
 	// A notice function allows to call code in the DB thread as soon as this DBRequest is executed and it's been put on the respQueue.

@@ -17,7 +17,7 @@ namespace NECRO
 	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
 
 
-	// Max m_externalQueue/m_internalQueue/m_respQueue
+	// Max m_externalQueue size
 	// It's to prevent the server to go OOM by bounding the DB queues sizes
 	inline constexpr int DB_QUEUE_MAX_SIZE = 100000;
 
