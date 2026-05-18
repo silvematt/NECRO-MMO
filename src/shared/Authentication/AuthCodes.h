@@ -36,12 +36,11 @@ namespace Auth
     enum class AuthResults : uint8_t
     {
         SUCCESS = 0x00,
-        FAILED_UNKNOWN_ACCOUNT = 0x01,
-        FAILED_ACCOUNT_BANNED = 0x02,
-        FAILED_WRONG_PASSWORD = 0x03,
-        FAILED_WRONG_CLIENT_VERSION = 0x04
+        FAILED_WRONG_CLIENT_VERSION,
+        FAILED_UNKNOWN_ACCOUNT,
+        FAILED_ACCOUNT_BANNED,
+        FAILED_WRONG_PASSWORD,
     };
-
 
     enum class LoginProofResults : uint8_t
     {
@@ -73,17 +72,22 @@ namespace Auth
         uint8_t		username[1];
     };
     static_assert(sizeof(SPacketAuthLoginGatherInfo) == (1 + 1 + 2 + 1 + 1 + 1 + 1 + 1), "SPacketAuthLoginGatherInfo size assert failed!");
-    inline constexpr int MAX_USERNAME_LENGTH  = 16;
-    inline constexpr int S_MAX_ACCEPTED_GATHER_INFO_SIZE = ((sizeof(SPacketAuthLoginGatherInfo)-1) + MAX_USERNAME_LENGTH);    // 16 is username length
+    inline constexpr int MAX_USERNAME_LENGTH = 16;
+    inline constexpr int S_MAX_ACCEPTED_GATHER_INFO_SIZE = ((sizeof(SPacketAuthLoginGatherInfo) - 1) + MAX_USERNAME_LENGTH);    // 16 is username length
     inline constexpr int S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
-
 
     struct CPacketAuthLoginGatherInfo
     {
         uint8_t		id;
         uint8_t		error;
+        uint16_t    size;
+
+        // Server Challenge 
+        uint8_t     challenge[AES_128_KEY_SIZE];
+        uint8_t     difficulty;
     };
-    static_assert(sizeof(CPacketAuthLoginGatherInfo) == (1 + 1), "CPacketAuthLoginGatherInfo size assert failed!");
+    static_assert(sizeof(CPacketAuthLoginGatherInfo) == (1 + 1 + 2 + 16 + 1), "CPacketAuthLoginGatherInfo size assert failed!");
+    inline constexpr int C_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
     struct SPacketAuthLoginProof
     {
@@ -91,12 +95,13 @@ namespace Auth
         uint8_t		error;
         uint16_t    size;
 
+        uint64_t    answer;
         uint32_t    clientsIVRandomPrefix;
 
-        uint8_t passwordSize;
-        uint8_t password[1];
+        uint8_t     passwordSize;
+        uint8_t     password[1];
     };
-    static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 4 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
+    static_assert(sizeof(SPacketAuthLoginProof) == (1 + 1 + 2 + 8 + 4 + 1 + 1), "SPacketAuthLoginProof size assert failed!");
     inline constexpr int MAX_PASSWORD_LENGTH = 16; 
     inline constexpr int S_MAX_ACCEPTED_AUTH_LOGIN_PROOF_SIZE = ((sizeof(SPacketAuthLoginProof)-1) + MAX_PASSWORD_LENGTH); // 16 is username length
     inline constexpr int S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet

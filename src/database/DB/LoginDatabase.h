@@ -20,7 +20,8 @@ namespace NECRO
 		KEEP_ALIVE,
 		GATHER_REALMS,
 		SEL_SESSIONKEY_BY_GREETCODE,
-		INVALIDATE_GREETCODE
+		INVALIDATE_GREETCODE,
+		CREDENTIALS_CHECK
 	};
 
 
@@ -63,6 +64,9 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::GATHER_REALMS), ("SELECT id, name, address, port, status FROM necroauth.realmlist ORDER BY name"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), "SELECT userid, sessionKey, starttime, authip FROM necroauth.active_sessions WHERE greetcode = ?;");
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INVALIDATE_GREETCODE), "UPDATE necroauth.active_sessions SET greetcode = NULL WHERE greetcode = ?;");
+
+			// Credentials check introduced after Proof of Work protocol change
+			PrepareStatement(static_cast<int>(LoginDatabaseStatements::CREDENTIALS_CHECK), ("SELECT id, password FROM necroauth.users WHERE username = ?;"));
 		}
 
 		int Close() override

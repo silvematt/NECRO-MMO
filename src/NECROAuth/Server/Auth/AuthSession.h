@@ -30,6 +30,10 @@ namespace Auth
 
     struct AccountData
     {
+        // Challenge data
+        std::array<uint8_t, AES_128_KEY_SIZE> challenge{};
+        uint8_t difficulty;
+
         std::string username = "";
         uint32_t accountID = 0; // accountid in the database
 
@@ -97,11 +101,10 @@ namespace Auth
 
         // Handlers functions
         bool    HandleAuthLoginGatherInfoPacket();
-        bool    DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
         bool    HandleAuthLoginProofPacket();
         bool    DBCallback_AuthLoginProofPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
-        bool    HandlePasswordHashResult(bool authenticated);
+        bool    HandlePasswordHashResult(bool authenticated, bool preventLog);
 
         bool    HandleGatherRealmlistPacket();
 

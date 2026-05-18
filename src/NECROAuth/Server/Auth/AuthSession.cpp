@@ -12,6 +12,28 @@ namespace NECRO
 {
 namespace Auth
 {
+    static bool VerifyProofOfWork(const uint8_t* challenge, uint64_t* answer, uint8_t difficulty)
+    {
+        // TODO we could avoid thread_local, also this is never freed
+        static thread_local EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+        if (!ctx)
+            return false;
+
+        uint8_t hash[EVP_MAX_MD_SIZE];
+        unsigned int hashLen = 0;
+
+        bool success =
+                EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) == 1 &&
+                EVP_DigestUpdate(ctx, challenge, AES_128_KEY_SIZE) == 1 &&
+                EVP_DigestUpdate(ctx, answer, sizeof(uint64_t)) == 1 &&
+                EVP_DigestFinal_ex(ctx, hash, &hashLen) == 1;
+
+        if (!success || hashLen != SHA256_DIGEST_LENGTH)
+            return false;
+
+        return Utility::ProofOfWork_HasLeadingZeroBits(hash, difficulty);
+    }
+
     std::unordered_map<uint8_t, AuthHandler> AuthSession::InitHandlers()
     {
         std::unordered_map<uint8_t, AuthHandler> handlers;
@@ -229,17 +251,17 @@ namespace Auth
 
         SPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<SPacketAuthLoginGatherInfo*>(m_inBuffer.GetReadPointer());
 
-        // Pre-checks
+        // Pre Checks
         // Check for username size
         if (pcktData->usernameSize == 0 || pcktData->usernameSize > Auth::MAX_USERNAME_LENGTH)
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
+        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - 1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
             return false;
 
         // Check for username value (input validation)
-        for(int i = 0; i < pcktData->usernameSize; i++)
+        for (int i = 0; i < pcktData->usernameSize; i++)
             if (!std::isalnum(static_cast<unsigned char>(pcktData->username[i])))
                 return false;
 
@@ -251,106 +273,54 @@ namespace Auth
         m_data.versionMinor = pcktData->versionMinor;
         m_data.versionRevision = pcktData->versionRevision;
 
-        LOG_DEBUG("Handling AuthLoginInfo for user: {}", m_data.username);
-        m_status = SocketStatus::GATHER_INFO_PENDING; // this will flag this client as someone who already sent a GATHER_INFO, so if the same client sends the same packet again, we'll have a status mismatch
+        auto& serverSettings = Server::Instance().GetSettings();
 
-        // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
-        auto& dbworker = Server::Instance().GetLoginDBWorker();
+        // Check version
+        if (m_data.versionMajor == serverSettings.CLIENT_VERSION_MAJOR && m_data.versionMinor == serverSettings.CLIENT_VERSION_MINOR && m_data.versionRevision == serverSettings.CLIENT_VERSION_REVISION)
         {
-            DBRequest req(m_ioContextRef, false);
-            req.m_steps.push_back({static_cast<uint32_t>(LoginDatabaseStatements::SEL_ACCOUNT_ID_BY_NAME), { m_data.username } });
+            LOG_DEBUG("Handling AuthLoginInfo for user: {}", m_data.username);
+            m_status = SocketStatus::LOGIN_ATTEMPT; // this will flag this client as someone who already sent a GATHER_INFO, so if the same client sends the same packet again, we'll have a status mismatch
 
-            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
-            std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+            // Proof of Work generation
+            std::array<uint8_t, AES_128_KEY_SIZE> randBytes{};
+            if (RAND_bytes(randBytes.data(), AES_128_KEY_SIZE) != 1)
             {
-                if (auto lockedSelf = weakSelf.lock()) 
-                    return lockedSelf->DBCallback_AuthLoginGatherInfoPacket(ec, res);
-
-                return false; // AuthSession is destroyed (disconnect)
-            };
-
-            req.m_cancelToken = weakSelf;
-            
-            /*
-            req.m_noticeFunc = [weakSelf]() 
-            {
-                if (auto self = weakSelf.lock()) 
-                {
-                    Server::Instance().GetSocketManager().WakeUp();
-                }
-            };
-            */
-            if (!dbworker.TryEnqueue(std::move(req)))
+                throw std::runtime_error("Failed to generate Proof of Work challenge!");
                 return false;
-        }
+            }
+            uint8_t difficulty = 22; // this can be dynamically adjusted in base of the load
 
-        return true;
-    }
+            // Save to authdata
+            m_data.challenge = randBytes;
+            m_data.difficulty = difficulty;
 
-    bool AuthSession::DBCallback_AuthLoginGatherInfoPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
-    {
-        if (!IsOpen())
-            return false;
+            // Reply to the client
+            Packet packet;
+            packet << static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO);
+            packet << static_cast<uint8_t>(AuthResults::SUCCESS);
+            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginGatherInfo) - 4);
 
-        if (ec != 0)
-        {
-            LOG_DEBUG("DBCallback_AuthLoginGatherInfoPacket's query returned an error. There's no way to continue authentication. Dropping socket.");
-            CloseSocket();
-            return false;
-        }
+            // Write challenge
+            for (int i = 0; i < AES_128_KEY_SIZE; ++i)
+                packet << static_cast<uint8_t>(m_data.challenge[i]);
 
-        LOG_DEBUG("Handling DBCallback_AuthLoginGatherInfoPacket for user {}!!", m_data.username);
+            packet << static_cast<uint8_t>(m_data.difficulty);
 
-        // DB callbacks should also update last activity
-        m_lastActivity = std::chrono::steady_clock::now();
-
-        // Reply to the client
-        Packet packet;
-        packet << static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO);
-
-        // Let's just add this check for now
-        mysqlx::Row row = result[0].fetchOne();
-
-        if (!row)
-        {
-            LOG_INFO("User tried to login with an username that doesn't exist.");
-
-            m_closeAfterSend = true;
-
-            packet << static_cast<uint8_t>(AuthResults::FAILED_UNKNOWN_ACCOUNT);
+            NetworkMessage m(std::move(packet));
+            QueuePacket(std::move(m));
         }
         else
         {
-            auto& serverSettings = Server::Instance().GetSettings();
-            
-            // Check client version with server's client version
-            if (m_data.versionMajor == serverSettings.CLIENT_VERSION_MAJOR && m_data.versionMinor == serverSettings.CLIENT_VERSION_MINOR && m_data.versionRevision == serverSettings.CLIENT_VERSION_REVISION)
-            {
-                packet << static_cast<uint8_t>(AuthResults::SUCCESS);
+            // Reply to the client that he has the wrong version
+            m_closeAfterSend = true; // we want to drop the connection
+            Packet packet;
+            packet << static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO);
+            packet << static_cast<uint8_t>(AuthResults::FAILED_WRONG_CLIENT_VERSION);
+            packet << static_cast<uint16_t>(0); // size is empty
 
-                m_data.accountID = row[0];
-                LOG_INFO("Account {} has DB AccountID: {}.", m_data.username, m_data.accountID);
-                m_status = SocketStatus::LOGIN_ATTEMPT;
-
-                // Done, will wait for client's proof packet
-            }
-            else
-            {
-                LOG_INFO("User tried to login with an invalid client version.");
-                packet << static_cast<uint8_t>(AuthResults::FAILED_WRONG_CLIENT_VERSION);
-            }
+            NetworkMessage m(std::move(packet));
+            QueuePacket(std::move(m));
         }
-
-        NetworkMessage m(std::move(packet));
-
-        /* Encryption example
-        int res = m.AESEncrypt(data.sessionKey.data(), data.iv, nullptr, 0);
-        if (res < 0)
-            return false;
-        */
-
-        QueuePacket(std::move(m));
 
         return true;
     }
@@ -376,42 +346,54 @@ namespace Auth
             if (!std::isalnum(static_cast<unsigned char>(pcktData->password[i])))
                 return false;
 
-        LOG_OK("Handling AuthLoginProof for user {}", m_data.username);
+        LOG_DEBUG("Handling AuthLoginProof for user {}", m_data.username);
         m_status = SocketStatus::LOGIN_ATTEMPT_PENDING;
 
-        std::string p((char const*)pcktData->password, pcktData->passwordSize);
-        m_data.pass = p;
-        m_data.randIVPrefix = pcktData->clientsIVRandomPrefix;
-
-        auto& dbworker = Server::Instance().GetLoginDBWorker();
+        // Check challenge first
+        if (!VerifyProofOfWork(&m_data.challenge[0], &pcktData->answer, m_data.difficulty))
         {
-            DBRequest req(m_ioContextRef, false);
-            req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::CHECK_PASSWORD), {m_data.accountID } });
+            LOG_DEBUG("VerifyProofOfWork failed for user {}", m_data.username);
 
-            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
-            std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res) 
-            {
-                if (auto lockedSelf = weakSelf.lock()) 
-                    return lockedSelf->DBCallback_AuthLoginProofPacket(ec, res);
-
-                return false; // AuthSession is destroyed (disconnect)
-            };
-
-            req.m_cancelToken = weakSelf;
+            m_closeAfterSend = true;
+            Packet reply;
+            reply << static_cast<uint8_t>(PacketIDs::LOGIN_ATTEMPT);
+            reply << static_cast<uint8_t>(LoginProofResults::FAILED);
+            reply << static_cast<uint16_t>(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
             
-            /*
-            req.m_noticeFunc = [weakSelf]()
-                {
-                    if (auto self = weakSelf.lock())
-                    {
-                        Server::Instance().GetSocketManager().WakeUp();
-                    }
-                };
-            */
+            NetworkMessage m(std::move(reply));
+            QueuePacket(std::move(m));
+            // Don't return false, we're going to close after the packet has been sent
+        }
+        else
+        {
+            // Client successfully completed proof of work
+            std::string p((char const*)pcktData->password, pcktData->passwordSize);
+            m_data.pass = p;
+            m_data.randIVPrefix = pcktData->clientsIVRandomPrefix;
+            
+            // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
+            auto& dbworker = Server::Instance().GetLoginDBWorker();
+            {
+                DBRequest req(m_ioContextRef, false);
+                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::CREDENTIALS_CHECK), { m_data.username } });
 
-            if (!dbworker.TryEnqueue(std::move(req)))
-                return false;
+                // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
+                std::weak_ptr<AuthSession> weakSelf = shared_from_this();
+                req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                {
+                    if (auto lockedSelf = weakSelf.lock())
+                        return lockedSelf->DBCallback_AuthLoginProofPacket(ec, res);
+
+                    return false; // AuthSession is destroyed (disconnect)
+                };
+
+                req.m_cancelToken = weakSelf;
+
+                if (!dbworker.TryEnqueue(std::move(req)))
+                    return false;
+            }
+
+            return true;
         }
 
         return true;
@@ -436,40 +418,60 @@ namespace Auth
 
         mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
 
-        // Extra precaution, if somehow the account is deleted between GATHER_INFO and this query, result.fetchOne could return null
+        // Check if account exists
         if (!row)
         {
-            // Delete password from memory and disconnect immediately
-            LOG_CRITICAL("Account {} no longer exists in DB.", m_data.username);
-            sodium_memzero(m_data.pass.data(), m_data.pass.size());
-            m_data.pass.clear();
-            return false;
-        }
-
-        // TODO manage in ram password properly
-        std::string hash = row[0].get<std::string>();
-        std::string pass = m_data.pass;
-
-        // Password check
-        std::weak_ptr<AuthSession> weakSelf = shared_from_this();
-        Server::Instance().GetCryptoThreads().PostWork([weakSelf, hash, pass]()
-        {
-            if (auto lockedSelf = weakSelf.lock())
+            // We do a fake hash just like the else below, and just call HandlePasswordHashResult(false).
+            // This would prevent users enumeration via failed attempts, but would triggers useless crypto_pwhash_str_verify - TODO needs to estimate the performances savings
+            LOG_CRITICAL("Account {} doesn't exist.", m_data.username);
+            std::string hash = "$argon2id$v=19$m=65536,t=2,p=1$CjmAucKFN9/a9Kfj0bFrKw$WaopYKnajv9K6GRfwo0st3sp9xOCDBWdV51s8N5BAYg"; // TODO store this somewhere instead of allocating it each time?
+            std::string pass = "thisisapass";
+            std::weak_ptr<AuthSession> weakSelf = shared_from_this();
+            Server::Instance().GetCryptoThreads().PostWork([weakSelf, hash, pass]()
             {
-                bool authenticated = crypto_pwhash_str_verify(hash.data(), pass.data(), pass.size()) == 0;
-
-                boost::asio::post(lockedSelf->m_ioContextRef, [self = lockedSelf, authenticated]()
+                if (auto lockedSelf = weakSelf.lock())
                 {
-                    if (self->IsOpen()) 
-                        self->HandlePasswordHashResult(authenticated);
-                });
-            }
-        });
+                    bool authenticated = crypto_pwhash_str_verify(hash.data(), pass.data(), pass.size()) == 0;
+
+                    boost::asio::post(lockedSelf->m_ioContextRef, [self = lockedSelf, authenticated]()
+                    {
+                        if (self->IsOpen())
+                            self->HandlePasswordHashResult(authenticated, true);
+                    });
+                }
+            });
+        }
+        else
+        {
+            // TODO manage in RAM password properly
+            m_data.accountID = row[0].get<uint32_t>();
+
+            LOG_INFO("Account {} has DB AccountID: {}.", m_data.username, m_data.accountID);
+
+            std::string hash = row[1].get<std::string>();
+            std::string pass = m_data.pass;
+
+            // Password check
+            std::weak_ptr<AuthSession> weakSelf = shared_from_this();
+            Server::Instance().GetCryptoThreads().PostWork([weakSelf, hash, pass]()
+            {
+                if (auto lockedSelf = weakSelf.lock())
+                {
+                    bool authenticated = crypto_pwhash_str_verify(hash.data(), pass.data(), pass.size()) == 0;
+
+                    boost::asio::post(lockedSelf->m_ioContextRef, [self = lockedSelf, authenticated]()
+                    {
+                        if (self->IsOpen())
+                            self->HandlePasswordHashResult(authenticated, false);
+                    });
+                }
+            });
+        }
 
         return true;
     }
 
-    bool AuthSession::HandlePasswordHashResult(bool authenticated)
+    bool AuthSession::HandlePasswordHashResult(bool authenticated, bool preventLog)
     {
         // Reply to the client
         Packet packet;
@@ -483,18 +485,22 @@ namespace Auth
         auto& dbworker = Server::Instance().GetLoginDBWorker();
         if (!authenticated)
         {
-            LOG_INFO("User {}  tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
+            LOG_INFO("User {} tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());
 
-            // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
+            // TODO also make this a toggleable in config settings, for now we avoid log only on the fake-hash path
+            if (!preventLog)
             {
-                DBRequest req(m_ioContextRef, true);
-                req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), {this->GetRemoteAddressAndPort(), m_data.username, "WRONG_PASSWORD"} });
-                dbworker.TryEnqueue(std::move(req));
+                // Do an async insert on the DB worker to log that his IP tried to login with a wrong password
+                {
+                    DBRequest req(m_ioContextRef, true);
+                    req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INS_LOG_WRONG_PASSWORD), {this->GetRemoteAddressAndPort(), m_data.username, "WRONG_PASSWORD"} });
+                    dbworker.TryEnqueue(std::move(req));
+                }
             }
 
-            packet << static_cast<uint8_t>(LoginProofResults::FAILED);
             m_closeAfterSend = true;
-            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginProof) - C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE - AES_128_KEY_SIZE - AES_128_KEY_SIZE); // Adjust the size appropriately
+            packet << static_cast<uint8_t>(LoginProofResults::FAILED);
+            packet << static_cast<uint16_t>(0); // empty content
         }
         else
         {
@@ -528,9 +534,7 @@ namespace Auth
 
             // Write session key to packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
-            {
                 packet << m_data.sessionKey[i];
-            }
 
             // Create a new greetcode (RAND_bytes). Greetcode is appended with the first packet the client sends to the server, so the server can understand who's he talking to. ONE USE! Server will clear it after first usage
             m_data.greetCode = AES::GenerateSessionKey();
@@ -554,9 +558,7 @@ namespace Auth
 
             // Write the greetcode to the packet
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
-            {
                 packet << m_data.greetCode[i];
-            }
         }
 
         NetworkMessage m(std::move(packet));
@@ -609,6 +611,9 @@ namespace Auth
             realmCount++;
         }
 
+        // This is the final packet, set close after send
+        m_closeAfterSend = true;
+
         // Total Packet Size
         p << static_cast<uint16_t>(4 + payload.Size()); // +4 is for the realm count that gets written before the payload
         p << realmCount;
@@ -620,6 +625,5 @@ namespace Auth
         LOG_OK("HandleGatherRealmlistPacket: sent {} realm(s)", realmCount);
         return true;
     }
-
 }
 }

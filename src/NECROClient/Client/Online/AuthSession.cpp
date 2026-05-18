@@ -19,7 +19,7 @@ namespace Client
         std::unordered_map<uint8_t, AuthHandler> handlers;
 
         // fill
-        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO)] = { NECRO::Auth::SocketStatus::GATHER_INFO, sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo) , &HandlePacketAuthLoginGatherInfoResponse };
+        handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO)] = { NECRO::Auth::SocketStatus::GATHER_INFO, NECRO::Auth::C_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE , &HandlePacketAuthLoginGatherInfoResponse };
         handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT)] = {NECRO::Auth::SocketStatus::LOGIN_ATTEMPT, NECRO::Auth::C_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE , &HandlePacketAuthLoginProofResponse};
         handlers[static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_REALMLIST)] = { NECRO::Auth::SocketStatus::AUTHED, NECRO::Auth::C_PACKET_GATHER_REALMLIST_INITIAL_SIZE, &HandlePacketGatherRealmsResponse };
 
@@ -97,12 +97,25 @@ namespace Client
             }
 
             // Check if the passed packet sizes matches the handler's one, otherwise we're not ready to process this yet
-            uint16_t size = static_cast<uint16_t>(it->second.packetSize);
+            uint32_t size = static_cast<uint16_t>(it->second.packetSize);
             if (packet.GetActiveSize() < size)
                 break;
 
             // If it's a variable-sized packet, we need to ensure size
-            if (cmd == static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT))
+            if (cmd == static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_GATHER_INFO))
+            {
+                NECRO::Auth::CPacketAuthLoginGatherInfo* pcktData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginGatherInfo*>(packet.GetReadPointer());
+                size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
+
+                // Check for size
+                if (size > sizeof(NECRO::Auth::CPacketAuthLoginGatherInfo))
+                {
+                    Shutdown();
+                    Close();
+                    return -1;
+                }
+            }
+            else if (cmd == static_cast<int>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT))
             {
                 NECRO::Auth::CPacketAuthLoginProof* pcktData = reinterpret_cast<NECRO::Auth::CPacketAuthLoginProof*>(packet.GetReadPointer());
                 size += pcktData->size; // we've read the handler's defined packetSize, so this is safe. Attempt to read the remainder of the packet
@@ -148,17 +161,41 @@ namespace Client
         {
             // Continue authentication
             c.Log("Gather info succeded...");
+
+            // Solve the puzzle - this should be done by a background thread to not block the UI
+            bool solved = false;
+            uint64_t counter = 0;
+            uint8_t hash[SHA256_DIGEST_LENGTH];
+            // hash = buffer(challenge+counter)
+            std::array<uint8_t, AES_128_KEY_SIZE + sizeof(counter)> buffer;
+            while (!solved)
+            {
+                // Append both the challenge and the counter to the buffer
+                std::memcpy(buffer.data(), &pckData->challenge, AES_128_KEY_SIZE);
+                std::memcpy(buffer.data() + AES_128_KEY_SIZE, &counter, sizeof(counter));
+
+                // Compute SHA256, non EVP way is fine for now - TODO maybe in the future
+                SHA256(buffer.data(), AES_128_KEY_SIZE + sizeof(counter), hash);
+                solved = Utility::ProofOfWork_HasLeadingZeroBits(hash, pckData->difficulty);
+
+                if (!solved)
+                    counter++;
+            }
+
             m_status = NECRO::Auth::SocketStatus::LOGIN_ATTEMPT;
 
             uint8_t passwordLength = static_cast<uint8_t>(net.GetData().password.size());;
 
-            // Here you would send login proof to the server, after having received hashes in the CPacketAuthLoginGatherInfo packet above
-            // Send the random IV prefix so the server can make sure it's not the same as the client
+            // Send SPacketAuthLoginProof
             Packet packet;
 
+            // Send the header
             packet << static_cast<uint8_t>(NECRO::Auth::PacketIDs::LOGIN_ATTEMPT);
             packet << static_cast<uint8_t>(NECRO::Auth::LoginProofResults::SUCCESS);
             packet << static_cast<uint16_t>((sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength); // this means that after having read the first S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE bytes, the server will have to wait for sizeof(SPacketAuthLoginProof) - PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + passwordLength in order to correctly read this packet
+
+            // Send the PoW answer
+            packet << counter;
 
             // Randomize and send the prefix
             net.GetData().iv.RandomizePrefix();
@@ -169,7 +206,7 @@ namespace Client
             packet << passwordLength;
             packet << net.GetData().password; // string is and should be without null terminator!
 
-            net.GetData().password.clear(); // clear the password from memory after having used it
+            net.GetData().password.clear(); // clear the password from memory after having used it TODO sodiumzero
 
             std::cout << "My IV Prefix: " << net.GetData().iv.prefix << std::endl;
 
@@ -178,16 +215,10 @@ namespace Client
             //Send(); packets are sent by checking POLLOUT events in the socket, and we check for POLLOUT events only if there are packets written in the outQueue
 
         }
-        else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))
-        {
-            LOG_ERROR("Authentication failed, username does not exist.");
-            c.Log("Authentication failed, username does not exist.");
-            return false;
-        }
         else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_WRONG_CLIENT_VERSION))
         {
-            LOG_ERROR("Authentication failed, invalid client version.");
-            c.Log("Authentication failed, invalid client version.");
+            LOG_ERROR("Authentication failed, wrong client version.");
+            c.Log("Authentication failed, wrong client version.");
             return false;
         }
         else
