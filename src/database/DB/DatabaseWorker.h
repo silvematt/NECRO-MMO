@@ -475,6 +475,11 @@ namespace NECRO
 			return success;
 		}
 
+		size_t GetRequestsSize()
+		{
+			return m_requestsSize.load(std::memory_order_relaxed);
+		}
+
 		// -----------------------------------------
 		// DIRECT DB
 		// -----------------------------------------

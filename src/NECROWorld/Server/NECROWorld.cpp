@@ -8,70 +8,6 @@ namespace NECRO
 {
 namespace World
 {
-	int Server::Init()
-	{
-		m_isRunning = false;
-
-		LOG_OK("Booting up NECROServer...");
-
-		// Load config file
-		if (!Config::Instance().Load(WORLD_CONFIG_FILE_PATH))
-		{
-			LOG_ERROR("Failed to load config file at: {}", WORLD_CONFIG_FILE_PATH);
-
-			return -1;
-		}
-		LOG_OK("Config file {} loaded successfully", WORLD_CONFIG_FILE_PATH);
-
-		ApplySettings();
-
-		SocketUtility::Initialize();
-
-		// Init DBWorkers (pools?)
-		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
-		{
-			LOG_ERROR("Could not initialize dbworker, MySQL may be not running.");
-			return -2;
-		}
-
-		if (m_loginDbWorker.Start() != 0)
-		{
-			LOG_ERROR("Could not start LoginDBWorker, MySQL may be not running.");
-			return -3;
-		}
-		LOG_OK("Login DBWorker started successfully!");
-
-		if (m_charactersDBWorker.Setup(m_configSettings.CHARACTERS_DATABASE_URI) != 0)
-		{
-			LOG_ERROR("Could not initialize CharactersDBWorker, MySQL may be not running.");
-			return -4;
-		}
-
-		if (m_charactersDBWorker.Start() != 0)
-		{
-			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
-			return -5;
-		}
-		LOG_OK("Characters DBWorker started successfully!");
-
-		// Start network threads
-		int threadsCount = std::thread::hardware_concurrency();
-
-		// Make Socket Manager
-		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
-			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
-		
-		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
-		{
-			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
-			return -4;
-		}
-
-		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
-
-		return 0;
-	}
-
 	void Server::ApplySettings()
 	{
 		auto& conf = Config::Instance();
@@ -96,6 +32,8 @@ namespace World
 		m_configSettings.ASIO_THREADS_COUNT = conf.GetInt("ASIO_THREADS_COUNT", 1);
 		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
 		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
+		m_configSettings.LOGIN_DATABASE_THREADS_COUNT = conf.GetInt("LOGIN_DATABASE_THREADS_COUNT", 1);
+		m_configSettings.CHARACTERS_DATABASE_THREADS_COUNT = conf.GetInt("CHARACTERS_DATABASE_THREADS_COUNT", 1);
 
 		// Spam prevention
 		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
@@ -105,6 +43,94 @@ namespace World
 		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 		m_configSettings.CHARACTERS_DATABASE_URI = conf.GetString("CHARACTERS_DATABASE_URI", "");
 	}
+
+	int Server::Init()
+	{
+		m_isRunning = false;
+
+		LOG_OK("Booting up NECROServer...");
+
+		// Load config file
+		if (!Config::Instance().Load(WORLD_CONFIG_FILE_PATH))
+		{
+			LOG_ERROR("Failed to load config file at: {}", WORLD_CONFIG_FILE_PATH);
+
+			return -1;
+		}
+		LOG_OK("Config file {} loaded successfully", WORLD_CONFIG_FILE_PATH);
+
+		ApplySettings();
+
+		SocketUtility::Initialize();
+
+		// Make DBWorker Pool for Login database
+		int dbLoginThreadsCount = std::thread::hardware_concurrency();
+		if (m_configSettings.LOGIN_DATABASE_THREADS_COUNT != -1)
+			dbLoginThreadsCount = m_configSettings.LOGIN_DATABASE_THREADS_COUNT;
+
+		if (dbLoginThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -5;
+		}
+
+		// Init DBWorkers (pools?)
+		if (m_loginDbPool.Setup(dbLoginThreadsCount, m_configSettings.LOGIN_DATABASE_URI) != 0)
+		{
+			LOG_ERROR("Could not initialize dbworker, MySQL may be not running.");
+			return -2;
+		}
+
+		if (m_loginDbPool.Start() != 0)
+		{
+			LOG_ERROR("Could not start LoginDBWorker, MySQL may be not running.");
+			return -3;
+		}
+		LOG_OK("Login DBWorkerPool started successfully! {} threads.", dbLoginThreadsCount);
+
+		// Make DBWorker Pool for Login database
+		int dbCharactersThreadsCount = std::thread::hardware_concurrency();
+		if (m_configSettings.CHARACTERS_DATABASE_THREADS_COUNT != -1)
+			dbCharactersThreadsCount = m_configSettings.CHARACTERS_DATABASE_THREADS_COUNT;
+
+		if (dbCharactersThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -5;
+		}
+
+		if (m_charactersDBPool.Setup(dbCharactersThreadsCount, m_configSettings.CHARACTERS_DATABASE_URI) != 0)
+		{
+			LOG_ERROR("Could not initialize CharactersDBWorker, MySQL may be not running.");
+			return -4;
+		}
+
+		if (m_charactersDBPool.Start() != 0)
+		{
+			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+			return -5;
+		}
+		LOG_OK("Characters DBWorker started successfully! {} threads.", dbCharactersThreadsCount);
+
+		// Start network threads
+		int threadsCount = std::thread::hardware_concurrency();
+
+		// Make Socket Manager
+		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
+			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
+		
+		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -4;
+		}
+
+		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
+
+		return 0;
+	}
+
+
 
 	void Server::Start()
 	{
@@ -161,13 +187,13 @@ namespace World
 		m_asioPool.Stop();
 
 		// Shutdown DBWorkers
-		m_loginDbWorker.Stop();
-		m_loginDbWorker.Join();
-		m_loginDbWorker.CloseDB();
+		m_loginDbPool.Stop();
+		m_loginDbPool.Join();
+		m_loginDbPool.CloseDBs();
 
-		m_charactersDBWorker.Stop();
-		m_charactersDBWorker.Join();
-		m_charactersDBWorker.CloseDB();
+		m_charactersDBPool.Stop();
+		m_charactersDBPool.Join();
+		m_charactersDBPool.CloseDBs();
 
 		// Shutdown Network Threads
 		m_socketManager->StopThreads();
@@ -187,15 +213,25 @@ namespace World
 		m_keepLoginDatabaseAliveTimer.expires_after(std::chrono::milliseconds(m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS));
 		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabasesAliveHandler(); });
 
-		// Enqueue a keep alive packet (LoginDatabase)
-		DBRequest logReq(m_asioPool.m_ioContext, true);
-		logReq.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_loginDbWorker.Enqueue(std::move(logReq));
+		// Enqueue a keep alive packet
+		DBRequest loginKeepAlivePacket(m_asioPool.m_ioContext, true);
+		loginKeepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDbPool.EnqueueInAll(std::move(loginKeepAlivePacket));
 
-		// Enqueue a keep alive packet (CharactersDatabase)
-		DBRequest charReq(m_asioPool.m_ioContext, true);
-		charReq.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::KEEP_ALIVE), {} });
-		m_charactersDBWorker.Enqueue(std::move(charReq));
+		// Keep alive the direct connection as well
+		DBRequest loginDirectKeepAlivePacket(m_asioPool.m_ioContext, true);
+		loginDirectKeepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDbPool.DirectExecuteInAll(std::move(loginDirectKeepAlivePacket));
+
+		// Enqueue a keep alive packet
+		DBRequest charactersKeepAlivePacket(m_asioPool.m_ioContext, true);
+		charactersKeepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::KEEP_ALIVE), {} });
+		m_charactersDBPool.EnqueueInAll(std::move(charactersKeepAlivePacket));
+
+		// Keep alive the direct connection as well
+		DBRequest charactersDirectKeepAlivePacket(m_asioPool.m_ioContext, true);
+		charactersDirectKeepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::KEEP_ALIVE), {} });
+		m_charactersDBPool.DirectExecuteInAll(std::move(charactersDirectKeepAlivePacket));
 	}
 
 

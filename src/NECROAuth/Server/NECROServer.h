@@ -9,7 +9,7 @@
 #include "SocketManager.h"
 
 #include "LoginDatabase.h"
-#include "DatabaseWorker.h"
+#include "DatabaseWorkerPool.h"
 #include "AsioThreadPool.h"
 
 #include "RealmList.h"
@@ -61,6 +61,7 @@ namespace Auth
 			int			CONNECTED_AND_IDLE_TIMEOUT_MS = 10000; // After CONNECTED_AND_IDLE_TIMEOUT_MS, kick the client if he doesn't proceed with the communication
 			int			HANDSHAKING_AND_IDLE_TIMEOUT_MS = 10000;
 			int			CRYPTO_THREADS_COUNT = 1;
+			int			LOGIN_DATABASE_THREADS_COUNT = 1;
 
 			// Spam prevention
 			bool		ENABLE_SPAM_PREVENTION = 1;
@@ -78,7 +79,6 @@ namespace Auth
 		Server() :
 			m_isRunning(false), m_keepLoginDatabaseAliveTimer(m_ioContext), m_ipRequestCleanupTimer(m_ioContext), m_realmlistUpdateTimer(m_ioContext)
 		{
-
 		}
 
 		static Server& Instance()
@@ -99,7 +99,7 @@ namespace Auth
 		boost::asio::io_context m_ioContext;
 		std::unique_ptr<SocketManager> m_socketManager;
 
-		DatabaseWorker<LoginDatabase>	m_loginDbWorker;
+		DatabaseWorkerPool<LoginDatabase> m_loginDBPool;
 
 		// Handlers on main ioContext 
 		boost::asio::steady_timer m_keepLoginDatabaseAliveTimer;
@@ -111,9 +111,9 @@ namespace Auth
 		void UpdateRealmlistHandler();
 
 	public:
-		DatabaseWorker<LoginDatabase>& GetLoginDBWorker()
+		DatabaseWorkerPool<LoginDatabase>& GetLoginDBWPool()
 		{
-			return m_loginDbWorker;
+			return m_loginDBPool;
 		}
 
 		int						Init();

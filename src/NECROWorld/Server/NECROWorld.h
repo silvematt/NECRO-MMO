@@ -6,7 +6,7 @@
 #include "Config.h"
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
-#include "DatabaseWorker.h"
+#include "DatabaseWorkerPool.h"
 #include "AsioThreadPool.h"
 #include "SocketManager.h"
 
@@ -45,6 +45,8 @@ namespace World
 			int NETWORK_THREADS_COUNT = 1;
 			int	MAX_CONNECTED_CLIENTS_PER_THREAD = -1; //-1 equals to no check
 			uint16_t CONNECTED_AND_IDLE_TIMEOUT_MS = 10000;
+			int			LOGIN_DATABASE_THREADS_COUNT = 1;
+			int			CHARACTERS_DATABASE_THREADS_COUNT = 1;
 
 			// Spam prevention
 			bool		ENABLE_SPAM_PREVENTION = 1;
@@ -82,8 +84,8 @@ namespace World
 		std::unique_ptr<SocketManager> m_socketManager;
 
 		// Databases
-		DatabaseWorker<LoginDatabase>		m_loginDbWorker;
-		DatabaseWorker<CharactersDatabase>	m_charactersDBWorker;
+		DatabaseWorkerPool<LoginDatabase>		m_loginDbPool;
+		DatabaseWorkerPool<CharactersDatabase>	m_charactersDBPool;
 
 
 	public:
@@ -94,14 +96,14 @@ namespace World
 		void					Stop();
 		int						Shutdown();
 
-		DatabaseWorker<LoginDatabase>& GetLoginDBWorker()
+		DatabaseWorkerPool<LoginDatabase>& GetLoginDBPool()
 		{
-			return m_loginDbWorker;
+			return m_loginDbPool;
 		}
 
-		DatabaseWorker<CharactersDatabase>& GetCharactersDBWorker()
+		DatabaseWorkerPool<CharactersDatabase>& GetCharactersDBPool()
 		{
-			return m_charactersDBWorker;
+			return m_charactersDBPool;
 		}
 
 		const ConfigSettings& GetSettings() const

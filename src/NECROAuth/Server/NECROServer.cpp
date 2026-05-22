@@ -30,6 +30,46 @@ namespace NECRO
 {
 namespace Auth
 {
+	void Server::ApplySettings()
+	{
+		auto& conf = Config::Instance();
+
+		// Apply config
+		ConsoleLogger::Instance().m_logEnabled = conf.GetBool("ConsoleLoggingEnabled", true);
+		FileLogger::Instance().m_logEnabled = conf.GetBool("FileLoggingEnabled", true);
+
+		// Initialize the log levels
+		ConsoleLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("ConsoleLoggingLevel", "111111"));
+		FileLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("FileLoggingLevel", "111111"));
+
+		m_configSettings.CLIENT_VERSION_MAJOR = conf.GetInt("CLIENT_VERSION_MAJOR", 1);
+		m_configSettings.CLIENT_VERSION_MINOR = conf.GetInt("CLIENT_VERSION_MINOR", 0);
+		m_configSettings.CLIENT_VERSION_REVISION = conf.GetInt("CLIENT_VERSION_REVISION", 0);
+
+		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
+		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
+
+		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
+		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61531);
+		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", -1);
+		m_configSettings.CRYPTO_THREADS_COUNT = conf.GetInt("CRYPTO_THREADS_COUNT", 1);
+		m_configSettings.LOGIN_DATABASE_THREADS_COUNT = conf.GetInt("LOGIN_DATABASE_THREADS_COUNT", 1);
+
+		// Spam prevention
+		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
+		m_configSettings.CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = conf.GetInt("CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN", 1);
+		m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL = conf.GetInt("MAX_CONNECTION_ATTEMPTS_PER_INTERVAL", 10);
+
+		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
+		m_configSettings.HANDSHAKING_AND_IDLE_TIMEOUT_MS = conf.GetInt("HANDSHAKING_AND_IDLE_TIMEOUT_MS", 10000);
+
+		// Realmlist
+		m_configSettings.REALMLIST_UPDATE_INTERVAL_MS = conf.GetInt("REALMLIST_UPDATE_INTERVAL_MS", 60000);
+
+		// DB Connection
+		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
+	}
+
 	int Server::Init()
 	{
 		m_isRunning = false;
@@ -68,72 +108,44 @@ namespace Auth
 		if (OpenSSLManager::ServerInit() != 0)
 			return -4;
 
-		if (m_loginDbWorker.Setup(m_configSettings.LOGIN_DATABASE_URI) != 0)
+
+		// Make DBWorker Pool for Login database
+		int dbLoginThreadsCount = std::thread::hardware_concurrency();
+		if (m_configSettings.LOGIN_DATABASE_THREADS_COUNT != -1)
+			dbLoginThreadsCount = m_configSettings.LOGIN_DATABASE_THREADS_COUNT;
+
+		if (dbLoginThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
 		{
-			LOG_ERROR("Could not initialize m_loginDbWorker, MySQL may be not running.");
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
 			return -5;
 		}
 
-		if (m_loginDbWorker.Start() != 0)
+		if (m_loginDBPool.Setup(dbLoginThreadsCount, m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
-			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
+			LOG_ERROR("Could not initialize m_loginDbWorker Pool, MySQL may be not running.");
 			return -6;
 		}
 
-		// Make SocketManager
-		int threadsCount = std::thread::hardware_concurrency();
-
-		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
-			threadsCount = m_configSettings.NETWORK_THREADS_COUNT;
-		
-		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		if (m_loginDBPool.Start() != 0)
 		{
-			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			LOG_ERROR("Could not start m_loginDbWorker Pool, MySQL may be not running.");
 			return -7;
 		}
 
-		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
+		// Make SocketManager
+		int networkThreadsCount = std::thread::hardware_concurrency();
+		if (m_configSettings.NETWORK_THREADS_COUNT != -1)
+			networkThreadsCount = m_configSettings.NETWORK_THREADS_COUNT;
+		
+		if (networkThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
+		{
+			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
+			return -8;
+		}
+
+		m_socketManager = std::make_unique<SocketManager>(networkThreadsCount, m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
 
 		return 0;
-	}
-
-	void Server::ApplySettings()
-	{
-		auto& conf = Config::Instance();
-
-		// Apply config
-		ConsoleLogger::Instance().m_logEnabled	= conf.GetBool("ConsoleLoggingEnabled", true);
-		FileLogger::Instance().m_logEnabled		= conf.GetBool("FileLoggingEnabled", true);
-
-		// Initialize the log levels
-		ConsoleLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("ConsoleLoggingLevel", "111111"));
-		FileLogger::Instance().m_logEnabledSet = std::bitset<static_cast<int>(Logger::LogLevel::LAST_VALUE)>(conf.GetString("FileLoggingLevel", "111111"));
-
-		m_configSettings.CLIENT_VERSION_MAJOR		= conf.GetInt("CLIENT_VERSION_MAJOR", 1);
-		m_configSettings.CLIENT_VERSION_MINOR		= conf.GetInt("CLIENT_VERSION_MINOR", 0);
-		m_configSettings.CLIENT_VERSION_REVISION	= conf.GetInt("CLIENT_VERSION_REVISION", 0);
-
-		m_configSettings.DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS = conf.GetInt("DATABASE_ALIVE_HANDLER_UPDATE_INTERVAL_MS", 60000);
-		m_configSettings.IP_BASED_REQUEST_CLEANUP_INTERVAL_MS = conf.GetInt("IP_BASED_REQUEST_CLEANUP_INTERVAL_MS", 120000);
-
-		m_configSettings.MAX_CONNECTED_CLIENTS_PER_THREAD = conf.GetInt("MAX_CONNECTED_CLIENTS_PER_THREAD", -1);
-		m_configSettings.MANAGER_SERVER_PORT = conf.GetInt("MANAGER_SERVER_PORT", 61531);
-		m_configSettings.NETWORK_THREADS_COUNT = conf.GetInt("NETWORK_THREADS_COUNT", -1);
-		m_configSettings.CRYPTO_THREADS_COUNT = conf.GetInt("CRYPTO_THREADS_COUNT", 1);
-
-		// Spam prevention
-		m_configSettings.ENABLE_SPAM_PREVENTION = conf.GetInt("ENABLE_SPAM_PREVENTION", 1);
-		m_configSettings.CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN = conf.GetInt("CONNECTION_ATTEMPT_CLEANUP_INTERVAL_MIN", 1);
-		m_configSettings.MAX_CONNECTION_ATTEMPTS_PER_INTERVAL = conf.GetInt("MAX_CONNECTION_ATTEMPTS_PER_INTERVAL", 10);
-
-		m_configSettings.CONNECTED_AND_IDLE_TIMEOUT_MS = conf.GetInt("CONNECTED_AND_IDLE_TIMEOUT_MS", 10000);
-		m_configSettings.HANDSHAKING_AND_IDLE_TIMEOUT_MS = conf.GetInt("HANDSHAKING_AND_IDLE_TIMEOUT_MS", 10000);
-
-		// Realmlist
-		m_configSettings.REALMLIST_UPDATE_INTERVAL_MS = conf.GetInt("REALMLIST_UPDATE_INTERVAL_MS", 60000);
-
-		// DB Connection
-		m_configSettings.LOGIN_DATABASE_URI = conf.GetString("LOGIN_DATABASE_URI", "");
 	}
 
 	void Server::Start()
@@ -165,7 +177,7 @@ namespace Auth
 			DBRequest req(m_ioContext, false);
 			req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::GATHER_REALMS), {} });
 
-			std::vector<mysqlx::SqlResult> res = m_loginDbWorker.DirectExecute(req);
+			std::vector<mysqlx::SqlResult> res = m_loginDBPool.DirectExecute(req);
 
 			if (!res.empty())
 				RealmList::Instance().DBCallback_UpdateRealmList(req.m_errorCode, res);
@@ -214,9 +226,9 @@ namespace Auth
 		LOG_OK("Shutting down NECROAuth...");
 
 		// Shutdown DBWorker
-		m_loginDbWorker.Stop();
-		m_loginDbWorker.Join();
-		m_loginDbWorker.CloseDB();
+		m_loginDBPool.Stop();
+		m_loginDBPool.Join();
+		m_loginDBPool.CloseDBs();
 
 		// Stop crypto threads
 		m_cryptoThreads.Stop();
@@ -239,14 +251,14 @@ namespace Auth
 		m_keepLoginDatabaseAliveTimer.async_wait([this](boost::system::error_code const& ec) { KeepDatabaseAliveHandler(); });
 
 		// Enqueue a keep alive packet
-		DBRequest req(m_ioContext, true);
-		req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_loginDbWorker.Enqueue(std::move(req));
+		DBRequest keepAlivePacket(m_ioContext, true);
+		keepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDBPool.EnqueueInAll(std::move(keepAlivePacket));
 
 		// Keep alive the direct connection as well
-		DBRequest directReq(m_ioContext, false);
-		directReq.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
-		m_loginDbWorker.DirectExecute(directReq);
+		DBRequest directKeepAlivePacket(m_ioContext, true);
+		directKeepAlivePacket.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::KEEP_ALIVE), {} });
+		m_loginDBPool.DirectExecuteInAll(std::move(directKeepAlivePacket));
 	}
 
 	void Server::IPRequestCleanupHandler()
@@ -267,7 +279,7 @@ namespace Auth
 		m_realmlistUpdateTimer.expires_after(std::chrono::milliseconds(m_configSettings.REALMLIST_UPDATE_INTERVAL_MS));
 		m_realmlistUpdateTimer.async_wait([this](boost::system::error_code const& ec) { UpdateRealmlistHandler(); });
 
-		auto& dbworker = m_loginDbWorker;
+		auto& dbworker = m_loginDBPool;
 		// Send DB Gather Realms request
 		{
 			DBRequest req(m_ioContext, false);

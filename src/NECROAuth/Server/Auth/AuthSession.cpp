@@ -14,7 +14,7 @@ namespace Auth
 {
     static bool VerifyProofOfWork(const uint8_t* challenge, uint64_t* answer, uint8_t difficulty)
     {
-        // TODO we could avoid thread_local, also this is never freed
+        // TODO we could avoid thread_local, also this is never freed on shutdown
         static thread_local EVP_MD_CTX* ctx = EVP_MD_CTX_new();
         if (!ctx)
             return false;
@@ -372,7 +372,7 @@ namespace Auth
             m_data.randIVPrefix = pcktData->clientsIVRandomPrefix;
             
             // Here we would perform checks such as account exists, banned, suspended, IP locked, region locked, etc.
-            auto& dbworker = Server::Instance().GetLoginDBWorker();
+            auto& dbworker = Server::Instance().GetLoginDBWPool();
             {
                 DBRequest req(m_ioContextRef, false);
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::CREDENTIALS_CHECK), { m_data.username } });
@@ -482,7 +482,7 @@ namespace Auth
         sodium_memzero(m_data.pass.data(), m_data.pass.size());
         m_data.pass.clear();
 
-        auto& dbworker = Server::Instance().GetLoginDBWorker();
+        auto& dbworker = Server::Instance().GetLoginDBWPool();
         if (!authenticated)
         {
             LOG_INFO("User {} tried to send proof with a wrong password.", this->GetRemoteAddressAndPort());

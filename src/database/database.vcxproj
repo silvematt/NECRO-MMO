@@ -22,6 +22,7 @@
     <ClInclude Include="DB\CharactersDatabase.h" />
     <ClInclude Include="DB\Database.h" />
     <ClInclude Include="DB\DatabaseWorker.h" />
+    <ClInclude Include="DB\DatabaseWorkerPool.h" />
     <ClInclude Include="DB\DBConnection.h" />
     <ClInclude Include="DB\DBRequest.h" />
     <ClInclude Include="DB\LoginDatabase.h" />

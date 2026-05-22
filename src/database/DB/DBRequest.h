@@ -62,6 +62,18 @@ public:
 		m_errorCode = 0;
 	}
 
+	// Copy used in DBWorkerPool to EnqueueInAll
+	DBRequest(const DBRequest& copy) :
+		m_callbackContexRef(copy.m_callbackContexRef),
+		m_steps(copy.m_steps),
+		m_fireAndForget(copy.m_fireAndForget),
+		m_creationTime(copy.m_creationTime)
+	{
+	}
+
+	// Default move
+	DBRequest(DBRequest&&) noexcept = default;
+
 	bool IsTransaction() const
 	{
 		return m_steps.size() > 1;

@@ -78,7 +78,7 @@ namespace World
             // Advance phase, we've got the greetcode, now let's fetch it from the db:
             m_status = WorldSocketStatus::GATHER_SESSIONKEY_PENDING;
 
-            auto& dbworker = Server::Instance().GetLoginDBWorker();
+            auto& dbworker = Server::Instance().GetLoginDBPool();
             {
                 DBRequest req(m_ioContextRef, false);
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), {mysqlx::bytes(m_data.greetCode.data(), m_data.greetCode.size())}});
@@ -273,7 +273,7 @@ namespace World
 
         LOG_CRITICAL("Greet Packet handled! Gathering characters list... {}", m_data.accountID);
 
-        auto& dbworker = Server::Instance().GetCharactersDBWorker();
+        auto& dbworker = Server::Instance().GetCharactersDBPool();
         {
             DBRequest req(m_ioContextRef, false);
             req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_SEL_ENUM), {m_data.accountID } });
