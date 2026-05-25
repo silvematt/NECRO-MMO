@@ -16,7 +16,7 @@ namespace Client
     struct WorldHandler
     {
         NECRO::World::WorldSocketStatus status;
-        size_t packetSize;
+        size_t packetSize; // packet size is not needed if the worldpackets are encrypted via AES-GCM, as their size-check is done during decryption. However I kept this here if in the future I'd want to remove ecryption at all
         bool (WorldSession::* handler)();
     };
     #pragma pack(pop)
@@ -46,8 +46,8 @@ namespace Client
 
         bool    HandlePacketEnumCharacters();
 
+        bool    Handle_CreateNewCharResponse();
     };
-
 }
 }
 

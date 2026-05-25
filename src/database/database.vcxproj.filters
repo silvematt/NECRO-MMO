@@ -16,13 +16,13 @@
     <ClInclude Include="DB\DBConnection.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\LoginDatabase.h">
+    <ClInclude Include="DB\Implementation\LoginDatabase.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\DBRequest.h">
       <Filter>DB</Filter>
     </ClInclude>
-    <ClInclude Include="DB\CharactersDatabase.h">
+    <ClInclude Include="DB\Implementation\CharactersDatabase.h">
       <Filter>DB</Filter>
     </ClInclude>
     <ClInclude Include="DB\DatabaseWorkerPool.h">

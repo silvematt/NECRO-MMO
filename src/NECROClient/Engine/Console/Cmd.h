@@ -36,6 +36,9 @@ namespace Client
 		int		Cmd_ToggleCollisionDebug(const std::vector<std::string>& args);
 		int		Cmd_ToggleOcclusionDebug(const std::vector<std::string>& args);
 
+		// WorldCmds
+		int		Cmd_CreateCharacter(const std::vector<std::string>& args);
+
 	};
 
 }

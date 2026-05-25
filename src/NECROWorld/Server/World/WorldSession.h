@@ -40,6 +40,12 @@ namespace World
         AES::IV iv;
 
         uint32_t clientsIVPrefix = 0;
+
+        // TODO manage this better
+        std::string newCharacterName;
+        int newCharacterRace;
+        int newCharacterClass;
+        int newCharacterGender;
     };
 
 class WorldSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<WorldSession>
@@ -76,6 +82,11 @@ public:
     bool    DBCallback_GreetcodeLookup(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    HandleGreetPacket();
     bool    DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+
+    
+    bool    Handle_SPacketCreateNewChar();
+    bool    DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
 };
 }

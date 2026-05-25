@@ -19,7 +19,7 @@ namespace NECRO
     private:
         // Upper bound on the packet size (IV + TAG + CIPHERTEXT) accepted by AESDecrypt (used in the WorldServer). 
         // Guards against oversized/hostile packets.
-        static constexpr uint32_t MAX_PACKET_SIZE_AES_DECRYPT = 256;
+        static constexpr uint32_t MAX_PACKET_SIZE_AES_DECRYPT = 512;
 
         size_t m_rpos;          // Read Pos
         size_t m_wpos;          // Write Pos 

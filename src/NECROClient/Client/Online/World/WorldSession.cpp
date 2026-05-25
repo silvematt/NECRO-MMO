@@ -18,6 +18,7 @@ namespace Client
         std::unordered_map<uint16_t, WorldHandler> handlers;
 
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, NECRO::World::C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE, &WorldSession::HandlePacketEnumCharacters };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketCreateNewCharResponse), &WorldSession::Handle_CreateNewCharResponse};
 
         return handlers;
     }
@@ -83,6 +84,10 @@ namespace Client
             // Get the inner decrypted packet
             m_currentDecryptedPacket.Write(encryptedPacket.GetDecryptedPacketPtr(), plaintextLen);
 
+            // If the packet has 1 byte only, we cannot even read the cmd
+            if (plaintextLen <= sizeof(uint16_t))
+                return -1;
+
             // Packet is here the decrpyted [CMD | ...] and it arrived fully
             // TODO, it's probably better to do the same memcpy for reading packets instead of SPacketWorldGreet* pkt = reinterpret_cast<SPacketWorldGreet*>(m_currentDecryptedPacket.GetReadPointer());
             uint16_t cmd = 0;
@@ -106,14 +111,7 @@ namespace Client
 
             LOG_DEBUG("Whole Decrypted Packet Size (with header): {}", m_currentDecryptedPacket.GetActiveSize());
 
-            /* Drop size check, we already have the full packet - we do data validation in the Handlers.
-            uint16_t size = uint16_t(it->second.packetSize);
-            if (m_currentDecryptedPacket.GetActiveSize() != size)
-            {
-                LOG_DEBUG("m_currentDecryptedPacket.GetActiveSize {} | {}", size, m_currentDecryptedPacket.GetActiveSize());
-                return -1; // Make sure packet's size is in line with what's expected
-            }
-            */
+            // No size check is needed, we know we already already have the full packet from the AESDecrypt, and we do data validation in the Handlers.
 
             try
             {
@@ -170,13 +168,12 @@ namespace Client
             c.Log("This account has no character, please create one.");
 
             // Jump to Character Creation Screen
+            worldManager.GetData().isAuthed = true;
             return true;
         }
         
         // Pre checks
-        LOG_DEBUG("Inner packet size (without header): {}", pckData->size);
-
-        if (pckData->charactersNumber == 0 || pckData->charactersNumber > NECRO::World::MAX_CHARACTERS_N)
+        if (pckData->charactersNumber == 0 || pckData->charactersNumber > NECRO::World::MAX_CHARACTERS_N_PER_ACCOUNT)
             return false;
 
         // TODO Check if the sizes match before reading anything (if server lied or not)
@@ -253,7 +250,40 @@ namespace Client
         c.Log("Characters retrieved.");
 
         // Jump to Character Selection Screen
-            
+        worldManager.GetData().isAuthed = true;
+
+        return true;
+    }
+
+    bool WorldSession::Handle_CreateNewCharResponse()
+    {
+        LOG_CRITICAL("HandlePacketEnumCharacters...");
+
+        Console& c = engine.GetConsole();
+        NECRO::World::CPacketCreateNewCharResponse* pckData = reinterpret_cast<NECRO::World::CPacketCreateNewCharResponse*>(m_currentDecryptedPacket.GetBasePointer());
+
+        // Check for error - TODO currently the server just drops the connection, if we want graceful shutdown we should do something like this:
+        if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::FAILED))
+        {
+            c.Log("Request failed.");
+
+            // Close
+            m_status = NECRO::World::WorldSocketStatus::CLOSED;
+            return false;
+        }
+        else if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::CHARACTER_NEW_ACCOUNT_HAS_MAX_CHARACTERS_ALLOWED))
+        {
+            c.Log("This account has already the max num of allowed characters.");
+        }
+        else if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::CHARACTER_NEW_NAME_ALREADY_IN_USE))
+        {
+            c.Log("Name is already in use.");
+        }
+        else if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::CHARACTER_NEW_SUCCESS))
+        {
+            c.Log("Character Created!");
+            // Jump to selection screen
+        }
 
         return true;
     }

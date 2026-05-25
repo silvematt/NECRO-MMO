@@ -257,7 +257,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - 1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
+        if (pcktData->size != (sizeof(NECRO::Auth::SPacketAuthLoginGatherInfo) - 1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE + pcktData->usernameSize)
             return false;
 
         // Check for username value (input validation)
@@ -338,7 +338,7 @@ namespace Auth
             return false;
 
         // Check if client lied about the packet's size
-        if (pcktData->size < (sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
+        if (pcktData->size != (sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
             return false;
 
         // Check for password value (input validation)

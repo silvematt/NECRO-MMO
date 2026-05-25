@@ -16,8 +16,9 @@ enum class WorldSocketStatus
 
 enum class PacketIDs : uint16_t
 {
-    AUTH_SESSION = 0x00,
-    ENUM_CHARACTERS = 0x01
+    AUTH_SESSION = 0,
+    ENUM_CHARACTERS,
+    CHAR_CREATE_NEW,
 };
 
 //--------------------------------------------------------------------------------------------
@@ -25,9 +26,12 @@ enum class PacketIDs : uint16_t
 //--------------------------------------------------------------------------------------------
 enum class WorldResults : uint16_t
 {
-    FAILED = 0x00,
-    SUCCESS = 0x01,
-    NO_CHARACTERS_FOR_THIS_ACCOUNT = 0x2
+    FAILED = 0,
+    SUCCESS,
+    NO_CHARACTERS_FOR_THIS_ACCOUNT,
+    CHARACTER_NEW_ACCOUNT_HAS_MAX_CHARACTERS_ALLOWED,
+    CHARACTER_NEW_NAME_ALREADY_IN_USE,
+    CHARACTER_NEW_SUCCESS
 };
 
 // Packets
@@ -69,15 +73,37 @@ struct CPacketEnumCharacters
 {
     uint16_t    id;
     uint8_t     error; // WorldResults
-    uint16_t    size;
 
     uint8_t             charactersNumber;
     CharacterDataOnWire characters[];
 };
-static_assert(sizeof(CPacketEnumCharacters) == (2 + 1 + 2 + 1), "CPacketEnumCharacters size assert failed!");
-inline constexpr int C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE = 5; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+static_assert(sizeof(CPacketEnumCharacters) == (2 + 1 + 1), "CPacketEnumCharacters size assert failed!");
+inline constexpr int C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 inline constexpr int CHARACTER_MAX_NAME_LENGTH = 12;
-inline constexpr int MAX_CHARACTERS_N = 10;
+inline constexpr int MAX_CHARACTERS_N_PER_ACCOUNT = 10;
+
+// Client requests new character creation
+struct SPacketCreateNewChar
+{
+    uint16_t    id;
+    uint16_t    size;
+
+    uint8_t     race;
+    uint8_t     charClass;
+    uint8_t     gender;
+    
+    uint8_t     characterNameLength;
+    uint8_t     characterName[];
+};
+static_assert(sizeof(SPacketCreateNewChar) == (2 + 2 + 1 + 1 + 1 + 1), "SPacketCreateNewChar size assert failed!");
+inline constexpr int S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+
+// Server replies to SPacketCreateNewChar
+struct CPacketCreateNewCharResponse
+{
+    uint16_t    id;
+    uint8_t     error;
+};
 
 #pragma pack(pop)
 }

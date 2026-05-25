@@ -16,11 +16,13 @@ namespace Client
     struct OnlineData
     {
         bool hasConnectedToWorld = false;
+        bool isAuthed = false;
         std::vector<NECRO::CharacterData> characters{};
 
         void Zero()
         {
             hasConnectedToWorld = false;
+            isAuthed = false;
             characters.clear();
         }
     };
@@ -52,6 +54,11 @@ namespace Client
         OnlineData& GetData()
         {
             return m_data;
+        }
+
+        void QueuePacket(NetworkMessage&& m)
+        {
+            m_worldSocket->QueuePacket(std::move(m));
         }
     };
 
