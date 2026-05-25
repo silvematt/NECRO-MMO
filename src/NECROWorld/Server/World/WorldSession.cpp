@@ -10,8 +10,9 @@ namespace World
     {
         std::unordered_map<uint16_t, WorldHandler> handlers;
 
-        handlers[static_cast<int>(World::PacketIDs::AUTH_SESSION)] = { NECRO::World::WorldSocketStatus::SESSIONKEY_GATHERED, sizeof(NECRO::World::SPacketWorldGreet) , &HandleGreetPacket };
-        handlers[static_cast<int>(World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(NECRO::World::SPacketCreateNewChar) , &Handle_SPacketCreateNewChar };
+        handlers[static_cast<uint16_t>(World::PacketIDs::AUTH_SESSION)] = { NECRO::World::WorldSocketStatus::SESSIONKEY_GATHERED, sizeof(NECRO::World::SPacketWorldGreet) , &HandleGreetPacket };
+        handlers[static_cast<uint16_t>(World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::AUTHED, S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE , &Handle_SPacketCreateNewChar };
+        handlers[static_cast<uint16_t>(World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::AUTHED, S_PACKET_DELETE_CHAR_INITIAL_SIZE , &Handle_SPacketDeleteCharacter };
 
         return handlers;
     }
@@ -415,23 +416,23 @@ namespace World
         
         // Check for packet size - we check both against m_currentDecryptedPacket.GetActiveSize and client's delcared size
         // 1.
-        if (m_currentDecryptedPacket.GetActiveSize() < sizeof(SPacketCreateNewChar))
+        if (m_currentDecryptedPacket.GetActiveSize() < (sizeof(SPacketCreateNewChar)-1))
             return false;
 
         // 2.
-        if (m_currentDecryptedPacket.GetActiveSize() > sizeof(SPacketCreateNewChar) + CHARACTER_MAX_NAME_LENGTH)
+        if (m_currentDecryptedPacket.GetActiveSize() > (sizeof(SPacketCreateNewChar)-1) + CHARACTER_MAX_NAME_LENGTH)
             return false;
 
         // 3. 
-        if (pcktData->size < sizeof(SPacketCreateNewChar) - S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE)
+        if (pcktData->size < (sizeof(SPacketCreateNewChar)-1) - S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE)
             return false;
 
         // 4.
-        if (pcktData->size > sizeof(SPacketCreateNewChar) - S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE + CHARACTER_MAX_NAME_LENGTH)
+        if (pcktData->size > (sizeof(SPacketCreateNewChar)-1) - S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE + CHARACTER_MAX_NAME_LENGTH)
             return false;
 
         // 5. 
-        if (m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketCreateNewChar) + pcktData->characterNameLength || m_currentDecryptedPacket.GetActiveSize() != pcktData->size + S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE)
+        if (m_currentDecryptedPacket.GetActiveSize() != (sizeof(SPacketCreateNewChar)-1) + pcktData->characterNameLength || m_currentDecryptedPacket.GetActiveSize() != pcktData->size + S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE)
             return false;
 
         // Check for fields:
@@ -605,5 +606,183 @@ namespace World
         return true;
     }
 
+    bool WorldSession::Handle_SPacketDeleteCharacter()
+    {
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        SPacketDeleteCharacter* pcktData = reinterpret_cast<SPacketDeleteCharacter*>(m_currentDecryptedPacket.GetReadPointer());
+
+        // Pre-Checks
+        // Check for packet size - we check both against m_currentDecryptedPacket.GetActiveSize and client's delcared size
+        // 1.
+        if (m_currentDecryptedPacket.GetActiveSize() < (sizeof(SPacketDeleteCharacter)-1))
+            return false;
+
+        // 2.
+        if (m_currentDecryptedPacket.GetActiveSize() > (sizeof(SPacketDeleteCharacter)-1) + CHARACTER_MAX_NAME_LENGTH)
+            return false;
+
+        // 3. 
+        if (pcktData->size < (sizeof(SPacketDeleteCharacter)-1) - S_PACKET_DELETE_CHAR_INITIAL_SIZE)
+            return false;
+
+        // 4.
+        if (pcktData->size > (sizeof(SPacketDeleteCharacter)-1) - S_PACKET_DELETE_CHAR_INITIAL_SIZE + CHARACTER_MAX_NAME_LENGTH)
+            return false;
+
+        // 5. 
+        LOG_CRITICAL("{} {} {}", m_currentDecryptedPacket.GetActiveSize(), (sizeof(SPacketDeleteCharacter) - 1) + pcktData->characterNameLength, pcktData->size + S_PACKET_DELETE_CHAR_INITIAL_SIZE);
+        if (m_currentDecryptedPacket.GetActiveSize() != (sizeof(SPacketDeleteCharacter)-1) + pcktData->characterNameLength || m_currentDecryptedPacket.GetActiveSize() != pcktData->size + S_PACKET_DELETE_CHAR_INITIAL_SIZE)
+            return false;
+
+        // Check for fields:
+        if (pcktData->characterNameLength == 0 || pcktData->characterNameLength > CHARACTER_MAX_NAME_LENGTH)
+            return false;
+
+        // Check for input validation
+        for (int i = 0; i < pcktData->characterNameLength; i++)
+            if (!std::isalnum(static_cast<unsigned char>(pcktData->characterName[i])))
+                return false;
+
+        // All good
+
+        m_data.characterNameToDelete = std::string((char const*)pcktData->characterName, pcktData->characterNameLength);
+        m_data.characterIDToDelete = pcktData->characterID;
+
+        // Run queries
+        // 1. Check if character exists
+        // 2. Check if character belongs to m_data.accoutid
+        auto& dbworker = Server::Instance().GetCharactersDBPool();
+        {
+            DBRequest req(m_ioContextRef, false);
+            req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_CHECK_BELONGS_TO_ACCOUNTID), {pcktData->characterID, m_data.accountID } });
+
+            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
+            std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                {
+                    if (auto lockedSelf = weakSelf.lock())
+                        return lockedSelf->DBCallback_HandleDeleteCharacterChecks(ec, res);
+
+                    return false; // WorldSession is destroyed (disconnect)
+                };
+
+            req.m_cancelToken = weakSelf;
+
+            if (!dbworker.TryEnqueue(std::move(req)))
+                return false; // TODO, we could return a SERVER_BUSY and not drop the connection, but just cancel the current action if possible
+        }
+
+        return true;
+    }
+
+    bool WorldSession::DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    {
+        if (!IsOpen())
+            return false;
+
+        if (ec != 0)
+        {
+            LOG_DEBUG("DBCallback_HandleDeleteCharacterChecks's query returned an error. There's no way to continue. Dropping socket.");
+            CloseSocket();
+            return false;
+        }
+
+        LOG_DEBUG("Handling DBCallback_HandleDeleteCharacterChecks for user {}!", m_data.accountID);
+
+        // DB callbacks should also update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        if (result[0].count() > 0)
+        {
+            mysqlx::Row r = result[0].fetchOne();
+
+            std::string characterNameInDB = r[0].get<std::string>();
+
+            // ID - AccountID corresponds - check if the input by the player was correct
+            if (m_data.characterNameToDelete == r[0].get<std::string>())
+            {
+                // Perform the delete
+                auto& dbworker = Server::Instance().GetCharactersDBPool();
+                {
+                    DBRequest req(m_ioContextRef, false);
+                    req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_DELETE_CHARACTER), {m_data.characterIDToDelete, characterNameInDB, m_data.accountID} });
+
+                    // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
+                    std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+                    req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                        {
+                            if (auto lockedSelf = weakSelf.lock())
+                                return lockedSelf->DBCallback_HandleDeleteCharacterFinal(ec, res);
+
+                            return false; // WorldSession is destroyed (disconnect)
+                        };
+
+                    req.m_cancelToken = weakSelf;
+
+                    if (!dbworker.TryEnqueue(std::move(req)))
+                    {
+                        CloseSocket();
+                        return false; // TODO, we could return a SERVER_BUSY and not drop the connection, but just cancel the current action if possible
+                    }
+                }
+
+                return true;
+            } // if the name inserted was wrong, we fallback to the failed packet send
+        }
+        // else character doesn't exist, doesn't belong to this account or the player has inserted the wrong name in the dialog, send an error 
+
+        Packet p;
+        p << static_cast<uint16_t>(PacketIDs::CHAR_DELETE_CHARACTER);
+        p << static_cast<uint8_t>(WorldResults::FAILED);
+
+        NetworkMessage m(std::move(p));
+        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+        if (encryptRes < 0)
+        {
+            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            CloseSocket();
+            return false;
+        }
+        QueuePacket(std::move(m));
+
+        return true;
+    }
+
+    bool WorldSession::DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    {
+        if (!IsOpen())
+            return false;
+
+        if (ec != 0)
+        {
+            LOG_DEBUG("DBCallback_HandleDeleteCharacterFinal's query returned an error. There's no way to continue. Dropping socket.");
+            CloseSocket();
+            return false;
+        }
+
+        LOG_DEBUG("Character {} delete!", m_data.characterNameToDelete);
+
+        // DB callbacks should also update last activity
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        // Deleted
+
+        Packet p;
+        p << static_cast<uint16_t>(PacketIDs::CHAR_DELETE_CHARACTER);
+        p << static_cast<uint8_t>(WorldResults::SUCCESS);
+
+        NetworkMessage m(std::move(p));
+        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+        if (encryptRes < 0)
+        {
+            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            CloseSocket();
+            return false;
+        }
+        QueuePacket(std::move(m));
+
+        return true;
+    }
 }
 }

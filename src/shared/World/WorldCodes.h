@@ -19,6 +19,7 @@ enum class PacketIDs : uint16_t
     AUTH_SESSION = 0,
     ENUM_CHARACTERS,
     CHAR_CREATE_NEW,
+    CHAR_DELETE_CHARACTER
 };
 
 //--------------------------------------------------------------------------------------------
@@ -93,9 +94,9 @@ struct SPacketCreateNewChar
     uint8_t     gender;
     
     uint8_t     characterNameLength;
-    uint8_t     characterName[];
+    uint8_t     characterName[1];
 };
-static_assert(sizeof(SPacketCreateNewChar) == (2 + 2 + 1 + 1 + 1 + 1), "SPacketCreateNewChar size assert failed!");
+static_assert(sizeof(SPacketCreateNewChar) == (2 + 2 + 1 + 1 + 1 + 1 + 1), "SPacketCreateNewChar size assert failed!");
 inline constexpr int S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
 // Server replies to SPacketCreateNewChar
@@ -104,6 +105,29 @@ struct CPacketCreateNewCharResponse
     uint16_t    id;
     uint8_t     error;
 };
+static_assert(sizeof(CPacketCreateNewCharResponse) == (2 + 1), "CPacketCreateNewCharResponse size assert failed!");
+
+// Client requests deletion of character
+struct SPacketDeleteCharacter
+{
+    uint16_t    id;
+    uint16_t    size;
+
+    uint32_t    characterID;
+    uint8_t     characterNameLength;
+    uint8_t     characterName[1];
+};
+static_assert(sizeof(SPacketDeleteCharacter) == (2 + 2 + 4 + 1 + 1), "CPacketCreateNewCharResponse size assert failed!");
+inline constexpr int S_PACKET_DELETE_CHAR_INITIAL_SIZE = 4; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+
+// Server replies to SPacketDeleteCharacter
+struct CPacketDeleteCharacterResponse
+{
+    uint16_t    id;
+    uint8_t     error;
+};
+static_assert(sizeof(CPacketDeleteCharacterResponse) == (2 + 1), "CPacketDeleteCharacterResponse size assert failed!");
+
 
 #pragma pack(pop)
 }

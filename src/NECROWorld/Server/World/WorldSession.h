@@ -46,6 +46,9 @@ namespace World
         int newCharacterRace;
         int newCharacterClass;
         int newCharacterGender;
+
+        std::string characterNameToDelete;
+        int         characterIDToDelete;
     };
 
 class WorldSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<WorldSession>
@@ -87,6 +90,11 @@ public:
     bool    Handle_SPacketCreateNewChar();
     bool    DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+
+    bool    Handle_SPacketDeleteCharacter();
+    bool    DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+
 
 };
 }
