@@ -38,9 +38,9 @@ namespace Auth
     {
         std::unordered_map<uint8_t, AuthHandler> handlers;
 
-        handlers[static_cast<int>(PacketIDs::LOGIN_GATHER_INFO)] = { SocketStatus::GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket };
-        handlers[static_cast<int>(PacketIDs::LOGIN_ATTEMPT)] = { SocketStatus::LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket };
-        handlers[static_cast<int>(PacketIDs::LOGIN_GATHER_REALMLIST)] = { SocketStatus::AUTHED, sizeof(SPacketGatherRealmlist), &HandleGatherRealmlistPacket };
+        handlers[static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO)] = { SocketStatus::GATHER_INFO, S_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE, &HandleAuthLoginGatherInfoPacket };
+        handlers[static_cast<uint8_t>(PacketIDs::LOGIN_ATTEMPT)] = { SocketStatus::LOGIN_ATTEMPT, S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE, &HandleAuthLoginProofPacket };
+        handlers[static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_REALMLIST)] = { SocketStatus::AUTHED, sizeof(SPacketGatherRealmlist), &HandleGatherRealmlistPacket };
 
         return handlers;
     }
