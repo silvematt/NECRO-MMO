@@ -95,7 +95,8 @@ public:
     bool    DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
-
+    bool    Handle_SPacketEnumCharacter();
+    bool    DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 };
 }
 }

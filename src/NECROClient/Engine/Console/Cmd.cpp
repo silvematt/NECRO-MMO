@@ -36,6 +36,7 @@ namespace Client
 		c.Log("'/authworld' (ip, port): connects to a world server (run after 'authconnect').");
 		c.Log("'/createchar' (name, race, class, gender): creates a new character.");
 		c.Log("'/deletechar' (charID, charName): deletes one of your characters.");
+		c.Log("'/enumchars' (): enums all the characters on this account.");
 
 		return 1; // return 1 to not close the console after this function
 	}
@@ -258,6 +259,32 @@ namespace Client
 		p << static_cast<uint32_t>(characterID);
 		p << static_cast<uint8_t>(characterName.length());
 		p << characterName;
+
+		NetworkMessage encrypted(std::move(p));
+		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)
+		{
+			LOG_ERROR("Failed to encrypt packet.");
+			c.Log("Failed to encrypt packet.");
+			return 1;
+		}
+		NetworkMessage m(std::move(encrypted));
+		engine.GetWorldManager().QueuePacket(NetworkMessage(std::move(m)));
+
+		return 0;
+	}
+
+	int Cmd::Cmd_EnumCharacters(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (!engine.GetWorldManager().GetData().isAuthed)
+		{
+			c.Log("You are not connected to the world server.");
+			return 1;
+		}
+
+		Packet p;
+		p << static_cast<uint16_t>(NECRO::World::PacketIDs::ENUM_CHARACTERS);
 
 		NetworkMessage encrypted(std::move(p));
 		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)

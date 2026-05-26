@@ -86,7 +86,7 @@ namespace Client
             m_currentDecryptedPacket.Write(encryptedPacket.GetDecryptedPacketPtr(), plaintextLen);
 
             // If the packet has 1 byte only, we cannot even read the cmd
-            if (plaintextLen <= sizeof(uint16_t))
+            if (plaintextLen < sizeof(uint16_t))
                 return -1;
 
             // Packet is here the decrpyted [CMD | ...] and it arrived fully
@@ -178,6 +178,8 @@ namespace Client
             return false;
 
         // TODO Check if the sizes match before reading anything (if server lied or not)
+
+        worldManager.GetData().characters.clear();
 
         // This is a more involved way of reading the packet, but it allows to read more than one variable length array
         uint8_t* cursor = reinterpret_cast<uint8_t*>(&pckData->characters);
