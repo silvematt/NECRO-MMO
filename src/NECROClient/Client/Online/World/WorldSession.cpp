@@ -19,6 +19,7 @@ namespace Client
 
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, NECRO::World::C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE, &WorldSession::HandlePacketEnumCharacters };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketCreateNewCharResponse), &WorldSession::Handle_CreateNewCharResponse};
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketDeleteCharacterResponse) , &Handle_DeleteCharacterResponse };
 
         return handlers;
     }
@@ -257,7 +258,7 @@ namespace Client
 
     bool WorldSession::Handle_CreateNewCharResponse()
     {
-        LOG_CRITICAL("HandlePacketEnumCharacters...");
+        LOG_CRITICAL("Handle_CreateNewCharResponse...");
 
         Console& c = engine.GetConsole();
         NECRO::World::CPacketCreateNewCharResponse* pckData = reinterpret_cast<NECRO::World::CPacketCreateNewCharResponse*>(m_currentDecryptedPacket.GetBasePointer());
@@ -283,6 +284,26 @@ namespace Client
         {
             c.Log("Character Created!");
             // Jump to selection screen
+        }
+
+        return true;
+    }
+
+    bool WorldSession::Handle_DeleteCharacterResponse()
+    {
+        LOG_CRITICAL("Handle_DeleteCharacterResponse...");
+
+        Console& c = engine.GetConsole();
+        NECRO::World::CPacketDeleteCharacterResponse* pckData = reinterpret_cast<NECRO::World::CPacketDeleteCharacterResponse*>(m_currentDecryptedPacket.GetBasePointer());
+
+        // Check for error - TODO currently the server just drops the connection, if we want graceful shutdown we should do something like this:
+        if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::FAILED))
+        {
+            c.Log("Character deletion failed!!");
+        }
+        else if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::SUCCESS))
+        {
+            c.Log("Character deletion succeeded!");
         }
 
         return true;

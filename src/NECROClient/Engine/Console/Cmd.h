@@ -38,6 +38,7 @@ namespace Client
 
 		// WorldCmds
 		int		Cmd_CreateCharacter(const std::vector<std::string>& args);
+		int		Cmd_DeleteCharacter(const std::vector<std::string>& args);
 
 	};
 

@@ -25,6 +25,7 @@ namespace Client
 		m_cmds.insert({ "/authconnect", Cmd(&Cmd::Cmd_ConnectToAuthServer) });
 		m_cmds.insert({ "/authworld", Cmd(&Cmd::Cmd_ConnectToWorldServer) });
 		m_cmds.insert({ "/createchar", Cmd(&Cmd::Cmd_CreateCharacter) });
+		m_cmds.insert({ "/deletechar", Cmd(&Cmd::Cmd_DeleteCharacter) });
 
 		// Load history if present
 		m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::in);

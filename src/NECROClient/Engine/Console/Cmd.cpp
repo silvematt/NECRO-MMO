@@ -35,6 +35,7 @@ namespace Client
 		c.Log("'/authconnect' (): connects to the auth server.");
 		c.Log("'/authworld' (ip, port): connects to a world server (run after 'authconnect').");
 		c.Log("'/createchar' (name, race, class, gender): creates a new character.");
+		c.Log("'/deletechar' (charID, charName): deletes one of your characters.");
 
 		return 1; // return 1 to not close the console after this function
 	}
@@ -210,7 +211,7 @@ namespace Client
 		Packet p;
 
 		p << static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_CREATE_NEW);
-		p << static_cast<uint16_t>(sizeof(NECRO::World::SPacketCreateNewChar) - NECRO::World::S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE + name.length());
+		p << static_cast<uint16_t>((sizeof(NECRO::World::SPacketCreateNewChar)-1) - NECRO::World::S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE + name.length());
 
 		p << static_cast<uint8_t>(race);
 		p << static_cast<uint8_t>(charClass);
@@ -218,6 +219,45 @@ namespace Client
 		p << static_cast<uint8_t>(name.length());
 		p << name;
 
+		NetworkMessage encrypted(std::move(p));
+		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)
+		{
+			LOG_ERROR("Failed to encrypt packet.");
+			c.Log("Failed to encrypt packet.");
+			return 1;
+		}
+		NetworkMessage m(std::move(encrypted));
+		engine.GetWorldManager().QueuePacket(NetworkMessage(std::move(m)));
+
+		return 0;
+	}
+
+	int Cmd::Cmd_DeleteCharacter(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (args.size() < 3)
+		{
+			c.Log("Cmd_CreateCharacter: requires 4 arguments [name, race, class, gender].");
+			return 1;
+		}
+
+		if (!engine.GetWorldManager().GetData().isAuthed)
+		{
+			c.Log("You are not connected to the world server.");
+			return 1;
+		}
+
+		int characterID = ClientUtility::TryParseInt(args[1]);
+		const std::string& characterName = args[2];
+
+		Packet p;
+
+		p << static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_DELETE_CHARACTER);
+		p << static_cast<uint16_t>((sizeof(NECRO::World::SPacketDeleteCharacter)-1) - NECRO::World::S_PACKET_DELETE_CHAR_INITIAL_SIZE + characterName.length());
+		p << static_cast<uint32_t>(characterID);
+		p << static_cast<uint8_t>(characterName.length());
+		p << characterName;
 
 		NetworkMessage encrypted(std::move(p));
 		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)

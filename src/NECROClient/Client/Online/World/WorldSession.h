@@ -45,8 +45,8 @@ namespace Client
         void    SendCallback() override;
 
         bool    HandlePacketEnumCharacters();
-
         bool    Handle_CreateNewCharResponse();
+        bool    Handle_DeleteCharacterResponse();
     };
 }
 }
