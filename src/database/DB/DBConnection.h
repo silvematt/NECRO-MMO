@@ -1,5 +1,4 @@
-#ifndef NECRO_DBCONNECTION_H
-#define NECRO_DBCONNECTION_H
+#pragma once
 
 #include <string>
 #include <memory>
@@ -30,17 +29,17 @@ namespace NECRO
             }
             catch (const mysqlx::Error& err)
             {
-                LOG_INFO(std::string("Error initializing session: ") + err.what());
+                LOG_INFO(std::string("Error initializing DBConnection: ") + err.what());
                 return -1;
             }
             catch (std::exception& ex)
             {
-                LOG_INFO(std::string("Standard exception: ") + ex.what());
+                LOG_INFO(std::string("Standard exception during DBConnection initialization: ") + ex.what());
                 return -2;
             }
             catch (...)
             {
-                LOG_INFO(std::string("Unknown exception during session initialization."));
+                LOG_INFO(std::string("Unknown exception during DBConnection initialization."));
                 return -3;
             }
 
@@ -67,7 +66,4 @@ namespace NECRO
             }
         }
     };
-
 }
-
-#endif

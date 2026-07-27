@@ -1,5 +1,4 @@
-#ifndef NECRO_LOGIN_DATABASE_H
-#define NECRO_LOGIN_DATABASE_H
+#pragma once
 
 #include "Database.h"
 #include "DBConnection.h"
@@ -21,9 +20,8 @@ namespace NECRO
 		GATHER_REALMS,
 		SEL_SESSIONKEY_BY_GREETCODE,
 		INVALIDATE_GREETCODE,
-		CREDENTIALS_CHECK
+		CREDENTIALS_CHECK			// Credentials check introduced after Proof of Work protocol change, selects the ID and the password
 	};
-
 
 	//-----------------------------------------------------------------------------------------------------
 	// Wrapper for login database connection
@@ -41,13 +39,6 @@ namespace NECRO
 			}
 			else
 				return -1;
-
-			/*
-			if (m_conn.Init("localhost", 33060, "root", "root") == 0)
-				return 0;
-			else
-				return -1;
-			*/
 		}
 
 		void PrepareAllStatements() override
@@ -64,20 +55,13 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::GATHER_REALMS), ("SELECT id, name, address, port, status FROM necroauth.realmlist ORDER BY name"));
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), "SELECT userid, sessionKey, starttime, authip FROM necroauth.active_sessions WHERE greetcode = ?;");
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::INVALIDATE_GREETCODE), "UPDATE necroauth.active_sessions SET greetcode = NULL WHERE greetcode = ?;");
-
-			// Credentials check introduced after Proof of Work protocol change
 			PrepareStatement(static_cast<int>(LoginDatabaseStatements::CREDENTIALS_CHECK), ("SELECT id, password FROM necroauth.users WHERE username = ?;"));
 		}
 
 		int Close() override
 		{
-			//m_conn.Close();
 			m_pool.Close();
-
 			return 0;
 		}
 	};
-
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NECRO_DATABASE_H
-#define NECRO_DATABASE_H
+#pragma once
 
 #include <unordered_map>
 
@@ -13,20 +12,11 @@ namespace NECRO
 	//-----------------------------------------------------------------------------------------------------
 	class Database
 	{
-	public:
-		enum class DBType
-		{
-			LOGIN_DATABASE = 0
-		};
-
-
 	protected:
 		std::unordered_map<uint32_t, std::string> m_statementsMap;
 
 	public:
-		//DBConnection m_conn;
 		DBConnectionPool m_pool;
-
 
 	public:
 		virtual int Init(const std::string& URI) = 0;
@@ -62,7 +52,4 @@ namespace NECRO
 
 		virtual int Close() = 0;
 	};
-
 }
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NECRO_DB_REQUEST_H
-#define NECRO_DB_REQUEST_H
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -84,5 +83,3 @@ public:
 		return !m_steps.empty();
 	}
 };
-
-#endif

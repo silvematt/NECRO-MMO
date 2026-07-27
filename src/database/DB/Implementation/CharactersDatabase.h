@@ -1,5 +1,4 @@
-#ifndef NECRO_CHARACTERS_DATABASE_H
-#define NECRO_CHARACTERS_DATABASE_H
+#pragma once
 
 #include "Database.h"
 #include "DBConnection.h"
@@ -37,13 +36,6 @@ namespace NECRO
 			}
 			else
 				return -1;
-
-			/*
-			if (m_conn.Init("localhost", 33060, "root", "root") == 0)
-				return 0;
-			else
-				return -1;
-			*/
 		}
 
 		void PrepareAllStatements() override
@@ -60,24 +52,15 @@ namespace NECRO
 				"WHERE id=?");
 
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_DEL_CHARACTER), "DELETE FROM necrochars.characters WHERE id = ?");
-
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_CHECK_NAME_ALREADY_IN_USE), ("SELECT id FROM necrochars.characters WHERE NAME = ?;"));
-
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_CHECK_BELONGS_TO_ACCOUNTID), ("SELECT name FROM necrochars.characters WHERE id = ? AND accountid = ?;"));
-
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_DELETE_CHARACTER), "DELETE FROM necrochars.characters WHERE id = ? AND name = ? AND accountid = ?");
-
 		}
 
 		int Close() override
 		{
-			//m_conn.Close();
 			m_pool.Close();
-
 			return 0;
 		}
 	};
-
 }
-
-#endif

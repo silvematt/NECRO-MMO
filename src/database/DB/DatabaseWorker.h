@@ -1,5 +1,4 @@
-#ifndef NECRO_DATABASE_WORKER_H
-#define NECRO_DATABASE_WORKER_H
+#pragma once
 
 #include <thread>
 #include <mutex>
@@ -16,7 +15,6 @@ namespace NECRO
 {
 	inline constexpr int DB_REQUEST_TIMEOUT_IF_MYSQL_DOWN_MS = 10000; // This should be the same as the idle-timeout-kick of the server
 
-
 	// Max m_externalQueue size
 	// It's to prevent the server to go OOM by bounding the DB queues sizes
 	inline constexpr int DB_QUEUE_MAX_SIZE = 100000;
@@ -27,7 +25,6 @@ namespace NECRO
 	// TODO 
 	// 1.One dbworker on multiple databases? 
 	// 2. Handle the MySQL errors instead of recreating the MySQL session for every single thing.
-	// 3. Pool of DBWorkers that share the requests queue, or a DBWorkersPool that distributes requests
 	//-----------------------------------------------------------------------------------------------------
 	template<class T>
 	class DatabaseWorker
@@ -663,6 +660,4 @@ namespace NECRO
 			return results;
 		}
 	};
-
 }
-#endif

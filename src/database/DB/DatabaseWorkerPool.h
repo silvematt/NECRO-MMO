@@ -1,5 +1,4 @@
-#ifndef DATABASE_WORKER_POOL
-#define DATABASE_WORKER_POOL
+#pragma once
 
 #include <vector>
 #include <string>
@@ -16,7 +15,9 @@
 
 namespace NECRO
 {
-
+//-------------------------------------------------------------------------------------------
+// Pool of DBWorkers used to split DBRequests across multiple threads.
+//-------------------------------------------------------------------------------------------
 template<class T>
 class DatabaseWorkerPool
 {
@@ -155,7 +156,5 @@ public:
 			m_databases[i]->DirectExecute(std::move(copy));
 		}
 	}
-
 };
 }
-#endif
