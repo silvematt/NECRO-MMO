@@ -1,5 +1,4 @@
-#ifndef NECRO_OPEN_SSL_MANAGER
-#define NECRO_OPEN_SSL_MANAGER
+#pragma once
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -200,7 +199,4 @@ namespace NECRO
 			return 0;
 		}
 	};
-
 }
-
-#endif

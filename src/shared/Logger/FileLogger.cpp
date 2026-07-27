@@ -22,7 +22,7 @@ namespace NECRO
     {
         m_logFile.open(filePath, std::ios::out | std::ios::app);
         if (!m_logFile.is_open())
-            std::cerr << "Error while trying to open LogFile: " << DEFAULT_LOG_FILE_NAME << std::endl;
+            std::cerr << "Error while trying to open LogFile: " << filePath << std::endl;
     }
 
 
@@ -31,9 +31,6 @@ namespace NECRO
         // Prepare to handle variadic arguments
         va_list args;
         va_start(args, line); // 'line' is the last argument before variadic ones
-
-        // Format the message (parse variadic arguments) (not used anymore since FMT)
-        // std::string formattedMessage = FormatString(message.c_str(), args);
 
         std::lock_guard<std::mutex> guard(m_logMutex);
 
@@ -60,5 +57,4 @@ namespace NECRO
 
         va_end(args);
     }
-
 }

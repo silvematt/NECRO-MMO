@@ -1,5 +1,4 @@
-#ifndef AUTH_CODES_H
-#define AUTH_CODES_H
+#pragma once
 
 #include "AES.h"
 
@@ -7,7 +6,7 @@ namespace NECRO
 {
 namespace Auth
 {
-    // Status of the sockets during communication
+    // Status of the AuthSessions during communication
     enum class SocketStatus
     {
         HANDSHAKING = 0,
@@ -156,5 +155,3 @@ namespace Auth
     #pragma pack(pop)
 }
 }
-
-#endif

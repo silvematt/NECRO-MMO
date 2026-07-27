@@ -1,11 +1,9 @@
-#ifndef NECRO_CONSOLE_LOGGER_H
-#define NECRO_CONSOLE_LOGGER_H
+#pragma once
 
 #include "Logger.h"
 
 namespace NECRO
 {
-
 	class ConsoleLogger : public Logger
 	{
 	public:
@@ -21,5 +19,3 @@ namespace NECRO
 	};
 
 }
-
-#endif

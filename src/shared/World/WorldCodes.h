@@ -41,7 +41,7 @@ enum class WorldResults : uint16_t
 // Authentication:
 // Clients sends the greet packet, [GREETCODE | ENCRYPTED_PACKET] server decrypts it
 // Server sends CEnumCharactersPacket as [ENCRYPTED_PACKET] ([PCKT_SIZE | IV | TAG | CIPHERTEXT])
-// Client processes decrypts and processes the packet, if this fails, the client wasn't legit (may have stolen the greetcode(
+// Client processes decrypts and processes the packet, if this fails, the client wasn't legit (may have stolen the greetcode)
 struct SPacketWorldGreet
 {
     uint16_t	id;

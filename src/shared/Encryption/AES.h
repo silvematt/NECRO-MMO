@@ -1,5 +1,4 @@
-#ifndef NECRO_AES_H
-#define NECRO_AES_H
+#pragma once
 
 #include <array>
 #include <stdexcept>
@@ -205,5 +204,3 @@ namespace NECRO
 
 	}
 }
-
-#endif

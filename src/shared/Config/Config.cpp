@@ -23,12 +23,16 @@ namespace NECRO
 		std::string line;
 		while (std::getline(file, line))
 		{
-			// Skip comments
-			if (line.empty() || line[0] == '#')
+			// Skip empty lines
+			if (line.empty())
 				continue;
 
 			// Delete spaces
 			line.erase(remove_if(line.begin(), line.end(), [](unsigned char c) { return std::isspace(c); }), line.end());
+
+			// Skip comments
+			if (line[0] == '#')
+				continue;
 
 			// Get field's name
 			std::string vName = line.substr(0, line.find('='));

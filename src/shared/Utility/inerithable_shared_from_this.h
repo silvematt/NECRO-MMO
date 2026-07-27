@@ -1,5 +1,4 @@
-#ifndef INERHITABLE_SHARED_FROM_THIS_H
-#define INERHITABLE_SHARED_FROM_THIS_H
+#pragma once
 
 #include <memory>
 
@@ -27,5 +26,3 @@ public:
         );
     }
 };
-
-#endif

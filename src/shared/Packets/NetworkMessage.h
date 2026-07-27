@@ -1,5 +1,4 @@
-#ifndef NETWORK_MESSAGE_H
-#define NETWORK_MESSAGE_H
+#pragma once
 
 #include <vector>
 
@@ -246,7 +245,7 @@ namespace NECRO
 
             if (GetRemainingSpace() == 0)
             {
-                // It's probably a good idea to have an upperbound for how much this can grow
+                // It's a good idea to have an upperbound for how much this can grow
                 size_t newSize = Size() + (Size() / 2);
                 if (newSize > NETWORK_MESSAGE_ENLARGE_MAX_SIZE)
                     return -1;
@@ -263,4 +262,3 @@ namespace NECRO
         }
     };
 }
-#endif

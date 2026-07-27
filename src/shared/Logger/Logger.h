@@ -1,5 +1,4 @@
-#ifndef NECRO_LOGGER_H
-#define NECRO_LOGGER_H
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -15,7 +14,7 @@
 namespace NECRO
 {
     //---------------------------------------------------------------------------
-    // Simple abstract Logger class, used by Console/File Loggers implementations
+    // Abstract Logger class, used by Console/File Loggers implementations
     //---------------------------------------------------------------------------
     class Logger
     {
@@ -32,6 +31,7 @@ namespace NECRO
         };
 
     protected:
+        // Protects concurrent logs from multiple threads
         std::mutex m_logMutex;
 
         std::string GetLogLevelStr(LogLevel level);
@@ -77,7 +77,4 @@ namespace NECRO
         #define SLOG_ERROR(logger, message, ...) LOG_FMT(logger, Logger::LogLevel::LOG_LEVEL_ERROR, message, ##__VA_ARGS__)
         #define SLOG_CRITICAL(logger, message, ...) LOG_FMT(logger, Logger::LogLevel::LOG_LEVEL_CRITICAL, message, ##__VA_ARGS__)
     };
-
 }
-
-#endif

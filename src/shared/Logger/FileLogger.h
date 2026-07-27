@@ -1,5 +1,4 @@
-#ifndef NECRO_FILE_LOGGER_H
-#define NECRO_FILE_LOGGER_H
+#pragma once
 
 #include <fstream>
 
@@ -29,4 +28,3 @@ namespace NECRO
 		virtual void Log(const std::string& message, Logger::LogLevel lvl, const char* file, int line, ...) override;
 	};
 }
-#endif

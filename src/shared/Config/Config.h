@@ -1,5 +1,4 @@
-#ifndef NECRO_AUTH_SERV_CONFIG_H
-#define NECRO_AUTH_SERV_CONFIG_H
+#pragma once
 
 #include <unordered_map>
 #include <string>
@@ -26,5 +25,3 @@ namespace NECRO
 		std::string		GetString(const std::string& key, std::string fallback);
 	};
 }
-
-#endif

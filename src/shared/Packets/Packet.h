@@ -1,5 +1,4 @@
-#ifndef PACKET_H
-#define PACKET_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -167,5 +166,3 @@ namespace NECRO
     };
 
 }
-
-#endif
