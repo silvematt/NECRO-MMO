@@ -190,7 +190,7 @@ TEST(NetworkMessage, OversizedFrameRejected)
     std::vector<uint8_t> aad;
 
     NetworkMessage receiver;
-    uint32_t bogusSize = htonl(257); // > MAX_PACKET_SIZE_AES_DECRYPT (256)
+    uint32_t bogusSize = htonl(NECRO::MAX_PACKET_SIZE_AES_DECRYPT+1); // > MAX_PACKET_SIZE_AES_DECRYPT (512)
     receiver.Write(&bogusSize, sizeof(bogusSize));
 
     EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size())), -2);
