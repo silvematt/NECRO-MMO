@@ -10,15 +10,16 @@ namespace NECRO
     // Prevents EnlargeBufferIfNeeded to grow out of bounds
     inline constexpr size_t NETWORK_MESSAGE_ENLARGE_MAX_SIZE = Packet::DEFAULT_PCKT_SIZE * 16;
 
+    // Upper bound on the packet size (IV + TAG + CIPHERTEXT) accepted by AESDecrypt (used in the WorldServer). 
+    // Guards against oversized/hostile packets.
+    inline constexpr uint32_t MAX_PACKET_SIZE_AES_DECRYPT = 512;
+
     //-----------------------------------------------------------------------------------------------------------
     // Higher-level view on packets, used for Network transmission.
     //-----------------------------------------------------------------------------------------------------------
     class NetworkMessage
     {
     private:
-        // Upper bound on the packet size (IV + TAG + CIPHERTEXT) accepted by AESDecrypt (used in the WorldServer). 
-        // Guards against oversized/hostile packets.
-        static constexpr uint32_t MAX_PACKET_SIZE_AES_DECRYPT = 512;
 
         size_t m_rpos;          // Read Pos
         size_t m_wpos;          // Write Pos 
