@@ -1,5 +1,4 @@
-#ifndef NECROHAMMER_SOCKET_MANAGER_H
-#define NECROHAMMER_SOCKET_MANAGER_H
+#pragma once
 
 #include <vector>
 
@@ -8,7 +7,6 @@
 
 #include "NetworkThread.h"
 #include "HammerSocket.h"
-
 #include "Config.h"
 
 namespace NECRO
@@ -37,8 +35,8 @@ namespace Hammer
 		ConfigSettings m_configSettings;
 
 		// Threads
-		NetworkThreadList m_networkThreads;
-		int m_networkThreadsCount;
+		NetworkThreadList	m_networkThreads;
+		int					m_networkThreadsCount;
 
 		// Timer to update the distribution of new sockets
 		std::unique_ptr<boost::asio::steady_timer> m_distributionTimer;
@@ -54,8 +52,7 @@ namespace Hammer
 			// Create the distribution timer
 			m_distributionTimer = std::make_unique<boost::asio::steady_timer>(m_ioContextRef);
 
-			// A mutex all threads share to call std::cout
-			for (int i = 0; i < threadCount; i++)
+			for (uint32_t i = 0; i < threadCount; i++)
 			{
 				// Create the threads
 				m_networkThreads.push_back(std::make_unique<NetworkThread<HammerSocket>>(i, false));
@@ -141,5 +138,3 @@ namespace Hammer
 	};
 }
 }
-
-#endif

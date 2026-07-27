@@ -1,5 +1,4 @@
-#ifndef NECRO_HAMMER_SOCKET_H
-#define NECRO_HAMMER_SOCKET_H
+#pragma once
 
 #include "TCPSocketBoost.h"
 #include "AuthCodes.h"
@@ -79,5 +78,3 @@ namespace Hammer
 	};
 }
 }
-
-#endif

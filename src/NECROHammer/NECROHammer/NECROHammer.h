@@ -1,9 +1,7 @@
-#ifndef NECRO_HAMMER_H
-#define NECRO_HAMMER_H
+#pragma once
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
-
 #include "SocketManager.h"
 
 #include <boost/asio.hpp>
@@ -35,13 +33,12 @@ namespace Hammer
 		}
 
 	private:
-		ConfigSettings m_configSettings;
-		bool m_isRunning;
+		ConfigSettings	m_configSettings;
+		bool			m_isRunning;
 
 		// Main ioContext
-		boost::asio::io_context	m_ioContext;
-
-		std::unique_ptr<SocketManager> m_sockManager;
+		boost::asio::io_context			m_ioContext;
+		std::unique_ptr<SocketManager>	m_sockManager;
 
 	public:
 		// Initializes the Hammer client
@@ -57,5 +54,3 @@ namespace Hammer
 	};
 }
 }
-
-#endif
