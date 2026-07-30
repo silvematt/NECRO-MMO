@@ -101,7 +101,7 @@ namespace Auth
 				return true;
 			else
 			{
-				// If so, update both activity and last try
+				// If so, update tries count
 				it->second.tries++;
 			}
 		}
@@ -111,7 +111,7 @@ namespace Auth
 				m_ipRequestMap.emplace(clientIP, IPRequestData{ 1 });
 			else
 			{
-				// If the map ever reaches IP_REQUEST_MAP_MAX_SIZE with a reasonable window , the server is getting overwhelmed beyond its limits.
+				// If the map ever reaches IP_REQUEST_MAP_MAX_SIZE within a reasonable window, the server is getting overwhelmed beyond its limits.
 				return true;
 			}
 		}
@@ -128,7 +128,7 @@ namespace Auth
 
 	void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 	{
-
+		// Not implemented, at Auth the connection must be under SSL 
 	}
 
 	void SocketManager::StartThreads()

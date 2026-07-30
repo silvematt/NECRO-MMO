@@ -108,7 +108,6 @@ namespace Auth
 		if (OpenSSLManager::ServerInit() != 0)
 			return -4;
 
-
 		// Make DBWorker Pool for Login database
 		int dbLoginThreadsCount = std::thread::hardware_concurrency();
 		if (m_configSettings.LOGIN_DATABASE_THREADS_COUNT != -1)

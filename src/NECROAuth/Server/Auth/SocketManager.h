@@ -1,5 +1,4 @@
-#ifndef NECRO_SOCKET_MANAGER_H
-#define NECRO_SOCKET_MANAGER_H
+#pragma once
 
 #include "NetworkThread.h"
 #include "AuthSession.h"
@@ -67,4 +66,3 @@ namespace Auth
 	};
 }
 }
-#endif

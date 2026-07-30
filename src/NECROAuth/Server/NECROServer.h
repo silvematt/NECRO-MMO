@@ -1,5 +1,4 @@
-#ifndef NECROAUTHSERVER_H
-#define NECROAUTHSERVER_H
+#pragma once
 
 #include <boost/asio.hpp>
 
@@ -30,8 +29,6 @@
 // if the account is flagged and the legit user changed his IP, we can put in place a way to clear "lastip" from the DB so the per-account-rate-limit is going to be disabled until a new successful authentication, like an email-confirmation step on the next attempt "we noticed unusual login activity, click this link"
 // we could also let set lastip in the same transaction that consumes the email token, so write lastip = <IP that requested the recovery>
 // 
-// TODO: Add client proof of work before TLS setup
-// 
 // TODO: Add per ip concurrent connections limit, stricter than m_ipRequestMap so that we can make the m_ipRequestMap more generous
 
 namespace NECRO
@@ -56,9 +53,9 @@ namespace Auth
 
 			// Server settings
 			uint16_t	MANAGER_SERVER_PORT = 61531;
-			int			MAX_CONNECTED_CLIENTS_PER_THREAD = -1; //-1 equals to no check
-			int			NETWORK_THREADS_COUNT = -1; //-1 equals to std::thread::hardware_concurrency()
-			uint32_t	CONNECTED_AND_IDLE_TIMEOUT_MS = 10000; // After CONNECTED_AND_IDLE_TIMEOUT_MS, kick the client if he doesn't proceed with the communication
+			int			MAX_CONNECTED_CLIENTS_PER_THREAD = -1;	//-1 equals to no check
+			int			NETWORK_THREADS_COUNT = -1;				//-1 equals to std::thread::hardware_concurrency()
+			uint32_t	CONNECTED_AND_IDLE_TIMEOUT_MS = 10000;	// After CONNECTED_AND_IDLE_TIMEOUT_MS, kick the client if he doesn't proceed with the communication
 			int			HANDSHAKING_AND_IDLE_TIMEOUT_MS = 10000;
 			int			CRYPTO_THREADS_COUNT = 1;
 			int			LOGIN_DATABASE_THREADS_COUNT = 1;
@@ -96,8 +93,8 @@ namespace Auth
 		bool			m_isRunning;
 		ConfigSettings	m_configSettings;
 
-		boost::asio::io_context m_ioContext;
-		std::unique_ptr<SocketManager> m_socketManager;
+		boost::asio::io_context			m_ioContext;
+		std::unique_ptr<SocketManager>	m_socketManager;
 
 		DatabaseWorkerPool<LoginDatabase> m_loginDBPool;
 
@@ -116,12 +113,12 @@ namespace Auth
 			return m_loginDBPool;
 		}
 
-		int						Init();
-		void					ApplySettings();
-		void					Start();
-		void					Update();
-		void					Stop();
-		int						Shutdown();
+		int		Init();
+		void	ApplySettings();
+		void	Start();
+		void	Update();
+		void	Stop();
+		int		Shutdown();
 
 
 		const ConfigSettings& GetSettings() const
@@ -136,5 +133,3 @@ namespace Auth
 	};
 }
 }
-
-#endif

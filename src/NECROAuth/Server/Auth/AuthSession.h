@@ -1,5 +1,4 @@
-#ifndef AUTH_SESSION_H
-#define AUTH_SESSION_H
+#pragma once
 
 #include "TCPSocketBoost.h"
 #include <AuthCodes.h>
@@ -17,15 +16,14 @@ namespace NECRO
 namespace Auth
 {
     class AuthSession;
-    #pragma pack(push, 1)
 
+    #pragma pack(push, 1)
     struct AuthHandler
     {
         SocketStatus status;
         size_t packetSize;
         bool (AuthSession::* handler)();
     };
-
     #pragma pack(pop)
 
     struct AccountData
@@ -74,7 +72,7 @@ namespace Auth
 
         std::chrono::steady_clock::time_point   m_lastActivity;
 
-        
+        // Count of packets (for MAX_PACKETS_EXCHANGE_PER_CLIENT)
         uint32_t m_packetsProcessed = 0;
 
     public:
@@ -113,8 +111,5 @@ namespace Auth
             return m_data;
         }
     };
-
 }
 }
-
-#endif

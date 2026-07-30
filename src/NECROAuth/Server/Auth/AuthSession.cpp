@@ -14,7 +14,7 @@ namespace Auth
 {
     static bool VerifyProofOfWork(const uint8_t* challenge, uint64_t* answer, uint8_t difficulty)
     {
-        // TODO we could avoid thread_local, also this is never freed on shutdown
+        // TODO we could avoid thread_local, also this is never freed on server's shutdown
         static thread_local EVP_MD_CTX* ctx = EVP_MD_CTX_new();
         if (!ctx)
             return false;
@@ -53,6 +53,7 @@ namespace Auth
         if (m_UnderlyingState == UnderlyingState::CRITICAL_ERROR)
             return -1;
 
+        // After a socket is inserted into a NetworkThread, it's in the DEFAULT underlying state. This is used for setting up TLS as the first step of the communication
         if (m_UnderlyingState == UnderlyingState::DEFAULT)
         {
             // Startup the socket
@@ -80,7 +81,7 @@ namespace Auth
 
                             m_handshakeTimeoutTimer.cancel();
 
-                            // Now we can start reading/writing, first operation will go in JUST_CONNECTED case
+                            // Now we can start reading/writing, next time the NetworkThread calls Update(), the first operations will go in the JUST_CONNECTED case
                         }
                         else
                         {
@@ -157,7 +158,6 @@ namespace Auth
             if (m_status != it->second.status)
             {
                 LOG_WARNING("Status mismatch for user: {}. Status is '{}' but should have been '{}'. Closing the connection...", m_data.username, static_cast<int>(m_status), static_cast<int>(it->second.status));
-                
                 return -1;
             }
 
@@ -204,6 +204,7 @@ namespace Auth
                 // Call the Handler's function and ensure it returns true
                 if (!(*this.*it->second.handler)())
                 {
+                    LOG_DEBUG("Executing handler returned false for Packet ID: {} - Username: {}", cmd, m_data.username);
                     return -1;
                 }
             }
@@ -298,7 +299,7 @@ namespace Auth
             Packet packet;
             packet << static_cast<uint8_t>(PacketIDs::LOGIN_GATHER_INFO);
             packet << static_cast<uint8_t>(AuthResults::SUCCESS);
-            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginGatherInfo) - 4);
+            packet << static_cast<uint16_t>(sizeof(CPacketAuthLoginGatherInfo) - C_PACKET_AUTH_LOGIN_GATHER_INFO_INITIAL_SIZE);
 
             // Write challenge
             for (int i = 0; i < AES_128_KEY_SIZE; ++i)
@@ -341,7 +342,7 @@ namespace Auth
         if (pcktData->size != (sizeof(NECRO::Auth::SPacketAuthLoginProof)-1) - NECRO::Auth::S_PACKET_AUTH_LOGIN_PROOF_INITIAL_SIZE + pcktData->passwordSize)
             return false;
 
-        // Check for password value (input validation)
+        // Check for password value (input validation) TODO: passwords should allow special characters
         for (int i = 0; i < pcktData->passwordSize; i++)
             if (!std::isalnum(static_cast<unsigned char>(pcktData->password[i])))
                 return false;
@@ -423,6 +424,7 @@ namespace Auth
         {
             // We do a fake hash just like the else below, and just call HandlePasswordHashResult(false).
             // This would prevent users enumeration via failed attempts, but would triggers useless crypto_pwhash_str_verify - TODO needs to estimate the performances savings
+            // Instead of actually performing a crypto_pwhash_str_verify we could just delay the response by a random value of ms in an interval [x,y] estimated via real hash execution times
             LOG_CRITICAL("Account {} doesn't exist.", m_data.username);
             std::string hash = "$argon2id$v=19$m=65536,t=2,p=1$CjmAucKFN9/a9Kfj0bFrKw$WaopYKnajv9K6GRfwo0st3sp9xOCDBWdV51s8N5BAYg"; // TODO store this somewhere instead of allocating it each time?
             std::string pass = "thisisapass";
@@ -517,7 +519,7 @@ namespace Auth
 
             m_data.iv.ResetCounter();
 
-            LOG_INFO("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", m_data.randIVPrefix, m_data.iv.prefix);
+            LOG_DEBUG("Client's IV Random Prefix: {} | Server's IV Random Prefix: {}", m_data.randIVPrefix, m_data.iv.prefix);
 
             // Calculate a random session key
             m_data.sessionKey = AES::GenerateSessionKey();
@@ -539,7 +541,7 @@ namespace Auth
             // Create a new greetcode (RAND_bytes). Greetcode is appended with the first packet the client sends to the server, so the server can understand who's he talking to. ONE USE! Server will clear it after first usage
             m_data.greetCode = AES::GenerateSessionKey();
 
-            // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick him the previous client from the game
+            // Delete every previous sessions (if any) of this user, the game server will notice the new connection and kick the previous client from the game
             // This is a transaction
             {
                 DBRequest req(m_ioContextRef, true);
