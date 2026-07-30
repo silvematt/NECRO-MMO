@@ -84,8 +84,9 @@ public:
 
     bool    DBCallback_GreetcodeLookup(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    HandleGreetPacket();
-    bool    DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
+    bool    Handle_SPacketEnumCharacter();
+    bool    DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     
     bool    Handle_SPacketCreateNewChar();
     bool    DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
@@ -94,9 +95,6 @@ public:
     bool    Handle_SPacketDeleteCharacter();
     bool    DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
-
-    bool    Handle_SPacketEnumCharacter();
-    bool    DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 };
 }
 }

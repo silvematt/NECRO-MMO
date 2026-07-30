@@ -10,7 +10,7 @@ void SocketManager::Start()
 	SocketManagerHandler();
 }
 
-// This runs in the ASIO's io_context
+// This runs in the AsioThreadPool's io_context
 void SocketManager::SocketManagerHandler()
 {
 	// Selects the socket that will receive

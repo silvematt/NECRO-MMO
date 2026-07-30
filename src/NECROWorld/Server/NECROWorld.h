@@ -1,5 +1,4 @@
-#ifndef NECROSERVER_H
-#define NECROSERVER_H
+#pragma once
 
 #include <boost/asio.hpp>
 
@@ -113,5 +112,3 @@ namespace World
 	};
 }
 }
-
-#endif

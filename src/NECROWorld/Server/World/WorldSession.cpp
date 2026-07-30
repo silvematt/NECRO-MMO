@@ -87,7 +87,7 @@ namespace World
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::SEL_SESSIONKEY_BY_GREETCODE), {mysqlx::bytes(m_data.greetCode.data(), m_data.greetCode.size())}});
                 req.m_steps.push_back({ static_cast<uint32_t>(LoginDatabaseStatements::INVALIDATE_GREETCODE), {mysqlx::bytes(m_data.greetCode.data(), m_data.greetCode.size())} });
 
-                // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
+                // The callback needs to ensure the object still exists, as it may be deleted by while the dbrequest is being processed
                 std::weak_ptr<WorldSession> weakSelf = shared_from_this();
                 req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                     {
@@ -125,24 +125,22 @@ namespace World
             if (plaintextLen < sizeof(uint16_t))
                 return -1;
 
-            // Packet is here the decrpyted [CMD | ...] and it arrived fully
-            // TODO, it's probably better to do the same memcpy for reading packets instead of SPacketWorldGreet* pkt = reinterpret_cast<SPacketWorldGreet*>(m_currentDecryptedPacket.GetReadPointer());
+            // Packet is here the decrpyted [CMD | ...] and it arrived fully (packet does not get decrypted until it fully arrives).
+            // TODO, it may be better to do the same memcpy for reading packets instead of SPacketWorldGreet* pkt = reinterpret_cast<SPacketWorldGreet*>(m_currentDecryptedPacket.GetReadPointer());
             uint16_t cmd = 0;
             std::memcpy(&cmd, m_currentDecryptedPacket.GetReadPointer(), sizeof(uint16_t));
 
             auto it = Handlers.find(cmd);
             if (it == Handlers.end())
             {
-                LOG_WARNING("Discarding unknown world packet. CMD: {}", cmd);
+                LOG_DEBUG("Discarding unknown world packet. CMD: {}", cmd);
                 m_currentDecryptedPacket.Clear();
                 return -1; // TODO we may want to add some tolerance for unknown packets for the world server
             }
 
             if (m_status != it->second.status)
             {
-                LOG_WARNING("World status mismatch (got {} for cmd {}, expected {}). Closing.",
-                    static_cast<int>(m_status), cmd,
-                    static_cast<int>(it->second.status));
+                LOG_DEBUG("World status mismatch (got {} for cmd {}, expected {}). Closing.", static_cast<int>(m_status), cmd, static_cast<int>(it->second.status));
                 return -1;
             }
 
@@ -215,7 +213,7 @@ namespace World
         if (!row)
         {
             // No session matches this greetcode, client never authenticated or replay
-            LOG_INFO("World greetcode not found in active_sessions. Dropping.");
+            LOG_DEBUG("World greetcode not found in active_sessions. Dropping.");
             CloseSocket();
             return false;
         }
@@ -285,7 +283,25 @@ namespace World
         m_lastActivity = std::chrono::steady_clock::now();
         m_status = World::WorldSocketStatus::SELECTING_CHARACTERS;
 
-        LOG_CRITICAL("Greet Packet handled! Gathering characters list for AccountID: {}", m_data.accountID);
+        LOG_DEBUG("Greet Packet handled! Gathering characters list for AccountID: {}", m_data.accountID);
+
+        if (!Handle_SPacketEnumCharacter())
+            return false;
+
+        return true;
+    }
+
+    bool WorldSession::Handle_SPacketEnumCharacter()
+    {
+        // Pre-Checks
+        // Fixed size differs from what was expected. Can be an hard != because the packet size is fixed
+        if (m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketEnumCharacter) && 
+            m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketWorldGreet))
+            return false;
+
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        LOG_DEBUG("Handle_SPacketEnumCharacter: {}", m_data.accountID);
 
         auto& dbworker = Server::Instance().GetCharactersDBPool();
         {
@@ -297,7 +313,7 @@ namespace World
             req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                 {
                     if (auto lockedSelf = weakSelf.lock())
-                        return lockedSelf->DBCallback_HandleGreetPacket(ec, res);
+                        return lockedSelf->DBCallback_HandleSPacketEnumCharacter(ec, res);
 
                     return false; // WorldSession is destroyed (disconnect)
                 };
@@ -311,19 +327,19 @@ namespace World
         return true;
     }
 
-    bool WorldSession::DBCallback_HandleGreetPacket(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    bool WorldSession::DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
     {
         if (!IsOpen())
             return false;
 
         if (ec != 0)
         {
-            LOG_DEBUG("DBCallback_HandleGreetPacket's query returned an error. There's no way to continue. Dropping socket.");
+            LOG_DEBUG("DBCallback_HandleSPacketEnumCharacter's query returned an error. There's no way to continue. Dropping socket.");
             CloseSocket();
             return false;
         }
 
-        LOG_DEBUG("Handling DBCallback_AuthLoginProofPacket for user {}!", m_data.accountID);
+        LOG_DEBUG("Handling DBCallback_HandleSPacketEnumCharacter for user {}!", m_data.accountID);
 
         // DB callbacks should also update last activity
         m_lastActivity = std::chrono::steady_clock::now();
@@ -392,11 +408,16 @@ namespace World
         }
         QueuePacket(std::move(m));
 
-        // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet
-        m_status = WorldSocketStatus::AUTHED;
+        // Update status if it's the first time that characters are enumed, meaning this request originated from HandleGreetPacket
+        if (m_status == NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS)
+        {
+            // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet
+            m_status = WorldSocketStatus::AUTHED;
+        }
 
         return true;
     }
+
 
     bool WorldSession::Handle_SPacketCreateNewChar()
     {
@@ -531,7 +552,7 @@ namespace World
             {
                 DBRequest req(m_ioContextRef, false);
                 req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_INS_CHARACTER), 
-                    {m_data.accountID, m_data.newCharacterName, m_data.newCharacterRace, m_data.newCharacterClass, m_data.newCharacterGender, 1, 0, 0, 0.0f, 0.0f, 0.0f } }); // check for characters limit on the account
+                    {m_data.accountID, m_data.newCharacterName, m_data.newCharacterRace, m_data.newCharacterClass, m_data.newCharacterGender, 1, 0, 0, 0.0f, 0.0f, 0.0f } });
 
                 // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
                 std::weak_ptr<WorldSession> weakSelf = shared_from_this();
@@ -780,125 +801,6 @@ namespace World
         {
             LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
             CloseSocket();
-            return false;
-        }
-        QueuePacket(std::move(m));
-
-        return true;
-    }
-
-    bool WorldSession::Handle_SPacketEnumCharacter()
-    {
-        // Pre-Checks
-        // Fixed size differs from what was expected. Can be an hard != because the packet size is fixed
-        if (m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketEnumCharacter))
-            return false;
-
-        m_lastActivity = std::chrono::steady_clock::now();
-
-        LOG_CRITICAL("Handle_SPacketEnumCharacter: {}", m_data.accountID);
-
-        auto& dbworker = Server::Instance().GetCharactersDBPool();
-        {
-            DBRequest req(m_ioContextRef, false);
-            req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_SEL_ENUM), {m_data.accountID } });
-
-            // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
-            std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
-                {
-                    if (auto lockedSelf = weakSelf.lock())
-                        return lockedSelf->DBCallback_HandleSPacketEnumCharacter(ec, res);
-
-                    return false; // WorldSession is destroyed (disconnect)
-                };
-
-            req.m_cancelToken = weakSelf;
-
-            if (!dbworker.TryEnqueue(std::move(req)))
-                return false;
-        }
-
-        return true;
-    }
-
-    bool WorldSession::DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
-    {
-        if (!IsOpen())
-            return false;
-
-        if (ec != 0)
-        {
-            LOG_DEBUG("DBCallback_HandleSPacketEnumCharacter's query returned an error. There's no way to continue. Dropping socket.");
-            CloseSocket();
-            return false;
-        }
-
-        LOG_DEBUG("Handling DBCallback_HandleSPacketEnumCharacter for user {}!", m_data.accountID);
-
-        // DB callbacks should also update last activity
-        m_lastActivity = std::chrono::steady_clock::now();
-
-        // Reply to the client
-        Packet packet;
-        packet << static_cast<uint16_t>(PacketIDs::ENUM_CHARACTERS);
-
-        mysqlx::Row row = result[0].fetchOne(); //result[0] is result of m_step[0]
-
-        // Check if there's at leat one result
-        if (!row)
-        {
-            LOG_DEBUG("Account {} has no characters.", m_data.accountID);
-            packet << static_cast<uint8_t>(WorldResults::NO_CHARACTERS_FOR_THIS_ACCOUNT);
-        }
-        else
-        {
-            packet << static_cast<uint8_t>(WorldResults::SUCCESS);
-
-            // Collect all rows first so we can write the count before character data
-            std::vector<mysqlx::Row> rows;
-            rows.push_back(std::move(row)); // first row already fetched
-            while (mysqlx::Row next = result[0].fetchOne())
-                rows.push_back(std::move(next));
-
-            // Write size
-            // Get all the variable names sizes togheter
-            uint16_t namesSize = 0;
-            for (mysqlx::Row& charRow : rows)
-                namesSize += (charRow[1].get<std::string>()).length();
-
-            // Write number of characters
-            packet << static_cast<uint8_t>(rows.size());
-
-            for (mysqlx::Row& charRow : rows)
-            {
-                std::string characterName = charRow[1].get<std::string>();
-
-                packet << charRow[0].get<uint32_t>();                       // id
-                packet << static_cast<uint8_t>(characterName.length());     // characterNameLength
-                packet << characterName;                                    // characterName
-
-                packet << static_cast<uint8_t>(charRow[2].get<int>());       // race
-                packet << static_cast<uint8_t>(charRow[3].get<int>());       // gameClass
-                packet << static_cast<uint8_t>(charRow[4].get<int>());       // gender
-
-                packet << static_cast<uint8_t>(charRow[5].get<int>());       // level
-                packet << charRow[6].get<uint32_t>();                        // xp
-
-                packet << static_cast<uint8_t>(charRow[7].get<int>());       // zone
-                packet << charRow[8].get<float>();                           // pos_x
-                packet << charRow[9].get<float>();                           // pos_y
-                packet << charRow[10].get<float>();                          // pos_z
-            }
-
-            LOG_DEBUG("Written {} characters for AccountID: {}.", rows.size(), m_data.accountID);
-        }
-
-        NetworkMessage m(std::move(packet));
-        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
-        if (encryptRes < 0)
-        {
-            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
             return false;
         }
         QueuePacket(std::move(m));

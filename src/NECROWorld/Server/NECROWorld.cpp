@@ -71,20 +71,20 @@ namespace World
 		if (dbLoginThreadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
 		{
 			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
-			return -5;
+			return -2;
 		}
 
 		// Init DBWorkers (pools?)
 		if (m_loginDbPool.Setup(dbLoginThreadsCount, m_configSettings.LOGIN_DATABASE_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize dbworker, MySQL may be not running.");
-			return -2;
+			return -3;
 		}
 
 		if (m_loginDbPool.Start() != 0)
 		{
 			LOG_ERROR("Could not start LoginDBWorker, MySQL may be not running.");
-			return -3;
+			return -4;
 		}
 		LOG_OK("Login DBWorkerPool started successfully! {} threads.", dbLoginThreadsCount);
 
@@ -102,13 +102,13 @@ namespace World
 		if (m_charactersDBPool.Setup(dbCharactersThreadsCount, m_configSettings.CHARACTERS_DATABASE_URI) != 0)
 		{
 			LOG_ERROR("Could not initialize CharactersDBWorker, MySQL may be not running.");
-			return -4;
+			return -6;
 		}
 
 		if (m_charactersDBPool.Start() != 0)
 		{
 			LOG_ERROR("Could not start dbworker, MySQL may be not running.");
-			return -5;
+			return -7;
 		}
 		LOG_OK("Characters DBWorker started successfully! {} threads.", dbCharactersThreadsCount);
 
@@ -122,15 +122,13 @@ namespace World
 		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
 		{
 			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
-			return -4;
+			return -8;
 		}
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
 
 		return 0;
 	}
-
-
 
 	void Server::Start()
 	{

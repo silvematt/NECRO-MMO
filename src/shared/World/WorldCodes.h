@@ -70,6 +70,14 @@ struct CharacterDataOnWire
     float_t pos_z;
 };
 
+// Client requests enum of character, for example, when he goes from the character creation screen to the selection screen
+struct SPacketEnumCharacter
+{
+    uint16_t    id;
+};
+static_assert(sizeof(SPacketEnumCharacter) == (2), "SPacketEnumCharacter size assert failed!");
+inline constexpr int S_PACKET_ENUM_CHAR_INITIAL_SIZE = 2; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
+
 struct CPacketEnumCharacters
 {
     uint16_t    id;
@@ -127,15 +135,6 @@ struct CPacketDeleteCharacterResponse
     uint8_t     error;
 };
 static_assert(sizeof(CPacketDeleteCharacterResponse) == (2 + 1), "CPacketDeleteCharacterResponse size assert failed!");
-
-// Client requests enum of character, for example, when he goes from the character creation screen to the selection screen
-struct SPacketEnumCharacter
-{
-    uint16_t    id;
-};
-static_assert(sizeof(SPacketEnumCharacter) == (2), "SPacketEnumCharacter size assert failed!");
-inline constexpr int S_PACKET_ENUM_CHAR_INITIAL_SIZE = 2; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
-
 
 #pragma pack(pop)
 }
