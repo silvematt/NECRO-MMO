@@ -107,12 +107,18 @@ namespace Hammer
 			m_distributionTimer->expires_after(std::chrono::milliseconds(m_configSettings.SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC));
 			m_distributionTimer->async_wait([this](boost::system::error_code const& ec) { DistributeNewSocketsHandler(); });
 
+			// Socket type is a simple round-robin selection
+			static int curSocketType = 0;
 			for (int i = 0; i < m_networkThreadsCount; i++)
 			{
+				curSocketType++;
+				if (curSocketType >= static_cast<int>(HammerSocketType::LAST_VAL))
+					curSocketType = 0;
+
 				if (m_networkThreads[i]->GetSocketsSize() < m_configSettings.MAX_SOCKETS_PER_THREAD)
 				{
 					// Creates a new socket and sticks it into the network thread's list
-					std::shared_ptr<HammerSocket> newSock = std::make_shared<HammerSocket>(m_networkThreads[i]->GetIOContext(), m_networkThreads[i]->GetSSLContext(), m_configSettings.REMOTE_SERVER_IP, m_configSettings.REMOTE_SERVER_PORT);
+					std::shared_ptr<HammerSocket> newSock = std::make_shared<HammerSocket>(static_cast<HammerSocketType>(curSocketType), m_networkThreads[i]->GetIOContext(), m_networkThreads[i]->GetSSLContext(), m_configSettings.REMOTE_SERVER_IP, m_configSettings.REMOTE_SERVER_PORT);
 					m_networkThreads[i]->QueueNewSocket(newSock);
 				}
 			}

@@ -2,6 +2,7 @@
 
 #include "TCPSocketBoost.h"
 #include "AuthCodes.h"
+#include "Realm.h"
 
 #include <boost/asio.hpp>
 #include <boost/asio/ssl.hpp>
@@ -14,6 +15,22 @@ namespace NECRO
 {
 namespace Hammer
 {
+	// ------------------------------------------------------------------------------------------------
+	//	These are all the different kind of behaviors the hammer sockets can have
+	// ------------------------------------------------------------------------------------------------
+	enum class HammerSocketType : uint32_t
+	{
+		SUCCESSFUL_AUTHENTICATION = 0,
+		WRONG_PASSWORD,
+		USERNAME_DOESNT_EXIST,
+		FAIL_PROOF_OF_WORK,
+		CONNECT_AND_HANG,
+		CONNECT_AND_DONT_RESOLVE,
+		//INIT_TLS_HANDSHAKE_AND_HANG,
+		HANG_MID_AUTHENTICATION,
+		LAST_VAL
+	};
+
     class HammerSocket;
     #pragma pack(push, 1)
 
@@ -39,11 +56,13 @@ namespace Hammer
 		AES::IV iv;
 
 		bool hasAuthenticated = false;
+		std::vector<Realm> realmlist{};
 	};
 
 	class HammerSocket : public TCPSocketBoost
 	{
     protected:
+		HammerSocketType m_type;
 		std::string m_remoteIp;
 		std::string m_remotePort;
 
@@ -52,17 +71,51 @@ namespace Hammer
 
 	public:
 		// TLS-enabled constructor
-		HammerSocket(boost::asio::io_context& io, context& ssl_ctx, std::string ip, std::string port) : TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
+		HammerSocket(HammerSocketType t, boost::asio::io_context& io, context& ssl_ctx, std::string ip, std::string port) : m_type(t), TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
 		{
-            m_data.username = "matt";
-            m_data.password = "124";
+			// Default
+			m_data.username = "matt";
+			m_data.password = "123";
+
+			if (m_type == HammerSocketType::SUCCESSFUL_AUTHENTICATION || m_type == HammerSocketType::HANG_MID_AUTHENTICATION)
+			{
+				m_data.username = "matt";
+				m_data.password = "123";
+			}
+			else if (m_type == HammerSocketType::WRONG_PASSWORD)
+			{
+				m_data.username = "matt";
+				m_data.password = "124";
+			}
+			else if (m_type == HammerSocketType::USERNAME_DOESNT_EXIST)
+			{
+				m_data.username = "invalid_username";
+				m_data.password = "124";
+			}
 		}
 
 		// Or non-TLS version
-		HammerSocket(boost::asio::io_context& io, std::string ip, std::string port) : TCPSocketBoost(io), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
+		HammerSocket(HammerSocketType t, boost::asio::io_context& io, std::string ip, std::string port) : TCPSocketBoost(io), m_type(t), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
 		{
-            m_data.username = "matt";
-            m_data.password = "124";
+			// Default
+			m_data.username = "matt";
+			m_data.password = "123";
+
+			if (m_type == HammerSocketType::SUCCESSFUL_AUTHENTICATION || m_type == HammerSocketType::HANG_MID_AUTHENTICATION)
+			{
+				m_data.username = "matt";
+				m_data.password = "123";
+			}
+			else if (m_type == HammerSocketType::WRONG_PASSWORD)
+			{
+				m_data.username = "matt";
+				m_data.password = "124";
+			}
+			else if (m_type == HammerSocketType::USERNAME_DOESNT_EXIST)
+			{
+				m_data.username = "invalid_username";
+				m_data.password = "124";
+			}
 		}
 
         static std::unordered_map<uint8_t, HammerHandler> InitHandlers();
@@ -75,6 +128,8 @@ namespace Hammer
 
         bool HandlePacketAuthLoginGatherInfoResponse();
         bool HandlePacketAuthLoginProofResponse();
+
+		bool HandlePacketGatherRealmsResponse();
 	};
 }
 }
