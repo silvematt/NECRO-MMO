@@ -77,7 +77,6 @@ namespace NECRO
 
 		void QueuePacket(NetworkMessage&& pckt);
 
-
 		void			InternalReadCallback(boost::system::error_code err, std::size_t transferredBytes);
 		void			InternalWriteCallback(boost::system::error_code err, std::size_t writtenBytes);
 
@@ -113,6 +112,8 @@ namespace NECRO
 		{
 			SetupTLS(sslCtx);
 		}
+
+		void PostQueuePacket(NetworkMessage&& pckt);
 
 		virtual int Update(std::chrono::steady_clock::time_point now) { return 0; };
 

@@ -146,6 +146,21 @@ namespace NECRO
 		AsyncWrite();
 	}
 
+	// -------------------------------------------------------------------------
+	// Posts a QueuePacket request on the NetworkThread that owns this socket
+	// Used for queuing packets from different threads in a thread-safe way
+	// -------------------------------------------------------------------------
+	void TCPSocketBoost::PostQueuePacket(NetworkMessage&& pckt)
+	{
+		boost::asio::post(m_ioContextRef, [self = shared_from_this(), msg = std::move(pckt)]() mutable
+		{
+			if (!self->IsOpen())
+				return;
+
+			self->QueuePacket(std::move(msg));   // now runs on the owning NetworkThread io context
+		});
+	}
+
 	// AsyncWrites do work without syncronization issues because at most one thread at the time calls these handlers
 	void TCPSocketBoost::AsyncWrite()
 	{
