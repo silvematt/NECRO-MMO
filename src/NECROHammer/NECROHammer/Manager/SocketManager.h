@@ -111,6 +111,9 @@ namespace Hammer
 			static int curSocketType = 0;
 			for (int i = 0; i < m_networkThreadsCount; i++)
 			{
+				// The current way of distributing socket is pseudo-randomic in some way
+				// The DistributeNewSocketsHandler gets called SOCKET_MANAGER_DISTRIBUTION_INTERVAL_MILLISEC and the curSocketType gets incremented even if there's no spot left
+				// Since auth takes different ms for each attempt there's some randomness to this as it is
 				curSocketType++;
 				if (curSocketType >= static_cast<int>(HammerSocketType::LAST_VAL))
 					curSocketType = 0;

@@ -59,23 +59,36 @@ namespace Hammer
 		std::vector<Realm> realmlist{};
 	};
 
-	class HammerSocket : public TCPSocketBoost
+	class HammerSocket : public TCPSocketBoost, public inheritable_enable_shared_from_this<HammerSocket>
 	{
+		using inheritable_enable_shared_from_this<HammerSocket>::shared_from_this;
+
     protected:
+		// To have different behaviors for hammer sockets
 		HammerSocketType m_type;
+
+		// Used to run some only once-code at the first Update() 
+		bool m_init = false;
+
 		std::string m_remoteIp;
 		std::string m_remotePort;
 
         Auth::SocketStatus m_status;
 		AuthData m_data;
 
+		// Sockets of certain types (like CONNECT_AND_DONT_RESOLVE) will remain up indefinitely, this death timer, if set will kill the socket indiscriminately 
+		bool m_deathCalled = false;
+		int m_deathTimerMs = 0;
+		boost::asio::steady_timer m_deathTimer;
+
 	public:
 		// TLS-enabled constructor
-		HammerSocket(HammerSocketType t, boost::asio::io_context& io, context& ssl_ctx, std::string ip, std::string port) : m_type(t), TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
+		HammerSocket(HammerSocketType t, boost::asio::io_context& io, context& ssl_ctx, std::string ip, std::string port) : m_type(t), TCPSocketBoost(io, ssl_ctx), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port), m_deathTimer(io), m_init(false)
 		{
 			// Default
 			m_data.username = "matt";
 			m_data.password = "123";
+			m_deathTimerMs = 0;
 
 			if (m_type == HammerSocketType::SUCCESSFUL_AUTHENTICATION || m_type == HammerSocketType::HANG_MID_AUTHENTICATION)
 			{
@@ -91,15 +104,21 @@ namespace Hammer
 			{
 				m_data.username = "invalid_username";
 				m_data.password = "124";
+			}
+			else if (m_type == HammerSocketType::CONNECT_AND_HANG || m_type == HammerSocketType::CONNECT_AND_DONT_RESOLVE)
+			{
+				// Enables the death timer, these kind of socket will not cleanup by themselves as some of their functionalities will never run, including the socket's is-alive check.
+				m_deathTimerMs = 15000;
 			}
 		}
 
 		// Or non-TLS version
-		HammerSocket(HammerSocketType t, boost::asio::io_context& io, std::string ip, std::string port) : TCPSocketBoost(io), m_type(t), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port)
+		HammerSocket(HammerSocketType t, boost::asio::io_context& io, std::string ip, std::string port) : TCPSocketBoost(io), m_type(t), m_status(Auth::SocketStatus::GATHER_INFO), m_remoteIp(ip), m_remotePort(port), m_deathTimer(io), m_init(false)
 		{
 			// Default
 			m_data.username = "matt";
 			m_data.password = "123";
+			m_deathTimerMs = 0;
 
 			if (m_type == HammerSocketType::SUCCESSFUL_AUTHENTICATION || m_type == HammerSocketType::HANG_MID_AUTHENTICATION)
 			{
@@ -115,6 +134,11 @@ namespace Hammer
 			{
 				m_data.username = "invalid_username";
 				m_data.password = "124";
+			}
+			else if (m_type == HammerSocketType::CONNECT_AND_HANG || m_type == HammerSocketType::CONNECT_AND_DONT_RESOLVE)
+			{
+				// Death timer here should always be set to be higher than the server's threshold
+				m_deathTimerMs = 10000;
 			}
 		}
 

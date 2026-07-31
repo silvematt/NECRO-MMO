@@ -32,12 +32,39 @@ namespace Hammer
 
 		if (m_UnderlyingState == UnderlyingState::DEFAULT)
 		{
+            // Used to run some only once-code at the first Update() 
+            if (!m_init)
+            {
+                LOG_CRITICAL("Starting Hammer Socket. Type: {}", static_cast<int>(m_type));
+                m_init = true;
+            }
+
+            if (!m_deathCalled && m_deathTimerMs != 0)
+            {
+                auto self = shared_from_this();
+
+                m_deathTimer.expires_after(std::chrono::milliseconds(m_deathTimerMs));
+                m_deathTimer.async_wait([this, self](boost::system::error_code const& ec)
+                {
+                    LOG_CRITICAL("Death Timer Triggered! Killing the socket...");
+                    CloseSocket();
+                });
+
+                m_deathCalled = true;
+            }
+
+            if (m_type == HammerSocketType::CONNECT_AND_DONT_RESOLVE)
+                return 0;
+
 			// Startup the socket
 			Resolve(m_remoteIp, m_remotePort);
 			return 0;
 		}
 		else if (m_UnderlyingState == UnderlyingState::JUST_CONNECTED)
 		{
+            if (m_type == HammerSocketType::CONNECT_AND_HANG)
+                return 0;
+
 			// Start the async read loop
 			AsyncRead();
             
@@ -169,6 +196,9 @@ namespace Hammer
                 if (!solved)
                     counter++;
             }
+            // Invalidate the proof of work
+            if (m_type == HammerSocketType::FAIL_PROOF_OF_WORK)
+                counter=0;
 
             m_status = NECRO::Auth::SocketStatus::LOGIN_ATTEMPT;
 
@@ -198,8 +228,11 @@ namespace Hammer
 
             std::cout << "My IV Prefix: " << m_data.iv.prefix << std::endl;
 
-            NetworkMessage m(std::move(packet));
-            QueuePacket(std::move(m));
+            if (m_type != HammerSocketType::HANG_MID_AUTHENTICATION)
+            {
+                NetworkMessage m(std::move(packet));
+                QueuePacket(std::move(m));
+            }
         }
         else if (pckData->error == static_cast<int>(NECRO::Auth::AuthResults::FAILED_UNKNOWN_ACCOUNT))
         {
