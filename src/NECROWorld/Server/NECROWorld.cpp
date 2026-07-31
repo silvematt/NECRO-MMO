@@ -161,10 +161,11 @@ namespace World
 
 	void Server::Update()
 	{
-		while (1)
-		{
+		LOG_INFO("Starting up world simulation...");
+		m_worldSimulation.Start();
 
-		}
+		while (m_worldSimulation.m_isRunning)
+			m_worldSimulation.Update();
 
 		// Here if somebody called Server::Stop()
 		Shutdown();

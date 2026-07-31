@@ -8,6 +8,7 @@
 #include "DatabaseWorkerPool.h"
 #include "AsioThreadPool.h"
 #include "SocketManager.h"
+#include "WorldSimulation.h"
 
 namespace NECRO
 {
@@ -86,6 +87,8 @@ namespace World
 		DatabaseWorkerPool<LoginDatabase>		m_loginDbPool;
 		DatabaseWorkerPool<CharactersDatabase>	m_charactersDBPool;
 
+		// Simulation
+		WorldSimulation m_worldSimulation;
 
 	public:
 		int						Init();

@@ -16,14 +16,20 @@
     <ClCompile Include="Server\NECROWorld.cpp">
       <Filter>NECROWorld\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Server\World\SocketManager.cpp" />
-    <ClCompile Include="Server\World\WorldSession.cpp" />
+    <ClCompile Include="Server\Sockets\SocketManager.cpp" />
+    <ClCompile Include="Server\Sockets\WorldSession.cpp" />
+    <ClCompile Include="Server\Sim\WorldSimulation.cpp" />
+    <ClCompile Include="Server\Sim\Maps\Cell.cpp" />
+    <ClCompile Include="Server\Sim\Maps\Map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\NECROWorld.h">
       <Filter>NECROWorld\Server</Filter>
     </ClInclude>
-    <ClInclude Include="Server\World\SocketManager.h" />
-    <ClInclude Include="Server\World\WorldSession.h" />
+    <ClInclude Include="Server\Sockets\SocketManager.h" />
+    <ClInclude Include="Server\Sockets\WorldSession.h" />
+    <ClInclude Include="Server\Sim\WorldSimulation.h" />
+    <ClInclude Include="Server\Sim\Maps\Cell.h" />
+    <ClInclude Include="Server\Sim\Maps\Map.h" />
   </ItemGroup>
 </Project>
