@@ -201,36 +201,49 @@ namespace NECRO
 
 		m_Closing = true;
 
-		if (m_usesTLS)
+		if (!m_usesTLS)
 		{
-			auto self = shared_from_this();
-			m_sslSocket->async_shutdown([this, self](const boost::system::error_code& ec)
-			{
-				if (!ec)
-				{
-					// TLS shutdown completed
-				}
-				else if (ec == boost::asio::error::eof)
-				{
-					// Remote closed cleanly
-				}
-				else
-				{
-					// TLS shutdown failed
-				}
+			ForceCloseSocket();
+			return;
+		}
 
-				boost::system::error_code close_ec;
-				m_sslSocket->lowest_layer().close(close_ec);
-				m_Closed = true;
-				m_UnderlyingState = UnderlyingState::CRITICAL_ERROR; // this will allow the manager to clean up this socket
-			});
-		}
-		else
+		auto self = shared_from_this();
+
+		// Deadline: a peer that never answers close_notify must not pin this socket forever
+		m_asyncShutdownDeadlineTimer.expires_after(std::chrono::milliseconds(SOCKET_ASYNC_SHUTDOWN_TIMEOUT_MS));
+		m_asyncShutdownDeadlineTimer.async_wait([this, self](boost::system::error_code const& ec)
 		{
-			boost::system::error_code close_ec;
+			if (ec == boost::asio::error::operation_aborted)
+				return;
+
+			LOG_DEBUG("TLS shutdown timed out, forcing close.");
+			ForceCloseSocket();
+		});
+
+		m_sslSocket->async_shutdown([this, self](boost::system::error_code const& ec)
+		{
+			m_asyncShutdownDeadlineTimer.cancel();
+			ForceCloseSocket();
+		});
+	}
+
+	// ----------------------------------------------------------------
+	// Forces the closure of a socket without doing a shutdown
+	// ----------------------------------------------------------------
+	void TCPSocketBoost::ForceCloseSocket()
+	{
+		if (m_Closed)
+			return;
+
+		m_Closed = true;
+
+		boost::system::error_code close_ec;
+
+		if (m_usesTLS)
+			m_sslSocket->lowest_layer().close(close_ec);
+		else
 			m_socket.close(close_ec);
-			m_Closed = true;
-			m_UnderlyingState = UnderlyingState::CRITICAL_ERROR; // this will allow the manager to clean up this socket
-		}
+
+		m_UnderlyingState = UnderlyingState::CRITICAL_ERROR; // this will allow the manager to clean up this socket
 	}
 }

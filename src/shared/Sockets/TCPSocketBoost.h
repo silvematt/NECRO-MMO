@@ -19,6 +19,8 @@ using boost::asio::ssl::context;
 
 namespace NECRO
 {
+	inline constexpr int SOCKET_ASYNC_SHUTDOWN_TIMEOUT_MS = 5000;
+
 	//-------------------------------------------------------
 	// Defines a TCP Socket object that uses boost.
 	//-------------------------------------------------------
@@ -60,6 +62,8 @@ namespace NECRO
 		bool m_Closed = false;
 		bool m_Closing = false;
 
+		// Shutdown deadline. This lives and triggers on the NetworkThread that will own this socket
+		boost::asio::steady_timer m_asyncShutdownDeadlineTimer;
 
 		void SetupTLS(context& sslCtx);
 
@@ -81,30 +85,31 @@ namespace NECRO
 		virtual void	AsyncWriteCallback() = 0;
 
 		void			CloseSocket();
+		void			ForceCloseSocket();
 
 	public:
 		// Constructs a plain socket
 		TCPSocketBoost(boost::asio::io_context& io) : m_usesTLS(false), m_ioContextRef(io), 
-						m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(m_ioContextRef)
+						m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(m_ioContextRef), m_asyncShutdownDeadlineTimer(m_ioContextRef)
 		{
 		}
 
 		// Constructs a TLS socket
 		TCPSocketBoost(boost::asio::io_context& io, context& sslCtx) : m_usesTLS(true), m_ioContextRef(io), 
-						m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(m_ioContextRef)
+						m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(m_ioContextRef), m_asyncShutdownDeadlineTimer(m_ioContextRef)
 		{
 			SetupTLS(sslCtx);
 		}
 
 		// Construct a plain socket moving in
 		TCPSocketBoost(tcp::socket&& insock) : m_usesTLS(false), m_ioContextRef(static_cast<boost::asio::io_context&>(insock.get_executor().context())), 
-												m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(std::move(insock))
+												m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(std::move(insock)), m_asyncShutdownDeadlineTimer(m_ioContextRef)
 		{
 		}
 
 		// Constructs a TLS socket moving in
 		TCPSocketBoost(tcp::socket&& insock, context& sslCtx) : m_usesTLS(true), m_ioContextRef(static_cast<boost::asio::io_context&>(insock.get_executor().context())),
-			m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(std::move(insock))
+			m_UnderlyingState(UnderlyingState::DEFAULT), m_socket(std::move(insock)), m_asyncShutdownDeadlineTimer(m_ioContextRef)
 		{
 			SetupTLS(sslCtx);
 		}
