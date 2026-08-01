@@ -1,0 +1,21 @@
+# NDB Definitions
+DEFINITION_START
+ID:maps_db
+DEFINITION_END
+
+# NDB Structure - Always indexed by numerical (uint32_t) ID.
+STRUCTURE_START
+ID:int
+MapName:string
+MapType:int
+Width:int
+Height:int
+STRUCTURE_END
+
+# All the next lines are DB rows
+
+ROWS_START
+# ID, MapName, MapType (0: exterior, 1: instantiable), WIDTH, HEIGHT
+0, Virrihael, 0, 50, 50;
+ROWS_END
+NDB_END

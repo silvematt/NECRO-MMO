@@ -16,6 +16,10 @@ namespace World
 	class Map
 	{
 	private:
+		// m_mapID is the unique map id that identifies the map/zone (0: exterior world, 1: dungeon, 2: mines, 3: island, etc). 
+		// Instanced maps can have the same m_mapID but a different m_instanceID: ([1,123] [1,456] - are the same dungeons but different instances)
+		uint32_t m_mapID;
+
 		bool m_isActive; // if the map is active or not. Inactive maps will skip updating during a simulation step of
 
 		std::vector<std::vector<Cell>> m_cellMap;
@@ -26,6 +30,11 @@ namespace World
 
 		}
 
+		Map(uint32_t mapID) : m_isActive(true), m_mapID(mapID)
+		{
+			// Initialize the m_cellMap in base of the loade m_mapID
+		}
+
 		void SetActive(bool v)
 		{
 			m_isActive = v;
@@ -33,10 +42,8 @@ namespace World
 			// Eventual consequences of activating/deactivating a map
 		}
 
-		int Init();
-		int Start();
-
-		void Update(uint32_t diff);
+		int		Start();
+		void	Update(uint32_t diff);
 	};
 }
 }

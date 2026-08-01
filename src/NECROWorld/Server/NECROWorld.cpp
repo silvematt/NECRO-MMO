@@ -156,7 +156,16 @@ namespace World
 		m_socketManager->Start();
 
 		m_isRunning = true;
-		LOG_OK("NECROWorld is running...");
+
+		// NDB Example usage
+		m_ndbMap.LoadFromDisk("NDB/maps.ndb");
+		std::string aaa; 
+
+		auto x = m_ndbMap.TryFind(0, "MapName");
+		if (x)
+			x->TryGetString(aaa);
+
+		LOG_OK("{},  NECROWorld is running...", aaa);
 	}
 
 	void Server::Update()

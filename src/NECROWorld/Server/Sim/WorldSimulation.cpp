@@ -7,6 +7,7 @@ namespace World
 	int WorldSimulation::Start()
 	{
 		// Load all the default maps
+		m_maps.push_back(std::make_unique<Map>(0)); // 0: Virrihael
 
 		// Load the active instanced maps (saved on the DB)
 

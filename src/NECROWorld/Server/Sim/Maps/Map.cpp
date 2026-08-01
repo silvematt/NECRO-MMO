@@ -4,11 +4,6 @@ namespace NECRO
 {
 namespace World
 {
-	int Map::Init()
-	{
-		return 0;
-	}
-
 	int Map::Start()
 	{
 		return 0;

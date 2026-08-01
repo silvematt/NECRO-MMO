@@ -73,6 +73,9 @@
     <ClInclude Include="World\WorldCodes.h" />
     <ClInclude Include="Utility\IPRequestData.h" />
     <ClInclude Include="Characters\CharacterData.h" />
+    <ClInclude Include="NDB\NDB.h" />
+    <ClInclude Include="NDB\NDBValue.h" />
+    <ClInclude Include="NDB\NDBRow.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -96,5 +99,6 @@
     <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
     <ClCompile Include="Config\Config.cpp" />
     <ClCompile Include="Sockets\TCPAcceptor.cpp" />
+    <ClCompile Include="NDB\NDB.cpp" />
   </ItemGroup>
 </Project>
