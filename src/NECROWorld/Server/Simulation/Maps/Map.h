@@ -2,8 +2,12 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
+#include <memory>
+#include <unordered_map>
 
 #include "Cell.h"
+#include "Entity.h"
 
 namespace NECRO
 {
@@ -26,9 +30,11 @@ namespace World
 		int m_width;
 		int m_height;
 
+		// Map state
 		bool m_isActive; // if the map is active or not. Inactive maps will skip updating during a simulation step of
 
-		std::vector<std::vector<Cell>> m_cellMap;
+		std::unordered_map<uint64_t, std::unique_ptr<Entity>>	m_entities;
+		std::vector<Cell> m_cellMap;
 
 	public:
 		Map(uint32_t mapID) : m_isActive(true), m_mapID(mapID)

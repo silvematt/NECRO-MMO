@@ -24,15 +24,10 @@ namespace World
 
 		// Apply
 		m_cellMap.clear();
-		m_cellMap.reserve(m_width);
-		for (int x = 0; x < m_width; x++)
-		{
-			auto& cols = m_cellMap.emplace_back();
-			cols.reserve(m_height);
-
-			for (int y = 0; y < m_height; y++)
-				cols.emplace_back(x, y);
-		}
+		m_cellMap.reserve(m_width*m_height);
+		for (int y = 0; y < m_height; y++)
+			for (int x = 0; x < m_width; x++)
+				m_cellMap.emplace_back(x, y);
 
 		LOG_OK("[MAPS] Loaded: Map ID: '{}' - Name: '{}' loaded! Width:'{}' | Height:'{}'.", m_mapID, m_ingameName, m_width, m_height);
 		return 0;
@@ -41,10 +36,10 @@ namespace World
 	void Map::Update(uint32_t diff)
 	{
 		// Let's do a flat update for the whole map for now. The correct way will be to calculate where players are and only update the nearbies
-		for(int x = 0; x < m_width; x++)
-			for (int y = 0; y < m_height; y++)
+		for (int y = 0; y < m_height; y++)
+			for(int x = 0; x < m_width; x++)
 			{
-				Cell& cell = m_cellMap[x][y];
+				Cell& cell = m_cellMap[y * m_width + x];
 				cell.Update(diff);
 			}
 	}

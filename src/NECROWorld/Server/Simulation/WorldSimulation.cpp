@@ -1,4 +1,6 @@
 #include "WorldSimulation.h"
+#include "GUIDManager.h"
+#include "Entity.h"
 
 namespace NECRO
 {
@@ -15,6 +17,8 @@ namespace World
 		m_startTime = std::chrono::steady_clock::now();
 
 		m_isRunning = true;
+
+
 		return 0;
 	}
 
@@ -27,7 +31,6 @@ namespace World
 		m_curTimeDiff = m_curTime - m_prevTime;
 
 		// We can throttle here, define a tickrate and have a minDiff before update
-
 		for (auto& map : m_maps)
 			map->Update(m_curTimeDiff);
 		

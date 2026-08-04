@@ -19,21 +19,24 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Server\Simulation\Entities\Entity.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server\NECROWorld.cpp" />
-    <ClCompile Include="Server\Sim\Maps\Cell.cpp" />
-    <ClCompile Include="Server\Sim\Maps\Map.cpp" />
+    <ClCompile Include="Server\Simulation\Maps\Cell.cpp" />
+    <ClCompile Include="Server\Simulation\Maps\Map.cpp" />
     <ClCompile Include="Server\Sockets\SocketManager.cpp" />
     <ClCompile Include="Server\Sockets\WorldSession.cpp" />
-    <ClCompile Include="Server\Sim\WorldSimulation.cpp" />
+    <ClCompile Include="Server\Simulation\WorldSimulation.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Server\Simulation\Entities\Entity.h" />
     <ClInclude Include="Server\NECROWorld.h" />
-    <ClInclude Include="Server\Sim\Maps\Cell.h" />
-    <ClInclude Include="Server\Sim\Maps\Map.h" />
+    <ClInclude Include="Server\Simulation\Maps\Cell.h" />
+    <ClInclude Include="Server\Simulation\Maps\Map.h" />
     <ClInclude Include="Server\Sockets\SocketManager.h" />
     <ClInclude Include="Server\Sockets\WorldSession.h" />
-    <ClInclude Include="Server\Sim\WorldSimulation.h" />
+    <ClInclude Include="Server\Simulation\WorldSimulation.h" />
+    <ClInclude Include="Server\Managers\GUIDManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -138,7 +141,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB\Implementation;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\AsioThreads;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\World;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Sim;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Sim\Maps;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\NDB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB\Implementation;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server;C:\Program Files\OpenSSL-Win64\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\database\DB;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\AsioThreads;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\World;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Simulation;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Simulation\Maps;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\NDB;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Managers;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\NECROWorld\Server\Simulation\Entities;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>

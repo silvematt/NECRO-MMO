@@ -4,9 +4,9 @@
 #include <atomic>
 #include <vector>
 #include <memory>
+#include <chrono>
 
 #include "Map.h"
-#include <chrono>
 
 namespace NECRO
 {
@@ -30,7 +30,6 @@ namespace World
 		// All the maps currently loaded loaded in the server
 		// Some may be inactive
 		std::vector<std::unique_ptr<Map>> m_maps;
-
 
 	public:
 		std::atomic<bool> m_isRunning;

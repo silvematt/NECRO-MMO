@@ -18,9 +18,10 @@
     </ClCompile>
     <ClCompile Include="Server\Sockets\SocketManager.cpp" />
     <ClCompile Include="Server\Sockets\WorldSession.cpp" />
-    <ClCompile Include="Server\Sim\WorldSimulation.cpp" />
-    <ClCompile Include="Server\Sim\Maps\Cell.cpp" />
-    <ClCompile Include="Server\Sim\Maps\Map.cpp" />
+    <ClCompile Include="Server\Simulation\WorldSimulation.cpp" />
+    <ClCompile Include="Server\Simulation\Maps\Cell.cpp" />
+    <ClCompile Include="Server\Simulation\Maps\Map.cpp" />
+    <ClCompile Include="Server\Simulation\Entities\Entity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\NECROWorld.h">
@@ -28,8 +29,10 @@
     </ClInclude>
     <ClInclude Include="Server\Sockets\SocketManager.h" />
     <ClInclude Include="Server\Sockets\WorldSession.h" />
-    <ClInclude Include="Server\Sim\WorldSimulation.h" />
-    <ClInclude Include="Server\Sim\Maps\Cell.h" />
-    <ClInclude Include="Server\Sim\Maps\Map.h" />
+    <ClInclude Include="Server\Simulation\WorldSimulation.h" />
+    <ClInclude Include="Server\Simulation\Maps\Cell.h" />
+    <ClInclude Include="Server\Simulation\Maps\Map.h" />
+    <ClInclude Include="Server\Simulation\Entities\Entity.h" />
+    <ClInclude Include="Server\Managers\GUIDManager.h" />
   </ItemGroup>
 </Project>
