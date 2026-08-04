@@ -136,6 +136,7 @@
     <ClInclude Include="Authentication\AuthCodes.h" />
     <ClInclude Include="Characters\CharacterData.h" />
     <ClInclude Include="Config\Config.h" />
+    <ClInclude Include="NDB\NDBManager.h" />
     <ClInclude Include="NDB\NDBValue.h" />
     <ClInclude Include="NDB\NDB.h" />
     <ClInclude Include="RealmList\Realm.h" />
@@ -159,6 +160,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config\Config.cpp" />
+    <ClCompile Include="NDB\NDBManager.cpp" />
     <ClCompile Include="NDB\NDB.cpp" />
     <ClInclude Include="NDB\NDBRow.h" />
     <ClCompile Include="Sockets\TCPSocketBoost.cpp" />

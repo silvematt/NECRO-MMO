@@ -10,7 +10,7 @@
 #include "SocketManager.h"
 #include "WorldSimulation.h"
 
-#include "NDB.h"
+#include "NDBManager.h"
 
 namespace NECRO
 {
@@ -30,8 +30,6 @@ namespace World
 	class Server
 	{
 	public:
-		NDB m_ndbMap;
-
 		// Server settings that can be overridden by config file
 		struct ConfigSettings
 		{
@@ -92,6 +90,7 @@ namespace World
 		DatabaseWorkerPool<CharactersDatabase>	m_charactersDBPool;
 
 		// Simulation
+		NDBManager		m_ndbs;
 		WorldSimulation m_worldSimulation;
 
 	public:

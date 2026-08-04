@@ -112,6 +112,17 @@ namespace World
 		}
 		LOG_OK("Characters DBWorker started successfully! {} threads.", dbCharactersThreadsCount);
 
+		// Load NDBs
+		int ndbsLoadReturnVal = m_ndbs.LoadFromDefinition();
+
+		if (ndbsLoadReturnVal == 0)
+		{
+			LOG_ERROR("m_ndbs.LoadFromDefinition returned 0!");
+			return -8;
+		}
+		else
+			LOG_OK("Loaded {} NDBs!", ndbsLoadReturnVal);
+
 		// Start network threads
 		int threadsCount = std::thread::hardware_concurrency();
 
@@ -122,10 +133,14 @@ namespace World
 		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
 		{
 			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
-			return -8;
+			return -9;
 		}
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
+
+		// Example usage of the NDB manager
+		const NDB* myDB = m_ndbs["maps_db"];
+		LOG_OK("Example NDB Usage: {}", *myDB->TryFind(0, "MapName")->AsString());
 
 		return 0;
 	}
@@ -157,15 +172,7 @@ namespace World
 
 		m_isRunning = true;
 
-		// NDB Example usage
-		m_ndbMap.LoadFromDisk("NDB/maps.ndb");
-		std::string aaa; 
-
-		auto x = m_ndbMap.TryFind(0, "MapName");
-		if (x)
-			x->TryGetString(aaa);
-
-		LOG_OK("{},  NECROWorld is running...", aaa);
+		LOG_OK("NECROWorld is running...");
 	}
 
 	void Server::Update()

@@ -2,7 +2,6 @@
 
 #include <variant>
 #include <string>
-#include <iostream>
 
 namespace NECRO
 {
@@ -35,41 +34,27 @@ namespace NECRO
 			return m_type; 
 		}
 
-
-		bool TryGetInt(int& out) const
+		// ---------------------------------------------------------------------------------------------------------------------------
+		// Get values
+		// ---------------------------------------------------------------------------------------------------------------------------
+		const int* AsInt() const
 		{
-			if (m_type != NDBValueType::INT)
-				return false;
-
-			out = std::get<int>(m_data);
-			return true;
+			return m_type == NDBValueType::INT ? &std::get<int>(m_data) : nullptr;
 		}
 
-		bool TryGetFloat(float& out) const
+		const float* AsFloat() const
 		{
-			if (m_type != NDBValueType::FLOAT)
-				return false;
-
-			out = std::get<float>(m_data);
-			return true;
+			return m_type == NDBValueType::FLOAT ? &std::get<float>(m_data) : nullptr;
 		}
 
-		bool TryGetBool(bool& out) const
+		const bool* AsBool() const
 		{
-			if (m_type != NDBValueType::BOOL)
-				return false;
-
-			out = std::get<bool>(m_data);
-			return true;
+			return m_type == NDBValueType::BOOL ? &std::get<bool>(m_data) : nullptr;
 		}
 
-		bool TryGetString(std::string& out) const
+		const std::string* AsString() const  
 		{
-			if (m_type != NDBValueType::STRING)
-				return false;
-
-			out = std::get<std::string>(m_data);
-			return true;
+			return m_type == NDBValueType::STRING ? &std::get<std::string>(m_data) : nullptr;
 		}
 	};
 }

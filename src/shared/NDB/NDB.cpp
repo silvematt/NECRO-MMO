@@ -45,6 +45,7 @@ namespace NECRO
 
 	bool NDB::LoadFromDisk(const std::string& path)
 	{
+		m_isOpenAndValid = false;
 		m_rows.clear();
 		m_valuesMap.clear();
 		m_id = "";
@@ -55,7 +56,7 @@ namespace NECRO
 
 		if (!ndbFile.is_open())
 		{
-			LOG_ERROR("Could not load NDB at: {}.", path);
+			LOG_ERROR("Could not load NDB at: '{}'.", path);
 			return false;
 		}
 
@@ -210,6 +211,7 @@ namespace NECRO
 			}
 		}
 
+		m_isOpenAndValid = true;
 		LOG_OK("'{}' successfully loaded! Loaded '{}' rows.", path, curRowCount);
 		return true;
 	}

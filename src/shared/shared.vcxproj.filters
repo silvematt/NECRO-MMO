@@ -76,6 +76,7 @@
     <ClInclude Include="NDB\NDB.h" />
     <ClInclude Include="NDB\NDBValue.h" />
     <ClInclude Include="NDB\NDBRow.h" />
+    <ClInclude Include="NDB\NDBManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -100,5 +101,6 @@
     <ClCompile Include="Config\Config.cpp" />
     <ClCompile Include="Sockets\TCPAcceptor.cpp" />
     <ClCompile Include="NDB\NDB.cpp" />
+    <ClCompile Include="NDB\NDBManager.cpp" />
   </ItemGroup>
 </Project>
