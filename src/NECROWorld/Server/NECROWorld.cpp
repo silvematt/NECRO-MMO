@@ -138,10 +138,6 @@ namespace World
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);
 
-		// Example usage of the NDB manager
-		const NDB* myDB = m_ndbs["maps_db"];
-		LOG_OK("Example NDB Usage: {}", *myDB->TryFind(0, "MapName")->AsString());
-
 		return 0;
 	}
 

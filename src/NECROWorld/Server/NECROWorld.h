@@ -115,6 +115,11 @@ namespace World
 		{
 			return m_configSettings;
 		}
+
+		const NDBManager& GetNDBs() const
+		{
+			return m_ndbs;
+		}
 	};
 }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace NECRO
 {
 namespace World
@@ -18,6 +20,10 @@ namespace World
 	private:
 		int m_cellX;
 		int m_cellY;
+
+	public:
+		Cell(int x, int y) : m_cellX(x), m_cellY(y) {}
+		void Update(uint32_t diff);
 	};
 
 }
