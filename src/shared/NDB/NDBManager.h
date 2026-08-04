@@ -19,18 +19,20 @@ namespace NECRO
 	{
 	private:
 		std::unordered_map<std::string, NDB> m_dbs;
+		bool m_ndbsLoaded = false;
+
+		// Ptrs to dbs
+		const NDB* m_maps = nullptr;
 
 	public:
 		int LoadFromDefinition();
-
-		const NDB* operator[] (const std::string& id) const
-		{
-			return GetDB(id);
-		}
 
 		const NDB* GetDB(const std::string& id) const; 
 
 		bool AddDB(const std::string& path);
 		bool RemoveDB(const std::string& id);
+
+		// Getters
+		const NDB* Maps() const { return m_maps; }
 	};
 }

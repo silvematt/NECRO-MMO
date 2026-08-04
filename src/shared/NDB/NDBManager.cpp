@@ -41,6 +41,10 @@ namespace NECRO
 			return 0;
 		}
 
+		// Assign the quick access ptrs
+		m_maps = &m_dbs["maps_db"];
+		m_ndbsLoaded = true;
+
 		return loadedCount;
 	}
 
