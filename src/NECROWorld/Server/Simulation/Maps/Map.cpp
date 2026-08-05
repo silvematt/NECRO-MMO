@@ -43,5 +43,46 @@ namespace World
 				cell.Update(diff);
 			}
 	}
+
+	Entity* Map::AddEntityToMap(std::unique_ptr<Entity> e)
+	{
+		uint64_t entityGUID = e->GetGUID();
+
+		auto it = m_entities.find(entityGUID);
+		if (it == m_entities.end())
+		{
+			// Calculate entity cell and place it in the cell
+			int cellX = e->m_posX / CELL_WIDTH;
+			int cellY = e->m_posY / CELL_HEIGHT;
+
+			if (Utility::CellBoundCheck(cellX, cellY, m_width, m_height))
+			{
+				// Add to cell
+				Cell* currentCell = &m_cellMap[cellY * m_width + cellX];
+				currentCell->AddEntityHere(e.get()); // note on e.get(): std::move (done later in m_entities.insert) does not change the memory address, so this is safe
+
+				// All worked
+				e->SetCurrentMapPtr(this);
+				e->SetCurrentCellPtr(currentCell);
+				m_entities.insert({ entityGUID, std::move(e) });
+				LOG_DEBUG("Entity {} added to map", entityGUID);
+
+				Entity* ePtr = m_entities[entityGUID].get();
+				return ePtr;
+			}
+			else
+			{
+				// Invalid cell placement
+				LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But the position ({}, {}) is out of bounds! Entity is destroyed.", entityGUID, m_mapID, e->m_posX, e->m_posY);
+				return nullptr;
+			}
+			
+		}
+		else
+		{
+			LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But that GUID is already present in the m_entities list! Entity is destroyed.", entityGUID, m_mapID);
+			return nullptr;
+		}
+	}
 }
 }

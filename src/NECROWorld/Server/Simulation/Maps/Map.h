@@ -46,6 +46,11 @@ namespace World
 		int		LoadMap();
 		void	SetActive(bool v);
 		void	Update(uint32_t diff);
+
+		// Entities Management
+		Entity*		AddEntityToMap(std::unique_ptr<Entity> e);
+		bool		RemoveEntityFromMap(uint64_t guid);
+		Entity*		FindEntity(uint64_t guid) const;
 	};
 }
 }

@@ -48,5 +48,10 @@ namespace Utility
         uint8_t mask = 0xFF << (8 - extraBits);
         return (hash[fullBytes] & mask) == 0;
     }
+
+    inline bool CellBoundCheck(int x, int y, int maxX, int maxY)
+    {
+        return (x >= 0 && x < maxX && y >= 0 && y < maxY);
+    }
 }
 }

@@ -186,6 +186,7 @@ namespace World
 	void Server::Stop()
 	{
 		LOG_OK("Stopping NECROWorld...");
+		m_worldSimulation.Stop();
 
 		m_isRunning = false;
 	}

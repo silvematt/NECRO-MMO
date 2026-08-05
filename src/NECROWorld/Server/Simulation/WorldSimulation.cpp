@@ -2,6 +2,9 @@
 #include "GUIDManager.h"
 #include "Entity.h"
 
+#include "ConsoleLogger.h"
+#include "FileLogger.h"
+
 namespace NECRO
 {
 namespace World
@@ -9,16 +12,18 @@ namespace World
 	int WorldSimulation::Start()
 	{
 		// Load all the default maps
-		m_maps.push_back(std::make_unique<Map>(0)); // 0: Virrihael
+		m_maps.push_back(std::make_unique<Map>(0)); // 0: Load Virrihael
 
 		// Load the active instanced maps (saved on the DB)
+
+		// Entity spawn example
+		LOG_DEBUG("Spawning a new PlayerEntity in map {} at ({},{})", 0, 100.f, 170.f);
+		m_maps[0]->AddEntityToMap(std::move(std::make_unique<Entity>(GUIDManager::GetNextGUID(), EntityType::PLAYER_ENTITY, 100.f, 170.f)));
 
 		m_worldLoopCounter = 0;
 		m_startTime = std::chrono::steady_clock::now();
 
 		m_isRunning = true;
-
-
 		return 0;
 	}
 
@@ -39,7 +44,7 @@ namespace World
 
 	void WorldSimulation::Stop()
 	{
-
+		m_isRunning = false;
 	}
 }
 }
