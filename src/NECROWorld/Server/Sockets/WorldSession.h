@@ -40,15 +40,21 @@ namespace World
         AES::IV iv;
 
         uint32_t clientsIVPrefix = 0;
+    };
 
-        // TODO manage this better
+    // For handlers that require DB callbacks, we save the context of the requests and pass them around DB callbacks
+    struct CreateCharacterCtx
+    {
         std::string newCharacterName;
-        int newCharacterRace;
-        int newCharacterClass;
-        int newCharacterGender;
+        uint8_t newCharacterRace;
+        uint8_t newCharacterClass;
+        uint8_t newCharacterGender;
+    };
 
+    struct DeleteCharacterCtx
+    {
         std::string characterNameToDelete;
-        int         characterIDToDelete;
+        uint32_t    characterIDToDelete;
     };
 
 class WorldSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<WorldSession>
@@ -89,12 +95,16 @@ public:
     bool    DBCallback_HandleSPacketEnumCharacter(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     
     bool    Handle_SPacketCreateNewChar();
-    bool    DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
-    bool    DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<CreateCharacterCtx> ctx);
+    bool    DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<CreateCharacterCtx> ctx);
 
     bool    Handle_SPacketDeleteCharacter();
-    bool    DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
-    bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<DeleteCharacterCtx> ctx);
+    bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<DeleteCharacterCtx> ctx);
+
+    bool    Handle_SPacketEnterWorld();
+    bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleEnterWorldFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 };
 }
 }

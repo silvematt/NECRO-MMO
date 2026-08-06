@@ -27,6 +27,7 @@ namespace Client
 		m_cmds.insert({ "/createchar", Cmd(&Cmd::Cmd_CreateCharacter) });
 		m_cmds.insert({ "/deletechar", Cmd(&Cmd::Cmd_DeleteCharacter) });
 		m_cmds.insert({ "/enumchars", Cmd(&Cmd::Cmd_EnumCharacters) });
+		m_cmds.insert({ "/enterworld", Cmd(&Cmd::Cmd_EnterWorld) });
 
 		// Load history if present
 		m_cmdsLogFile.open(CONSOLE_CMDS_LOG_FILENAME, std::ios::in);

@@ -76,7 +76,7 @@ namespace Client
 	public:
 		const std::unordered_map<uint32_t, std::unique_ptr<Entity>>& GetEntities();
 
-		Cell* GetCellAt(int x, int y);
+		Cell*			GetCellAt(int x, int y);
 		float			GetBaseLightIntensity() const;
 		SDL_Color		GetBaseLightColor() const;
 		void			ResetLighting(); // Sets the current lColor and lIntensity of the cell to the base color, so light can be applied again the current frame

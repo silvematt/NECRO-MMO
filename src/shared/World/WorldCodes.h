@@ -19,7 +19,8 @@ enum class PacketIDs : uint16_t
     AUTH_SESSION = 0,
     ENUM_CHARACTERS,
     CHAR_CREATE_NEW,
-    CHAR_DELETE_CHARACTER
+    CHAR_DELETE_CHARACTER,
+    ENTER_WORLD
 };
 
 //--------------------------------------------------------------------------------------------
@@ -135,6 +136,29 @@ struct CPacketDeleteCharacterResponse
     uint8_t     error;
 };
 static_assert(sizeof(CPacketDeleteCharacterResponse) == (2 + 1), "CPacketDeleteCharacterResponse size assert failed!");
+
+// Client asks the server to enter the world
+struct SPacketEnterWorld
+{
+    uint16_t id;
+    uint32_t characterID; // character that the player wants to enter with
+};
+static_assert(sizeof(SPacketEnterWorld) == (2 + 4), "SPacketEnterWorld size assert failed!");
+
+// Server replies to the client that he may (or may not) enter
+struct CPacketEnterWorld
+{
+    uint16_t id;
+    uint8_t error;
+
+    // Server tells client the information to spawn in the world
+    uint64_t guid;// the guid the simulation assigned to our character, unique within this run of the server
+
+    uint16_t mapID;
+    float_t posX;
+    float_t posY;
+};
+static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 2 + 4 + 4), "CPacketEnterWorld size assert failed!");
 
 #pragma pack(pop)
 }

@@ -1,6 +1,7 @@
 #include "WorldSimulation.h"
 #include "GUIDManager.h"
 #include "Entity.h"
+#include "PlayerEntity.h"
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -18,7 +19,7 @@ namespace World
 
 		// Entity spawn example
 		LOG_DEBUG("Spawning a new PlayerEntity in map {} at ({},{})", 0, 100.f, 170.f);
-		m_maps[0]->AddEntityToMap(std::move(std::make_unique<Entity>(GUIDManager::GetNextGUID(), EntityType::PLAYER_ENTITY, 100.f, 170.f)));
+		m_maps[0]->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), 100.f, 170.f)));
 
 		m_worldLoopCounter = 0;
 		m_startTime = std::chrono::steady_clock::now();

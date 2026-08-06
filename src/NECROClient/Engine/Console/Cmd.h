@@ -41,6 +41,8 @@ namespace Client
 		int		Cmd_DeleteCharacter(const std::vector<std::string>& args);
 		int		Cmd_EnumCharacters(const std::vector<std::string>& args);
 
+		int		Cmd_EnterWorld(const std::vector<std::string>& args);
+
 	};
 
 }

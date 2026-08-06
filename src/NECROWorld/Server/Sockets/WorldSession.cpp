@@ -14,6 +14,7 @@ namespace World
         handlers[static_cast<uint16_t>(World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::AUTHED, S_PACKET_CREATE_NEW_CHAR_INITIAL_SIZE , &Handle_SPacketCreateNewChar };
         handlers[static_cast<uint16_t>(World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::AUTHED, S_PACKET_DELETE_CHAR_INITIAL_SIZE , &Handle_SPacketDeleteCharacter };
         handlers[static_cast<uint16_t>(World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnumCharacter) , &Handle_SPacketEnumCharacter };
+        handlers[static_cast<uint16_t>(World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnterWorld) , &Handle_SPacketEnterWorld };
 
         return handlers;
     }
@@ -472,26 +473,23 @@ namespace World
         std::string charName((char const*)pcktData->characterName, pcktData->characterNameLength);
         LOG_DEBUG("AccountID {} wants to create '{}', name size={}, race={}, class={}, gender={}.", m_data.accountID, charName, pcktData->characterNameLength, pcktData->race, pcktData->charClass, pcktData->gender);
 
-        // Save players selection
-        m_data.newCharacterName = charName;
-        m_data.newCharacterRace = pcktData->race;
-        m_data.newCharacterGender = pcktData->gender;
-        m_data.newCharacterClass = pcktData->charClass;
+        // Save players selection into a context
+        std::shared_ptr<CreateCharacterCtx> reqCtx = std::make_shared<CreateCharacterCtx>(CreateCharacterCtx{ charName, pcktData->race, pcktData->charClass, pcktData->gender});
 
         // Run queries
         auto& dbworker = Server::Instance().GetCharactersDBPool();
         {
             DBRequest req(m_ioContextRef, false);
             req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_SEL_ENUM), {m_data.accountID } }); // check for characters limit on the account
-            req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_CHECK_NAME_ALREADY_IN_USE), {m_data.newCharacterName } }); // check for characters limit on the account
+            req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_CHECK_NAME_ALREADY_IN_USE), {reqCtx->newCharacterName } }); // check for characters limit on the account
             //TODO: queries to check if race,gender,class exist in the DB definitions
             
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+            req.m_callback = [weakSelf, reqCtx](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                 {
                     if (auto lockedSelf = weakSelf.lock())
-                        return lockedSelf->DBCallback_HandleCreateNewCharChecks(ec, res);
+                        return lockedSelf->DBCallback_HandleCreateNewCharChecks(ec, res, reqCtx);
 
                     return false; // WorldSession is destroyed (disconnect)
                 };
@@ -505,7 +503,7 @@ namespace World
         return true;
     }
 
-    bool WorldSession::DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    bool WorldSession::DBCallback_HandleCreateNewCharChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<CreateCharacterCtx> ctx)
     {
         if (!IsOpen())
             return false;
@@ -552,14 +550,14 @@ namespace World
             {
                 DBRequest req(m_ioContextRef, false);
                 req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_INS_CHARACTER), 
-                    {m_data.accountID, m_data.newCharacterName, m_data.newCharacterRace, m_data.newCharacterClass, m_data.newCharacterGender, 1, 0, 0, 0.0f, 0.0f, 0.0f } });
+                    {m_data.accountID, ctx->newCharacterName, ctx->newCharacterRace, ctx->newCharacterClass, ctx->newCharacterGender, 1, 0, 0, 0.0f, 0.0f, 0.0f } });
 
                 // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
                 std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-                req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                req.m_callback = [weakSelf, ctx](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                     {
                         if (auto lockedSelf = weakSelf.lock())
-                            return lockedSelf->DBCallback_HandleCreateNewCharFinal(ec, res);
+                            return lockedSelf->DBCallback_HandleCreateNewCharFinal(ec, res, ctx);
 
                         return false; // WorldSession is destroyed (disconnect)
                     };
@@ -592,7 +590,7 @@ namespace World
         return true;
     }
 
-    bool WorldSession::DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    bool WorldSession::DBCallback_HandleCreateNewCharFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<CreateCharacterCtx> ctx)
     {
         if (!IsOpen())
             return false;
@@ -668,9 +666,7 @@ namespace World
                 return false;
 
         // All good
-
-        m_data.characterNameToDelete = std::string((char const*)pcktData->characterName, pcktData->characterNameLength);
-        m_data.characterIDToDelete = pcktData->characterID;
+        std::shared_ptr<DeleteCharacterCtx> reqCtx = std::make_shared<DeleteCharacterCtx>(DeleteCharacterCtx{ std::string((char const*)pcktData->characterName, pcktData->characterNameLength), pcktData->characterID });
 
         // Run queries
         // 1. Check if character exists
@@ -682,10 +678,10 @@ namespace World
 
             // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
             std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-            req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+            req.m_callback = [weakSelf, reqCtx](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                 {
                     if (auto lockedSelf = weakSelf.lock())
-                        return lockedSelf->DBCallback_HandleDeleteCharacterChecks(ec, res);
+                        return lockedSelf->DBCallback_HandleDeleteCharacterChecks(ec, res, reqCtx);
 
                     return false; // WorldSession is destroyed (disconnect)
                 };
@@ -699,7 +695,7 @@ namespace World
         return true;
     }
 
-    bool WorldSession::DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    bool WorldSession::DBCallback_HandleDeleteCharacterChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<DeleteCharacterCtx> ctx)
     {
         if (!IsOpen())
             return false;
@@ -723,20 +719,20 @@ namespace World
             std::string characterNameInDB = r[0].get<std::string>();
 
             // ID - AccountID corresponds - check if the input by the player was correct
-            if (m_data.characterNameToDelete == r[0].get<std::string>())
+            if (ctx->characterNameToDelete == r[0].get<std::string>())
             {
                 // Perform the delete
                 auto& dbworker = Server::Instance().GetCharactersDBPool();
                 {
                     DBRequest req(m_ioContextRef, false);
-                    req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_DELETE_CHARACTER), {m_data.characterIDToDelete, characterNameInDB, m_data.accountID} });
+                    req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_DELETE_CHARACTER), {ctx->characterIDToDelete, characterNameInDB, m_data.accountID} });
 
                     // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
                     std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-                    req.m_callback = [weakSelf](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
+                    req.m_callback = [weakSelf, ctx](uint32_t ec, std::vector<mysqlx::SqlResult>& res)
                         {
                             if (auto lockedSelf = weakSelf.lock())
-                                return lockedSelf->DBCallback_HandleDeleteCharacterFinal(ec, res);
+                                return lockedSelf->DBCallback_HandleDeleteCharacterFinal(ec, res, ctx);
 
                             return false; // WorldSession is destroyed (disconnect)
                         };
@@ -772,7 +768,7 @@ namespace World
         return true;
     }
 
-    bool WorldSession::DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result)
+    bool WorldSession::DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<DeleteCharacterCtx> ctx)
     {
         if (!IsOpen())
             return false;
@@ -784,7 +780,7 @@ namespace World
             return false;
         }
 
-        LOG_DEBUG("Character {} delete!", m_data.characterNameToDelete);
+        LOG_DEBUG("Character {} delete!", ctx->characterNameToDelete);
 
         // DB callbacks should also update last activity
         m_lastActivity = std::chrono::steady_clock::now();

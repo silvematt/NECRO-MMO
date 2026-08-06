@@ -19,7 +19,7 @@ namespace World
 	class Entity
 	{
 		friend Map;
-	private:
+	protected:
 		uint64_t	m_guid;
 		EntityType	m_type;
 		bool		m_isActive;
