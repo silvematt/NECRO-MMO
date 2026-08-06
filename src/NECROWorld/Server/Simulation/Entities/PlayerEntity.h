@@ -1,6 +1,10 @@
 #pragma once
 
+#include <memory>
+
 #include "Entity.h"
+#include "CharacterData.h"
+
 
 namespace NECRO
 {
@@ -8,13 +12,13 @@ namespace World
 {
 	class PlayerEntity : public Entity
 	{
-	public:
-		PlayerEntity(uint64_t guid) : Entity(guid, EntityType::PLAYER_ENTITY)
-		{
-		}
+	private:
+		std::unique_ptr<CharacterData> m_characterData;
 
-		PlayerEntity(uint64_t guid, float posX, float posY) : Entity(guid, EntityType::PLAYER_ENTITY, posX, posY)
+	public:
+		PlayerEntity(uint64_t guid, std::shared_ptr<CharacterData> charData) : Entity(guid, EntityType::PLAYER_ENTITY)
 		{
+			m_characterData = std::make_unique<CharacterData>(*charData);
 		}
 	};
 }

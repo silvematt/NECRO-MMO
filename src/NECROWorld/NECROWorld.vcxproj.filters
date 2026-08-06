@@ -24,6 +24,7 @@
     <ClCompile Include="Server\Simulation\Entities\Entity.cpp" />
     <ClCompile Include="Server\Simulation\Entities\PlayerEntity.cpp" />
     <ClCompile Include="Server\Sockets\Handlers\PlayerHandlers.cpp" />
+    <ClCompile Include="Server\Simulation\WorldCmds\PlayerWorldCmds.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Server\NECROWorld.h">
@@ -38,5 +39,6 @@
     <ClInclude Include="Server\Managers\GUIDManager.h" />
     <ClInclude Include="Server\Simulation\Entities\PlayerEntity.h" />
     <ClInclude Include="Server\Managers\SessionManager.h" />
+    <ClInclude Include="Server\Simulation\WorldCmds\WorldCmdTypes.h" />
   </ItemGroup>
 </Project>

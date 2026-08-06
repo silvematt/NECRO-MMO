@@ -17,7 +17,8 @@ namespace NECRO
 		CHAR_DEL_CHARACTER,
 		CHAR_CHECK_NAME_ALREADY_IN_USE,
 		CHAR_CHECK_BELONGS_TO_ACCOUNTID,
-		CHAR_DELETE_CHARACTER
+		CHAR_DELETE_CHARACTER,
+		CHAR_SEL_BY_CHARID
 	};
 
 	//-----------------------------------------------------------------------------------------------------
@@ -55,6 +56,7 @@ namespace NECRO
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_CHECK_NAME_ALREADY_IN_USE), ("SELECT id FROM necrochars.characters WHERE NAME = ?;"));
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_CHECK_BELONGS_TO_ACCOUNTID), ("SELECT name FROM necrochars.characters WHERE id = ? AND accountid = ?;"));
 			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_DELETE_CHARACTER), "DELETE FROM necrochars.characters WHERE id = ? AND name = ? AND accountid = ?");
+			PrepareStatement(static_cast<int>(CharactersDatabaseStatements::CHAR_SEL_BY_CHARID), ("SELECT accountid, name, race, class, gender, level, xp, zone, pos_x, pos_y, pos_z FROM necrochars.characters WHERE id = ?;"));
 		}
 
 		int Close() override

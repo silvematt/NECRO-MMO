@@ -57,6 +57,11 @@ namespace World
         uint32_t    characterIDToDelete;
     };
 
+    struct EnterWorldCtx
+    {
+        uint32_t characterID;
+    };
+
 class WorldSession : public TCPSocketBoost, public inheritable_enable_shared_from_this<WorldSession>
 {
 	using inheritable_enable_shared_from_this<WorldSession>::shared_from_this;
@@ -116,7 +121,7 @@ public:
     bool    DBCallback_HandleDeleteCharacterFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<DeleteCharacterCtx> ctx);
 
     bool    Handle_SPacketEnterWorld();
-    bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<EnterWorldCtx> reqCtx);
     bool    DBCallback_HandleEnterWorldFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
 
 };

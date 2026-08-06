@@ -129,6 +129,11 @@ namespace World
 		{
 			return m_sessionManager;
 		}
+
+		WorldSimulation& GetWorldSimulation()
+		{
+			return m_worldSimulation;
+		}
 	};
 }
 }

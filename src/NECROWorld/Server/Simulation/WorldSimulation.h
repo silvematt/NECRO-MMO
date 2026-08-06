@@ -5,11 +5,15 @@
 #include <vector>
 #include <memory>
 #include <chrono>
+#include <functional>
+#include <mutex>
 
 #include "Map.h"
+#include "WorldCmdTypes.h"
 
 namespace NECRO
 {
+struct CharacterData; // forward declare
 namespace World
 {
 	// ------------------------------------------------------------------------
@@ -31,6 +35,16 @@ namespace World
 		// Some may be inactive
 		std::vector<std::unique_ptr<Map>> m_maps;
 
+		// ------------------------------------------------------------------------------------------------------------------------------------------------------
+		// A WorldCmd is a function or command that is issued by a WorldSession that requests to execute code on the main thread (simulation thread) and 
+		// eventually fire a callback on the thread that originatated the request (that thread may need to know the result of the Cmd to continue its processing)
+		// ------------------------------------------------------------------------------------------------------------------------------------------------------
+		std::mutex m_cmdsMutex;
+		std::vector<std::function<void()>> m_pendingCmds;
+
+	private:
+		void	ExecuteWorldCmds();
+
 	public:
 		std::atomic<bool> m_isRunning;
 
@@ -41,6 +55,11 @@ namespace World
 		int		Start();
 		void	Update();
 		void	Stop();
+
+		void	PostWorldCmd(std::function<void()> cmd);
+
+		// Cmds - implemented in Simulation/WorldCmds/x.cpp
+		PlayerSpawnCmdResult WorldCmd_TryToSpawnPlayerCharacter(std::shared_ptr<CharacterData> charData);
 	};
 }
 }

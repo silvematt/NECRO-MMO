@@ -6,6 +6,8 @@
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
 
+#include <boost/asio.hpp>
+
 namespace NECRO
 {
 namespace World
@@ -18,8 +20,8 @@ namespace World
 		// Load the active instanced maps (saved on the DB)
 
 		// Entity spawn example
-		LOG_DEBUG("Spawning a new PlayerEntity in map {} at ({},{})", 0, 100.f, 170.f);
-		m_maps[0]->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), 100.f, 170.f)));
+		//LOG_DEBUG("Spawning a new PlayerEntity in map {} at ({},{})", 0, 100.f, 170.f);
+		//m_maps[0]->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), 100.f, 170.f)));
 
 		m_worldLoopCounter = 0;
 		m_startTime = std::chrono::steady_clock::now();
@@ -37,6 +39,11 @@ namespace World
 		m_curTimeDiff = m_curTime - m_prevTime;
 
 		// We can throttle here, define a tickrate and have a minDiff before update
+		
+		// Execute queued cmds
+		ExecuteWorldCmds();
+
+		// TODO: This is highly parallelizable, we could have working sim threads working on different maps :D
 		for (auto& map : m_maps)
 			map->Update(m_curTimeDiff);
 		
@@ -46,6 +53,35 @@ namespace World
 	void WorldSimulation::Stop()
 	{
 		m_isRunning = false;
+	}
+
+	void WorldSimulation::ExecuteWorldCmds()
+	{
+		std::vector<std::function<void()>> currentQueue;
+
+		{
+			std::lock_guard lock(m_cmdsMutex);
+			std::swap(m_pendingCmds, currentQueue);
+			m_pendingCmds.clear();
+		}
+
+		for (auto& cmd : currentQueue)
+		{
+			try
+			{
+				cmd();
+			}
+			catch (...)
+			{
+				LOG_CRITICAL("Exception caught during WorldCmd execution. Handling: Unknown.");
+			}
+		}
+	}
+
+	void WorldSimulation::PostWorldCmd(std::function<void()> cmd)
+	{
+		std::lock_guard lock(m_cmdsMutex);
+		m_pendingCmds.push_back(std::move(cmd));
 	}
 }
 }
