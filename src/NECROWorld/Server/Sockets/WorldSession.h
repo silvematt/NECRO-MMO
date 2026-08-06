@@ -74,13 +74,26 @@ private:
 
     std::chrono::steady_clock::time_point   m_lastActivity;
     uint32_t m_packetsProcessed = 0;
+
+    // To Register and Unregister
+    static inline std::atomic<uint64_t> s_nextSerial{ 1 };
+    uint64_t m_serial = 0;
+
+    std::atomic<bool> m_hasRegistered{ false };
     
 public:
-    WorldSession(tcp::socket&& insocket) : TCPSocketBoost(std::move(insocket)), m_status(WorldSocketStatus::GATHER_SESSIONKEY), m_closeAfterSend(false)
+    WorldSession(tcp::socket&& insocket) : TCPSocketBoost(std::move(insocket)), m_status(WorldSocketStatus::GATHER_SESSIONKEY), m_closeAfterSend(false), m_hasRegistered(false), m_serial(0)
     {
     }
 
+    ~WorldSession();
+
+    const uint64_t GetSessionSerial() const { return m_serial; }
+
     static std::unordered_map<uint16_t, WorldHandler> InitHandlers();
+
+    void    PostCloseSocket();
+    void    PostForceCloseSocket();
 
     // This runs in the NetworkThread that possess this socket
     int     Update(std::chrono::steady_clock::time_point now) override;
@@ -105,6 +118,7 @@ public:
     bool    Handle_SPacketEnterWorld();
     bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
     bool    DBCallback_HandleEnterWorldFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+
 };
 }
 }

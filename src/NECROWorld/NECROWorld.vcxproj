@@ -40,6 +40,7 @@
     <ClInclude Include="Server\Sockets\WorldSession.h" />
     <ClInclude Include="Server\Simulation\WorldSimulation.h" />
     <ClInclude Include="Server\Managers\GUIDManager.h" />
+    <ClInclude Include="Server\Managers\SessionManager.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

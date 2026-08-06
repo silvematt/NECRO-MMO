@@ -37,5 +37,6 @@
     <ClInclude Include="Server\Simulation\Entities\Entity.h" />
     <ClInclude Include="Server\Managers\GUIDManager.h" />
     <ClInclude Include="Server\Simulation\Entities\PlayerEntity.h" />
+    <ClInclude Include="Server\Managers\SessionManager.h" />
   </ItemGroup>
 </Project>

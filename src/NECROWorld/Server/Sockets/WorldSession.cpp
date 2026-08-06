@@ -5,6 +5,11 @@ namespace NECRO
 {
 namespace World
 {
+    WorldSession::~WorldSession()
+    {
+        if (m_hasRegistered.load())
+            Server::Instance().GetSessionManager().UnregisterSession(m_data.accountID, m_serial);
+    }
 
     std::unordered_map<uint16_t, WorldHandler> WorldSession::InitHandlers()
     {
@@ -20,6 +25,29 @@ namespace World
     }
     std::unordered_map<uint16_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
 
+
+    // Allows other threads to kick this world session, used in SessionManager
+    void WorldSession::PostCloseSocket()
+    {
+        boost::asio::post(m_ioContextRef, [self = shared_from_this()]() mutable
+        {
+            if (!self->IsOpen())
+                return;
+
+            self->CloseSocket();
+        });
+    }
+
+    void WorldSession::PostForceCloseSocket()
+    {
+        boost::asio::post(m_ioContextRef, [self = shared_from_this()]() mutable
+            {
+                if (!self->IsOpen())
+                    return;
+
+                self->ForceCloseSocket();
+            });
+    }
 
     int WorldSession::Update(std::chrono::steady_clock::time_point now)
     {
@@ -414,6 +442,11 @@ namespace World
         {
             // Client is Authed, he can send select/create characters - if he's not legit, he won't be able to send a coherent packet
             m_status = WorldSocketStatus::AUTHED;
+
+            // Register the session
+            m_serial = s_nextSerial.fetch_add(1, std::memory_order_relaxed);
+            Server::Instance().GetSessionManager().RegisterSession(m_data.accountID, shared_from_this());
+            m_hasRegistered = true;
         }
 
         return true;

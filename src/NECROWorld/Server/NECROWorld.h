@@ -9,6 +9,7 @@
 #include "AsioThreadPool.h"
 #include "SocketManager.h"
 #include "WorldSimulation.h"
+#include "SessionManager.h"
 
 #include "NDBManager.h"
 
@@ -93,6 +94,9 @@ namespace World
 		NDBManager		m_ndbs;
 		WorldSimulation m_worldSimulation;
 
+		// Managers
+		SessionManager	m_sessionManager;
+
 	public:
 		int						Init();
 		void					Start();
@@ -119,6 +123,11 @@ namespace World
 		const NDBManager& GetNDBs() const
 		{
 			return m_ndbs;
+		}
+
+		SessionManager& GetSessionManager()
+		{
+			return m_sessionManager;
 		}
 	};
 }
