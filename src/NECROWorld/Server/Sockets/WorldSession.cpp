@@ -419,7 +419,7 @@ namespace World
                 packet << static_cast<uint8_t>(charRow[5].get<int>());       // level
                 packet << charRow[6].get<uint32_t>();                        // xp
 
-                packet << static_cast<uint32_t>(charRow[7].get<int>());      // zone
+                packet << charRow[7].get<uint32_t>();      // zone
                 packet << charRow[8].get<float>();                           // pos_x
                 packet << charRow[9].get<float>();                           // pos_y
                 packet << charRow[10].get<float>();                          // pos_z

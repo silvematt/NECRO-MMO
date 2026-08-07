@@ -15,13 +15,9 @@ namespace World
 	int WorldSimulation::Start()
 	{
 		// Load all the default maps
-		m_maps.push_back(std::make_unique<Map>(0)); // 0: Load Virrihael
+		m_maps.insert({ 0, std::make_unique<Map>(0)}); // 0: Load Virrihael
 
 		// Load the active instanced maps (saved on the DB)
-
-		// Entity spawn example
-		//LOG_DEBUG("Spawning a new PlayerEntity in map {} at ({},{})", 0, 100.f, 170.f);
-		//m_maps[0]->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), 100.f, 170.f)));
 
 		m_worldLoopCounter = 0;
 		m_startTime = std::chrono::steady_clock::now();
@@ -45,7 +41,7 @@ namespace World
 
 		// TODO: This is highly parallelizable, we could have working sim threads working on different maps :D
 		for (auto& map : m_maps)
-			map->Update(m_curTimeDiff);
+			map.second->Update(m_curTimeDiff);
 		
 		m_prevTime = m_curTime;
 	}
@@ -82,6 +78,37 @@ namespace World
 	{
 		std::lock_guard lock(m_cmdsMutex);
 		m_pendingCmds.push_back(std::move(cmd));
+	}
+
+	bool WorldSimulation::RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player)
+	{
+		auto it = m_charIdToGuid.find(charID);
+		if (it == m_charIdToGuid.end())
+		{
+			// Register the player
+			m_players[guid] = player;
+			m_charIdToGuid[charID] = guid;
+			return true;
+		}
+
+		return false;
+	}
+
+	bool WorldSimulation::UnregisterPlayer(uint64_t guid, uint32_t charID)
+	{
+		auto cIt = m_charIdToGuid.find(charID);
+		if (cIt == m_charIdToGuid.end() || cIt->second != guid)
+			return false;
+
+		m_charIdToGuid.erase(cIt);
+		m_players.erase(guid);
+		return true;
+	}
+
+	Map* WorldSimulation::FindMap(uint32_t mapID)
+	{
+		auto it = m_maps.find(mapID);
+		return it != m_maps.end() ? it->second.get() : nullptr;
 	}
 }
 }

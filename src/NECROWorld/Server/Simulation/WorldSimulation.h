@@ -16,6 +16,8 @@ namespace NECRO
 struct CharacterData; // forward declare
 namespace World
 {
+	class PlayerEntity;
+
 	// ------------------------------------------------------------------------
 	// Simulation of the whole world. Contains all the maps loaded of the game
 	// ------------------------------------------------------------------------
@@ -33,7 +35,13 @@ namespace World
 
 		// All the maps currently loaded loaded in the server
 		// Some may be inactive
-		std::vector<std::unique_ptr<Map>> m_maps;
+		std::unordered_map<uint32_t, std::unique_ptr<Map>>	m_maps;
+
+		// All the players in any map. They belong to the map they're currently and are just indexed here for quick access
+		// CharID -> GUID
+		// GUID -> PlayerEntity*
+		std::unordered_map<uint32_t, uint64_t>				m_charIdToGuid;
+		std::unordered_map<uint64_t, PlayerEntity*>			m_players;
 
 		// ------------------------------------------------------------------------------------------------------------------------------------------------------
 		// A WorldCmd is a function or command that is issued by a WorldSession that requests to execute code on the main thread (simulation thread) and 
@@ -44,6 +52,9 @@ namespace World
 
 	private:
 		void	ExecuteWorldCmds();
+		bool	RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
+		bool	UnregisterPlayer(uint64_t guid, uint32_t charID);
+		Map*	FindMap(uint32_t mapID);
 
 	public:
 		std::atomic<bool> m_isRunning;
@@ -59,7 +70,7 @@ namespace World
 		void	PostWorldCmd(std::function<void()> cmd);
 
 		// Cmds - implemented in Simulation/WorldCmds/x.cpp
-		PlayerSpawnCmdResult WorldCmd_TryToSpawnPlayerCharacter(std::shared_ptr<CharacterData> charData);
+		PlayerSpawnCmdResult WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
 	};
 }
 }

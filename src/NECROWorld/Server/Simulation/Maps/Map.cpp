@@ -68,6 +68,7 @@ namespace World
 				LOG_DEBUG("Entity {} added to map", entityGUID);
 
 				Entity* ePtr = m_entities[entityGUID].get();
+				ePtr->OnBeingAddedToMap();
 				return ePtr;
 			}
 			else
@@ -76,12 +77,28 @@ namespace World
 				LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But the position ({}, {}) is out of bounds! Entity is destroyed.", entityGUID, m_mapID, e->m_posX, e->m_posY);
 				return nullptr;
 			}
-			
 		}
 		else
 		{
 			LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But that GUID is already present in the m_entities list! Entity is destroyed.", entityGUID, m_mapID);
 			return nullptr;
+		}
+	}
+
+	bool Map::RemoveEntityFromMap(uint64_t entityGUID)
+	{
+		auto it = m_entities.find(entityGUID);
+		if (it == m_entities.end())
+		{
+			LOG_WARNING("Tried to remove entity GUID: '{}' from MapID: '{}' - But that GUID was not registered here!", entityGUID, m_mapID);
+			return false;
+		}
+		else
+		{
+			it->second->OnBeingRemovedFromMap();
+			it->second->m_currentCell->RemoveEntityHere(entityGUID);
+			m_entities.erase(it);
+			return true;
 		}
 	}
 }

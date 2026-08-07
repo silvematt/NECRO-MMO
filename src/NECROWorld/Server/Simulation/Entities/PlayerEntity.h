@@ -16,10 +16,12 @@ namespace World
 		std::unique_ptr<CharacterData> m_characterData;
 
 	public:
-		PlayerEntity(uint64_t guid, std::shared_ptr<CharacterData> charData) : Entity(guid, EntityType::PLAYER_ENTITY)
+		PlayerEntity(uint64_t guid, CharacterData charData) : Entity(guid, EntityType::PLAYER_ENTITY)
 		{
-			m_characterData = std::make_unique<CharacterData>(*charData);
+			m_characterData = std::make_unique<CharacterData>(charData);
 		}
+
+		void Update(uint32_t diff) override;
 	};
 }
 }

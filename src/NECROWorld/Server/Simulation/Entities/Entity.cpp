@@ -42,5 +42,17 @@ namespace World
 			// Entity is an invalid state, TODO decide what to do
 		}
 	}
+
+	// Called as soon as the Entity is added to the map (via Map::AddEntityToMap) and (m_currentMap, m_currentCell) are assigned
+	void Entity::OnBeingAddedToMap()
+	{
+
+	}
+
+	// Called just before being removed from the map by (Map::RemoveFromMap)
+	void Entity::OnBeingRemovedFromMap()
+	{
+
+	}
 }
 }

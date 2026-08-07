@@ -43,16 +43,21 @@ namespace World
 		{
 		}
 
-		Entity(uint64_t guid, EntityType tpe, float posX, float posY) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr),  m_isActive(true), m_posX(posX), m_posY(posY)
-		{
-		}
-
 		const uint64_t GetGUID() const
 		{
 			return m_guid;
 		}
 
 		virtual void Update(uint32_t diff);
+
+		// Called as soon as the Entity is added to the map (via Map::AddEntityToMap) and (m_currentMap, m_currentCell) are assigned
+		virtual void OnBeingAddedToMap();
+
+		// Called just before being removed from the map by (Map::RemoveFromMap)
+		virtual void OnBeingRemovedFromMap();
+
+		// TODO Called wehn the entity is trasferred (or being transferred?) to another map
+		// virtual void OnBeingTransferredToMap(...)
 	};
 }
 }

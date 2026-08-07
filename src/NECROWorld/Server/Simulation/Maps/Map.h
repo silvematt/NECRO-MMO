@@ -47,10 +47,18 @@ namespace World
 		void	SetActive(bool v);
 		void	Update(uint32_t diff);
 
+		const uint32_t	GetMapID() const { return m_mapID; };
+		const int		GetWidth() const { return m_width; };
+		const int		GetHeight() const { return m_height; };
+
 		// Entities Management
 		Entity*		AddEntityToMap(std::unique_ptr<Entity> e);
 		bool		RemoveEntityFromMap(uint64_t guid);
+		// TODO: transferentity
+
 		Entity*		FindEntity(uint64_t guid) const;
+
+		
 	};
 }
 }
