@@ -216,7 +216,8 @@ namespace Client
             cursor += sizeof(curCharacter.xp);
 
             // Zone
-            curCharacter.zone = *cursor++;
+            std::memcpy(&curCharacter.zone, cursor, sizeof(curCharacter.zone));
+            cursor += sizeof(curCharacter.zone);
 
             // pos x,y,z
             std::memcpy(&curCharacter.pos_x, cursor, sizeof(curCharacter.pos_x));

@@ -67,7 +67,7 @@ struct CharacterDataOnWire
     uint8_t level;
     uint32_t xp;
 
-    uint8_t zone;
+    uint32_t zone;
     float_t pos_x;
     float_t pos_y;
     float_t pos_z;
@@ -156,11 +156,11 @@ struct CPacketEnterWorld
     // Server tells client the information to spawn in the world
     uint64_t guid;// the guid the simulation assigned to our character, unique within this run of the server
 
-    uint16_t mapID;
+    uint32_t mapID;
     float_t posX;
     float_t posY;
 };
-static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 2 + 4 + 4), "CPacketEnterWorld size assert failed!");
+static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 4 + 4 + 4), "CPacketEnterWorld size assert failed!");
 
 #pragma pack(pop)
 }

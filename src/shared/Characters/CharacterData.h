@@ -23,7 +23,7 @@ struct CharacterData
     uint8_t level;
     uint32_t xp;
 
-    uint8_t zone;
+    uint32_t zone;
     float_t pos_x;
     float_t pos_y;
     float_t pos_z;

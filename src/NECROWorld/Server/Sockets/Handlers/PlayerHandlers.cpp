@@ -104,11 +104,10 @@ namespace World
                 characterData->gender   = static_cast<uint8_t>(row[4].get<int>());
                 characterData->level    = static_cast<uint8_t>(row[5].get<int>());
                 characterData->xp       = static_cast<uint32_t>(row[6].get<uint32_t>());
-                characterData->zone     = static_cast<uint8_t>(row[7].get<int>());
+                characterData->zone     = static_cast<uint32_t>(row[7].get<uint32_t>());
                 characterData->pos_x    = static_cast<float_t>(row[8].get<float_t>());
                 characterData->pos_y    = static_cast<float_t>(row[9].get<float_t>());
                 characterData->pos_z    = static_cast<float_t>(row[10].get<float_t>());
-
 
                 Server::Instance().GetWorldSimulation().PostWorldCmd(
                     [weakSelf, characterData]()
@@ -117,11 +116,10 @@ namespace World
                         if (weakSelf.expired())
                             return; // client died
 
-                        PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(characterData);
+                        PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(*characterData);
 
                         // Process result
-
-                        // Post result on the originating NetworkThread
+                        
                     });
             }
             else
