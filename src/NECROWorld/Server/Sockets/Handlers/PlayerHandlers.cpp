@@ -10,6 +10,25 @@ namespace NECRO
 {
 namespace World
 {
+    // --------------------------------------------------------------------------------------------------------------------------
+    // Rolls back a spawn that was executed on the simulation thread but whose result could never be given to the client
+    // --------------------------------------------------------------------------------------------------------------------------
+    static void PostSpawnRollback(const PlayerSpawnCmdResult& result)
+    {
+        if (!result.success)
+            return; // Nothing was spawned, this was just extra safety
+
+        uint64_t guid = result.guid;
+        LOG_WARNING("EnterWorld result could not be delivered, rolling back the spawn of GUID: '{}'.", guid);
+
+        Server::Instance().GetWorldSimulation().PostWorldCmd(
+            [guid]()
+            {
+                // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
+            });
+    }
+
 	bool WorldSession::Handle_SPacketEnterWorld()
 	{
 		// Fixed size packet
@@ -126,15 +145,17 @@ namespace World
 
                         PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(*characterData);
 
-                        // TODO: fix the edge case where the world session dies between the already executed spawn and the callback we're posting below
-                        // WorldSession destructor could despawn it if we set the guid earlier than now (WorldCmdCallback_OnEnterWorld)
-
                         // Post result on the originating NetworkThread context
                         boost::asio::post(*originatingIoContext,
                             [weakSelf, spawnResult]()
                             {
                                 if (auto s = weakSelf.lock())
                                     s->WorldCmdCallback_OnEnterWorld(spawnResult);
+                                else
+                                {
+                                    // The session died between the call of WorldCmd_TryToSpawnPlayerCharacter and this callback execution
+                                    PostSpawnRollback(spawnResult);
+                                }
                             });
                     });
             }
@@ -163,8 +184,12 @@ namespace World
 
     bool WorldSession::WorldCmdCallback_OnEnterWorld(PlayerSpawnCmdResult result)
     {
+        // If the session closed just before this had to run, rollback the spawn
         if (!IsOpen())
+        {
+            PostSpawnRollback(result);
             return false;
+        }
 
         LOG_DEBUG("Handling WorldCmdCallback_OnEnterWorld for user {}!", m_data.accountID);
 
@@ -202,6 +227,89 @@ namespace World
             return false;
         }
         QueuePacket(std::move(m));
+        return true;
+    }
+
+    bool WorldSession::Handle_SPacketExitWorld()
+    {
+        // Fixed size packet
+        if (m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketExitWorld))
+            return false;
+
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        SPacketExitWorld* pckt = reinterpret_cast<SPacketExitWorld*>(m_currentDecryptedPacket.GetReadPointer());
+
+        uint64_t guid = m_playerGUID;
+
+        // Make sure that the state we're in is valid to leave the world
+        if (guid != 0)
+        {
+            // Update status
+            m_status = WorldSocketStatus::LEAVING_WORLD;
+
+            // Proceed, spawn the character in the world
+            std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+            boost::asio::io_context* originatingIoContext = &m_ioContextRef;
+            Server::Instance().GetWorldSimulation().PostWorldCmd(
+                [weakSelf, guid, originatingIoContext]()
+                {
+                    // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                    PlayerDespawnCmdResult despawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
+
+                    // Post result on the originating NetworkThread context
+                    boost::asio::post(*originatingIoContext,
+                        [weakSelf, despawnResult]()
+                        {
+                            if (auto s = weakSelf.lock())
+                                s->WorldCmdCallback_OnExitWorld(despawnResult);
+                        });
+                });
+        }
+        else
+        {
+            LOG_DEBUG("m_status is IN_WORLD but PlayerGUID/PlayerPtr is invalid for AccountID:'{}'", m_data.accountID);
+            CloseSocket();
+            return false;
+        }
+        
+
+        return true;
+    }
+
+    bool WorldSession::WorldCmdCallback_OnExitWorld(PlayerDespawnCmdResult result)
+    {
+        if (!IsOpen())
+            return false;
+
+        LOG_DEBUG("Handling WorldCmdCallback_OnExitWorld for user {}!", m_data.accountID);
+
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        // Reset owning entity references
+        m_playerGUID = 0;
+        m_playerPtr = nullptr;
+
+        // Send response
+        Packet p;
+        p << static_cast<uint16_t>(World::PacketIDs::EXIT_WORLD);
+
+        if (result.success)
+            p << static_cast<uint8_t>(World::WorldResults::SUCCESS);
+        else
+            p << static_cast<uint8_t>(World::WorldResults::FAILED);
+
+        NetworkMessage m(std::move(p));
+        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+        if (encryptRes < 0)
+        {
+            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            CloseSocket();
+            return false;
+        }
+        QueuePacket(std::move(m));
+
+        m_status = WorldSocketStatus::AUTHED;
         return true;
     }
 }

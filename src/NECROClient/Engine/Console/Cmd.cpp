@@ -38,6 +38,7 @@ namespace Client
 		c.Log("'/deletechar' (charID, charName): deletes one of your characters.");
 		c.Log("'/enumchars' (): enums all the characters on this account.");
 		c.Log("'/enterworld' (charID): sends a request to the server to enter in the world with the poassed character ID.");
+		c.Log("'/exitworld' (): sends a request to the server to exit the world with the current character.");
 
 		return 1; // return 1 to not close the console after this function
 	}
@@ -322,6 +323,33 @@ namespace Client
 
 		p << static_cast<uint16_t>(NECRO::World::PacketIDs::ENTER_WORLD);
 		p << static_cast<uint32_t>(characterID);
+
+		NetworkMessage encrypted(std::move(p));
+		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)
+		{
+			LOG_ERROR("Failed to encrypt packet.");
+			c.Log("Failed to encrypt packet.");
+			return 1;
+		}
+		NetworkMessage m(std::move(encrypted));
+		engine.GetWorldManager().QueuePacket(NetworkMessage(std::move(m)));
+
+		return 0;
+	}
+
+	int Cmd::Cmd_ExitWorld(const std::vector<std::string>& args)
+	{
+		Console& c = engine.GetConsole();
+
+		if (!engine.GetWorldManager().GetData().isInWorld)
+		{
+			c.Log("You are not in world!.");
+			return 1;
+		}
+
+		Packet p;
+
+		p << static_cast<uint16_t>(NECRO::World::PacketIDs::EXIT_WORLD);
 
 		NetworkMessage encrypted(std::move(p));
 		if (encrypted.AESEncrypt(engine.GetAuthManager().GetData().sessionKey.data(), engine.GetAuthManager().GetData().iv, nullptr, 0) < 0)

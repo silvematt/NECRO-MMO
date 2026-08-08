@@ -18,11 +18,15 @@ namespace Client
         bool hasConnectedToWorld = false;
         bool isAuthed = false;
         std::vector<NECRO::CharacterData> characters{};
+        bool isInWorld = false;
+        uint64_t myGuid;
 
         void Zero()
         {
             hasConnectedToWorld = false;
             isAuthed = false;
+            isInWorld = false;
+            myGuid = 0;
             characters.clear();
         }
     };

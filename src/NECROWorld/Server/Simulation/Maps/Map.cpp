@@ -98,6 +98,7 @@ namespace World
 			it->second->OnBeingRemovedFromMap();
 			it->second->m_currentCell->RemoveEntityHere(entityGUID);
 			m_entities.erase(it);
+			LOG_WARNING("Removed Entity from GUID: '{}' from MapID: '{}'!", entityGUID, m_mapID);
 			return true;
 		}
 	}

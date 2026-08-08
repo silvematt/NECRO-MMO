@@ -48,6 +48,7 @@ namespace Client
         bool    Handle_CreateNewCharResponse();
         bool    Handle_DeleteCharacterResponse();
         bool    Handle_EnterWorldResponse();
+        bool    Handle_ExitWorldResponse();
     };
 }
 }

@@ -71,6 +71,8 @@ namespace World
 
 		// Cmds - implemented in Simulation/WorldCmds/x.cpp
 		PlayerSpawnCmdResult	WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
+		PlayerDespawnCmdResult	WorldCmd_TryToDespawnPlayerCharacter(uint64_t guid);
+
 	};
 }
 }

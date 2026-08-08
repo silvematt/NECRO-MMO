@@ -20,6 +20,7 @@ namespace World
         handlers[static_cast<uint16_t>(World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::AUTHED, S_PACKET_DELETE_CHAR_INITIAL_SIZE , &Handle_SPacketDeleteCharacter };
         handlers[static_cast<uint16_t>(World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnumCharacter) , &Handle_SPacketEnumCharacter };
         handlers[static_cast<uint16_t>(World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnterWorld) , &Handle_SPacketEnterWorld };
+        handlers[static_cast<uint16_t>(World::PacketIDs::EXIT_WORLD)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(SPacketExitWorld) , &Handle_SPacketExitWorld};
 
         return handlers;
     }

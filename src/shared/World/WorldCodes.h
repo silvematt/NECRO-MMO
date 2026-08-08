@@ -13,6 +13,7 @@ enum class WorldSocketStatus
     AUTHED,
     ENTERING_WORLD,
     IN_WORLD,
+    LEAVING_WORLD,
     CLOSED
 };
 
@@ -22,7 +23,8 @@ enum class PacketIDs : uint16_t
     ENUM_CHARACTERS,
     CHAR_CREATE_NEW,
     CHAR_DELETE_CHARACTER,
-    ENTER_WORLD
+    ENTER_WORLD,
+    EXIT_WORLD
 };
 
 //--------------------------------------------------------------------------------------------
@@ -164,6 +166,21 @@ struct CPacketEnterWorld
 };
 static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 4 + 4 + 4), "CPacketEnterWorld size assert failed!");
 inline constexpr int C_PACKET_ENTER_WORLD_INITIAL_SIZE = 3;
+
+// Client requests to exit the worldserver
+struct SPacketExitWorld
+{
+    uint16_t id;
+};
+static_assert(sizeof(SPacketExitWorld) == (2), "SPacketLeaveWorld size assert failed!");
+
+// Client requests to exit the worldserver
+struct CPacketExitWorld
+{
+    uint16_t id;
+    uint8_t error;
+};
+static_assert(sizeof(CPacketExitWorld) == (2 + 1), "CPacketExitWorld size assert failed!");
 
 #pragma pack(pop)
 }

@@ -23,6 +23,7 @@ namespace Client
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketCreateNewCharResponse), &WorldSession::Handle_CreateNewCharResponse};
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketDeleteCharacterResponse) , &Handle_DeleteCharacterResponse };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketEnterWorld) , &Handle_EnterWorldResponse };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::EXIT_WORLD)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketExitWorld) , &Handle_ExitWorldResponse };
 
         return handlers;
     }
@@ -318,15 +319,24 @@ namespace Client
     bool WorldSession::Handle_EnterWorldResponse()
     {
         Console& c = engine.GetConsole();
-        LOG_CRITICAL("Handle_EnterWorldResponse...");
+        auto& onlineData = engine.GetWorldManager().GetData();
 
+        LOG_CRITICAL("Handle_EnterWorldResponse...");
         NECRO::World::CPacketEnterWorld* pcktData = reinterpret_cast<NECRO::World::CPacketEnterWorld*>(m_currentDecryptedPacket.GetBasePointer());
 
         if (pcktData->error == static_cast<uint8_t>(NECRO::World::WorldResults::SUCCESS))
         {
             c.Log("We are in the world!!");
+
+            // Save online data
+            onlineData.isInWorld = true;
+            onlineData.myGuid = pcktData->guid;
+
+            // Apply to entity (TODO: this is just temporary, we need to properly spawn and manage entities client side)
             Player::ENT_PTR->m_pos.x = pcktData->posX;
             Player::ENT_PTR->m_pos.y = pcktData->posY;
+
+            m_status = NECRO::World::WorldSocketStatus::IN_WORLD;
         }
         else
         {
@@ -336,5 +346,30 @@ namespace Client
         return true;
     }
 
+    bool WorldSession::Handle_ExitWorldResponse()
+    {
+        Console& c = engine.GetConsole();
+        auto& onlineData = engine.GetWorldManager().GetData();
+
+        LOG_CRITICAL("Handle_EnterWorldResponse...");
+        NECRO::World::CPacketExitWorld* pcktData = reinterpret_cast<NECRO::World::CPacketExitWorld*>(m_currentDecryptedPacket.GetBasePointer());
+
+        // Save online data
+        onlineData.isInWorld = false;
+        onlineData.myGuid = 0;
+
+        m_status = NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS;
+
+        if (pcktData->error == static_cast<uint8_t>(NECRO::World::WorldResults::SUCCESS))
+        {
+            c.Log("You left the world!");
+        }
+        else
+        {
+            c.Log("Error during leaving the world!");
+        }
+
+        return true;
+    }
 }
 }

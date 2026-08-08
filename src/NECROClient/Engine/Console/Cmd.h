@@ -42,7 +42,7 @@ namespace Client
 		int		Cmd_EnumCharacters(const std::vector<std::string>& args);
 
 		int		Cmd_EnterWorld(const std::vector<std::string>& args);
-
+		int		Cmd_ExitWorld(const std::vector<std::string>& args);
 	};
 
 }

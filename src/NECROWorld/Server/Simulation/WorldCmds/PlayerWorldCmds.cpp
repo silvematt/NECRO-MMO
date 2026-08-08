@@ -76,5 +76,42 @@ namespace World
 		result.success = false;
 		return result;
 	}
+
+	PlayerDespawnCmdResult WorldSimulation::WorldCmd_TryToDespawnPlayerCharacter(uint64_t guid)
+	{
+		PlayerDespawnCmdResult result;
+
+		auto it = m_players.find(guid);
+		if (it != m_players.end())
+		{
+			// Despawn the player
+			PlayerEntity* p = it->second;
+			uint32_t charID = p->GetCharID();
+
+			if (UnregisterPlayer(p->GetGUID(), p->GetCharID()))
+			{
+				result.success = true;
+				LOG_WARNING("Player with GUID: '{}' CharID: '{}' has been unregistered from the WorldSimulation!", guid, charID);
+
+				// Removal from map destroys the player (the maps owns the entities), so we do this at the end
+				Map* map = p->GetCurrentMap();
+				if (map)
+				{
+					map->RemoveEntityFromMap(guid);
+				}
+				else
+				{
+					// When could this fail? Should never unless we allow p->m_currentMap to be nullptr during map transfers
+					LOG_CRITICAL("Despawn Character failed critically!");
+				}
+
+				return result;
+			}
+		}
+
+		// Every other path that does not hit return result.success = true
+		result.success = false;
+		return result;
+	}
 }
 }

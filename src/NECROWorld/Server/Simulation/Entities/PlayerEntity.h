@@ -24,6 +24,16 @@ namespace World
 		}
 
 		void Update(uint32_t diff) override;
+
+		const uint32_t GetCharID() const
+		{
+			return m_characterData->id;
+		}
+		
+		Map* GetCurrentMap() const
+		{
+			return m_currentMap;
+		}
 	};
 }
 }

@@ -88,8 +88,8 @@ private:
     std::atomic<bool> m_hasRegistered{ false };
 
     // Player Related
-    uint64_t        m_playerGUID;
-    PlayerEntity*   m_playerPtr;
+    uint64_t        m_playerGUID = 0;
+    PlayerEntity*   m_playerPtr = nullptr;
     
 public:
     WorldSession(tcp::socket&& insocket) : TCPSocketBoost(std::move(insocket)), m_status(WorldSocketStatus::GATHER_SESSIONKEY), m_closeAfterSend(false), m_hasRegistered(false), m_serial(0)
@@ -128,6 +128,9 @@ public:
     bool    Handle_SPacketEnterWorld();
     bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<EnterWorldCtx> reqCtx);
     bool    WorldCmdCallback_OnEnterWorld(PlayerSpawnCmdResult result);
+
+    bool    Handle_SPacketExitWorld();
+    bool    WorldCmdCallback_OnExitWorld(PlayerDespawnCmdResult result);
 
 };
 }

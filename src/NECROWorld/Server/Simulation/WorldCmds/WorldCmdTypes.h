@@ -16,5 +16,10 @@ namespace World
 		float			posX = 0.0f;
 		float			posY = 0.0f;
 	};
+
+	struct PlayerDespawnCmdResult
+	{
+		bool			success = false;
+	};
 }
 }
