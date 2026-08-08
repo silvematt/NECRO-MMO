@@ -3,6 +3,7 @@
 #include "CharacterData.h"
 #include "WorldCmdTypes.h"
 
+#include <boost/asio.hpp>
 #include <memory>
 
 namespace NECRO
@@ -42,6 +43,8 @@ namespace World
                 return false; // TODO, we could return a SERVER_BUSY and not drop the connection, but just cancel the current action if possible
         }
 
+        m_status = WorldSocketStatus::ENTERING_WORLD;
+
 		return true;
 	}
 
@@ -80,6 +83,8 @@ namespace World
             }
             QueuePacket(std::move(m));
 
+            m_status = WorldSocketStatus::AUTHED;
+
             return true;
         }
         else
@@ -109,17 +114,28 @@ namespace World
                 characterData->pos_y    = static_cast<float_t>(row[9].get<float_t>());
                 characterData->pos_z    = static_cast<float_t>(row[10].get<float_t>());
 
+                boost::asio::io_context* originatingIoContext = &m_ioContextRef;
                 Server::Instance().GetWorldSimulation().PostWorldCmd(
-                    [weakSelf, characterData]()
+                    [weakSelf, characterData, originatingIoContext]()
                     {
                         // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                        
+                        // If sesion died
                         if (weakSelf.expired())
-                            return; // client died
+                            return;
 
                         PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(*characterData);
 
-                        // Process result
-                        
+                        // TODO: fix the edge case where the world session dies between the already executed spawn and the callback we're posting below
+                        // WorldSession destructor could despawn it if we set the guid earlier than now (WorldCmdCallback_OnEnterWorld)
+
+                        // Post result on the originating NetworkThread context
+                        boost::asio::post(*originatingIoContext,
+                            [weakSelf, spawnResult]()
+                            {
+                                if (auto s = weakSelf.lock())
+                                    s->WorldCmdCallback_OnEnterWorld(spawnResult);
+                            });
                     });
             }
             else
@@ -136,11 +152,57 @@ namespace World
                 }
                 QueuePacket(std::move(m));
 
+                m_status = WorldSocketStatus::AUTHED;
+
                 return true;
             }
         }
 
         return true;
 	}
+
+    bool WorldSession::WorldCmdCallback_OnEnterWorld(PlayerSpawnCmdResult result)
+    {
+        if (!IsOpen())
+            return false;
+
+        LOG_DEBUG("Handling WorldCmdCallback_OnEnterWorld for user {}!", m_data.accountID);
+
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        // Send response
+        Packet p;
+        p << static_cast<uint16_t>(World::PacketIDs::ENTER_WORLD);
+        if (result.success)
+        {
+            // Set our stuff
+            m_playerGUID = result.guid;
+            m_playerPtr = result.playerPtr;
+            
+            p << static_cast<uint8_t>(World::WorldResults::SUCCESS);
+            p << static_cast<uint64_t>(result.guid);
+            p << static_cast<uint32_t>(result.mapID);
+            p << static_cast<float_t>(result.posX);
+            p << static_cast<float_t>(result.posY);
+           
+            m_status = WorldSocketStatus::IN_WORLD;
+        }
+        else
+        {
+            p << static_cast<uint8_t>(World::WorldResults::FAILED);
+            m_status = WorldSocketStatus::AUTHED;
+        }
+
+        NetworkMessage m(std::move(p));
+        int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+        if (encryptRes < 0)
+        {
+            LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            CloseSocket();
+            return false;
+        }
+        QueuePacket(std::move(m));
+        return true;
+    }
 }
 }

@@ -8,6 +8,8 @@
 
 #include <WorldCodes.h>
 #include "AES.h"
+#include "Game.h"
+#include "Player.h"
 
 namespace NECRO
 {
@@ -20,6 +22,7 @@ namespace Client
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, NECRO::World::C_PACKET_ENUM_CHARACTERS_INITIAL_SIZE, &WorldSession::HandlePacketEnumCharacters };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_CREATE_NEW)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketCreateNewCharResponse), &WorldSession::Handle_CreateNewCharResponse};
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketDeleteCharacterResponse) , &Handle_DeleteCharacterResponse };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketEnterWorld) , &Handle_EnterWorldResponse };
 
         return handlers;
     }
@@ -307,6 +310,27 @@ namespace Client
         else if (pckData->error == static_cast<uint8_t>(NECRO::World::WorldResults::SUCCESS))
         {
             c.Log("Character deletion succeeded!");
+        }
+
+        return true;
+    }
+
+    bool WorldSession::Handle_EnterWorldResponse()
+    {
+        Console& c = engine.GetConsole();
+        LOG_CRITICAL("Handle_EnterWorldResponse...");
+
+        NECRO::World::CPacketEnterWorld* pcktData = reinterpret_cast<NECRO::World::CPacketEnterWorld*>(m_currentDecryptedPacket.GetBasePointer());
+
+        if (pcktData->error == static_cast<uint8_t>(NECRO::World::WorldResults::SUCCESS))
+        {
+            c.Log("We are in the world!!");
+            Player::ENT_PTR->m_pos.x = pcktData->posX;
+            Player::ENT_PTR->m_pos.y = pcktData->posY;
+        }
+        else
+        {
+            c.Log("Could not join the world!!");
         }
 
         return true;

@@ -9,6 +9,7 @@
 #include "TCPSocketBoost.h"
 #include "WorldCodes.h"
 #include "AES.h"
+#include "WorldCmdTypes.h"
 #include "inerithable_shared_from_this.h"
 
 
@@ -80,11 +81,15 @@ private:
     std::chrono::steady_clock::time_point   m_lastActivity;
     uint32_t m_packetsProcessed = 0;
 
-    // To Register and Unregister
+    // To Register and Unregister the WorldSession
     static inline std::atomic<uint64_t> s_nextSerial{ 1 };
     uint64_t m_serial = 0;
 
     std::atomic<bool> m_hasRegistered{ false };
+
+    // Player Related
+    uint64_t        m_playerGUID;
+    PlayerEntity*   m_playerPtr;
     
 public:
     WorldSession(tcp::socket&& insocket) : TCPSocketBoost(std::move(insocket)), m_status(WorldSocketStatus::GATHER_SESSIONKEY), m_closeAfterSend(false), m_hasRegistered(false), m_serial(0)
@@ -122,7 +127,7 @@ public:
 
     bool    Handle_SPacketEnterWorld();
     bool    DBCallback_HandleEnterWorldChecks(uint32_t ec, std::vector<mysqlx::SqlResult>& result, std::shared_ptr<EnterWorldCtx> reqCtx);
-    bool    DBCallback_HandleEnterWorldFinal(uint32_t ec, std::vector<mysqlx::SqlResult>& result);
+    bool    WorldCmdCallback_OnEnterWorld(PlayerSpawnCmdResult result);
 
 };
 }

@@ -29,6 +29,7 @@ namespace Client
 		p->Init();
 		p->SetFlag(Entity::Flags::FDynamic);
 		Player::ENT_ID = p->GetID();
+		Player::ENT_PTR = p.get();
 		engine.GetGame().SetCurPlayer(p.get());
 		AddEntity(std::move(p));
 

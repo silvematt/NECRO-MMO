@@ -11,6 +11,8 @@ enum class WorldSocketStatus
     SESSIONKEY_GATHERED,
     SELECTING_CHARACTERS,
     AUTHED,
+    ENTERING_WORLD,
+    IN_WORLD,
     CLOSED
 };
 
@@ -161,6 +163,7 @@ struct CPacketEnterWorld
     float_t posY;
 };
 static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 4 + 4 + 4), "CPacketEnterWorld size assert failed!");
+inline constexpr int C_PACKET_ENTER_WORLD_INITIAL_SIZE = 3;
 
 #pragma pack(pop)
 }

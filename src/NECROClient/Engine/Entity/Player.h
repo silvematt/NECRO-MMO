@@ -58,6 +58,8 @@ namespace Client
 		~Player();
 
 		static uint32_t	ENT_ID;
+		static Player*	ENT_PTR;
+
 		bool			m_controlsEnabled = true; // TEST: 
 
 	public:

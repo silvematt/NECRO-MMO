@@ -8,7 +8,8 @@ namespace NECRO
 namespace Client
 {
 	// Initialize static member
-	uint32_t Player::ENT_ID = 0;
+	uint32_t	Player::ENT_ID = 0;
+	Player*		Player::ENT_PTR = nullptr;
 
 	Player::~Player()
 	{
@@ -49,8 +50,8 @@ namespace Client
 		*/
 
 		// TODO: We can prefab players as well at least for basic info like occlModifier if we're going to have more data, we will probably have different characters with maybe different sizes
-		m_occlModifierX = 100;
-		m_occlModifierY = 75;
+		m_occlModifierX = 10;
+		m_occlModifierY = 7;
 	}
 
 	//-------------------------------------------------

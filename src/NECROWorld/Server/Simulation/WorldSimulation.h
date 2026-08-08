@@ -70,7 +70,7 @@ namespace World
 		void	PostWorldCmd(std::function<void()> cmd);
 
 		// Cmds - implemented in Simulation/WorldCmds/x.cpp
-		PlayerSpawnCmdResult WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
+		PlayerSpawnCmdResult	WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
 	};
 }
 }

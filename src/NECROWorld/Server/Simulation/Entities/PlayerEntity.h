@@ -19,6 +19,8 @@ namespace World
 		PlayerEntity(uint64_t guid, CharacterData charData) : Entity(guid, EntityType::PLAYER_ENTITY)
 		{
 			m_characterData = std::make_unique<CharacterData>(charData);
+			m_posX = m_characterData->pos_x;
+			m_posY = m_characterData->pos_y;
 		}
 
 		void Update(uint32_t diff) override;

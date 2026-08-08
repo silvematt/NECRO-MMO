@@ -48,6 +48,7 @@ namespace World
 
 			// Try to spawn the entity
 			PlayerEntity* res = static_cast<PlayerEntity*>(mapToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData))));
+			result.playerPtr = res;
 
 			if (res)
 			{
