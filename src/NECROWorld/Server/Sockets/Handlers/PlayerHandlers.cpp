@@ -240,6 +240,25 @@ namespace World
 
         SPacketExitWorld* pckt = reinterpret_cast<SPacketExitWorld*>(m_currentDecryptedPacket.GetReadPointer());
 
+        // Make sure that the state we're in is valid to leave the world
+        if (DoExitWorld(true))
+        {
+            return true;
+        }
+        else
+        {
+            LOG_DEBUG("m_status is IN_WORLD but PlayerGUID/PlayerPtr is invalid for AccountID:'{}'", m_data.accountID);
+            CloseSocket();
+            return false;
+        }
+    }
+
+    bool WorldSession::DoExitWorld(bool doCallback)
+    {
+        // Check if we've already left the world
+        if (m_status == WorldSocketStatus::AUTHED)
+            return true;
+
         uint64_t guid = m_playerGUID;
 
         // Make sure that the state we're in is valid to leave the world
@@ -248,31 +267,40 @@ namespace World
             // Update status
             m_status = WorldSocketStatus::LEAVING_WORLD;
 
-            // Proceed, spawn the character in the world
-            std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-            boost::asio::io_context* originatingIoContext = &m_ioContextRef;
-            Server::Instance().GetWorldSimulation().PostWorldCmd(
-                [weakSelf, guid, originatingIoContext]()
-                {
-                    // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
-                    PlayerDespawnCmdResult despawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
+            if (doCallback)
+            {
+                // Proceed, spawn the character in the world
+                std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+                boost::asio::io_context* originatingIoContext = &m_ioContextRef;
+                Server::Instance().GetWorldSimulation().PostWorldCmd(
+                    [weakSelf, guid, originatingIoContext]()
+                    {
+                        // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                        PlayerDespawnCmdResult despawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
 
-                    // Post result on the originating NetworkThread context
-                    boost::asio::post(*originatingIoContext,
-                        [weakSelf, despawnResult]()
-                        {
-                            if (auto s = weakSelf.lock())
-                                s->WorldCmdCallback_OnExitWorld(despawnResult);
-                        });
-                });
+                        // Post result on the originating NetworkThread context
+                        // This will probably not run if ran from the destructor
+                        boost::asio::post(*originatingIoContext,
+                            [weakSelf, despawnResult]()
+                            {
+                                if (auto s = weakSelf.lock())
+                                    s->WorldCmdCallback_OnExitWorld(despawnResult);
+                            });
+                    });
+            }
+            else
+            {
+                // If the callback doesn't have be called (call from destructor), just post the WorldCmd execution and move on with the destruction of this object
+                Server::Instance().GetWorldSimulation().PostWorldCmd(
+                    [guid]()
+                    {
+                        // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                        Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
+                    });
+            }
         }
         else
-        {
-            LOG_DEBUG("m_status is IN_WORLD but PlayerGUID/PlayerPtr is invalid for AccountID:'{}'", m_data.accountID);
-            CloseSocket();
             return false;
-        }
-        
 
         return true;
     }

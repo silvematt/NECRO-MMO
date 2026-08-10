@@ -211,6 +211,9 @@ namespace World
 		m_socketManager->StopThreads();
 		m_socketManager->JoinThreads();
 
+		// Orders the shutdown and calls the destructors of socketManager's members
+		m_socketManager.reset();
+
 		LOG_OK("Shut down of NECROWorld completed.");
 
 		return 0;

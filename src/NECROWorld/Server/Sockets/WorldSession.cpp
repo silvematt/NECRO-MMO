@@ -9,6 +9,8 @@ namespace World
     {
         if (m_hasRegistered.load())
             Server::Instance().GetSessionManager().UnregisterSession(m_data.accountID, m_serial);
+
+        DoExitWorld(false);
     }
 
     std::unordered_map<uint16_t, WorldHandler> WorldSession::InitHandlers()
