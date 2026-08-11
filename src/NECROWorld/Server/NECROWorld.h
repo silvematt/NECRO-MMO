@@ -125,6 +125,11 @@ namespace World
 			return m_ndbs;
 		}
 
+		AsioThreadPool& GetAsioThreadPool()
+		{
+			return m_asioPool;
+		}
+
 		SessionManager& GetSessionManager()
 		{
 			return m_sessionManager;

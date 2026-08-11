@@ -50,15 +50,17 @@ namespace World
 		std::mutex m_cmdsMutex;
 		std::vector<std::function<void()>> m_pendingCmds;
 
-	private:
-		void	ExecuteWorldCmds();
-		bool	RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
-		bool	UnregisterPlayer(uint64_t guid, uint32_t charID);
-		Map*	FindMap(uint32_t mapID);
-
 	public:
 		std::atomic<bool> m_isRunning;
 
+	private:
+		void			ExecuteWorldCmds();
+		bool			RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
+		bool			UnregisterPlayer(uint64_t guid, uint32_t charID);
+		Map*			FindMap(uint32_t mapID);
+		PlayerEntity*	FindPlayer(uint64_t guid);
+
+	public:
 		WorldSimulation() : m_isRunning(false), m_worldLoopCounter(0), m_curTime(0), m_prevTime(0), m_curTimeDiff(0)
 		{
 		}
@@ -66,6 +68,8 @@ namespace World
 		int		Start();
 		void	Update();
 		void	Stop();
+
+		bool	SavePlayerOnDatabase(uint64_t guid);
 
 		void	PostWorldCmd(std::function<void()> cmd);
 

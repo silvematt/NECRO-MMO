@@ -2,6 +2,7 @@
 #include "GUIDManager.h"
 #include "Entity.h"
 #include "PlayerEntity.h"
+#include "NECROWorld.h"
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -109,6 +110,40 @@ namespace World
 	{
 		auto it = m_maps.find(mapID);
 		return it != m_maps.end() ? it->second.get() : nullptr;
+	}
+
+	// Note on saving, possible TODO. The current architecture contains a unlikely but possible data race that happens when the player enters the world, leaves it and very quickly reconnects.
+	// If the dbworker thread is just 1, it's not a problem because it acts as a FIFO so the UPDATE (save) runs before the SELECT to list the characters.
+	// But if the dbworkers are 2, we could have a data race where the select is executed before the enqueued save. I should be extremely rare, but still possible
+	bool WorldSimulation::SavePlayerOnDatabase(uint64_t guid)
+	{
+		PlayerEntity* p = FindPlayer(guid);
+		
+		if (p)
+		{
+			const CharacterData* charData = p->GetCharacterData();
+
+			auto& dbWorker = Server::Instance().GetCharactersDBPool();
+			{
+				DBRequest req(Server::Instance().GetAsioThreadPool().m_ioContext, true);
+
+				req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_SAVE_CHARACTER), { charData->level, charData->xp, charData->zone, charData->pos_x, charData->pos_y, charData->pos_z, charData->id } });
+				dbWorker.Enqueue(std::move(req));
+			}
+		}
+		else
+			return false;
+
+		return true;
+	}
+
+	PlayerEntity* WorldSimulation::FindPlayer(uint64_t guid)
+	{
+		auto it = m_players.find(guid);
+		if (it == m_players.end())
+			return nullptr;
+		else
+			return it->second;
 	}
 }
 }

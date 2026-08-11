@@ -38,8 +38,9 @@ namespace World
 
 		float		m_posX;
 		float		m_posY;
+		float		m_posZ;
 
-		Entity(uint64_t guid, EntityType tpe) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr), m_isActive(true), m_posX(0), m_posY(0)
+		Entity(uint64_t guid, EntityType tpe) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr), m_isActive(true), m_posX(0), m_posY(0), m_posZ(0)
 		{
 		}
 

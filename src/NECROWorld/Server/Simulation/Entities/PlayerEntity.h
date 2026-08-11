@@ -21,6 +21,7 @@ namespace World
 			m_characterData = std::make_unique<CharacterData>(charData);
 			m_posX = m_characterData->pos_x;
 			m_posY = m_characterData->pos_y;
+			m_posZ = m_characterData->pos_z
 		}
 
 		void Update(uint32_t diff) override;
@@ -33,6 +34,21 @@ namespace World
 		Map* GetCurrentMap() const
 		{
 			return m_currentMap;
+		}
+
+		// Updates m_characterData to the current in memory values, usually done before saving on the database
+		void UpdateCharacterData()
+		{
+			// TODO Update all data
+			m_characterData->pos_x = m_posX;
+			m_characterData->pos_y = m_posY;
+			m_characterData->pos_z = m_posZ;
+		}
+
+		const CharacterData* GetCharacterData()
+		{
+			UpdateCharacterData(); // get character data also updates the data to return
+			return m_characterData.get();
 		}
 	};
 }

@@ -276,6 +276,9 @@ namespace World
                     [weakSelf, guid, originatingIoContext]()
                     {
                         // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                        // Save character on the DB
+                        Server::Instance().GetWorldSimulation().SavePlayerOnDatabase(guid);
+
                         PlayerDespawnCmdResult despawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
 
                         // Post result on the originating NetworkThread context
@@ -295,6 +298,9 @@ namespace World
                     [guid]()
                     {
                         // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+                        // Save character on the DB
+                        Server::Instance().GetWorldSimulation().SavePlayerOnDatabase(guid);
+
                         Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
                     });
             }
