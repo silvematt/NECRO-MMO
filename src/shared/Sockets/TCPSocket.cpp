@@ -116,55 +116,69 @@ namespace NECRO
 		if (m_outQueue.empty())
 			return 0;
 		
-		// TODO maybe it's better to try to send all packets in the queue until we get a short send, instead of sending just the front packet and then waiting for the next POLLOUT event to send the next one
-		NetworkMessage& out = m_outQueue.front();
-
-		int bytesSent = 0;
-		size_t sslBytesSent;
-		if (!m_usesTLS)
+		int bytesSentTotal = 0;
+		bool forceArrest = false;
+		while (!forceArrest)
 		{
-			bytesSent = send(m_socket, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), 0);
+			NetworkMessage& out = m_outQueue.front();
 
-			if (bytesSent < 0)
+			int bytesSent = 0;
+			size_t sslBytesSent;
+			if (!m_usesTLS)
 			{
-				if (SocketUtility::ErrorIsWouldBlock())
-					return 0;
+				bytesSent = send(m_socket, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), 0);
 
-				LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(SocketUtility::GetLastError()) + "]");
-				return -1;
+				if (bytesSent < 0)
+				{
+					if (SocketUtility::ErrorIsWouldBlock())
+						return bytesSentTotal;
+
+					LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(SocketUtility::GetLastError()) + "]");
+					return -1;
+				}
 			}
-		}
-		else
-		{
-			int ret = SSL_write_ex(m_ssl, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), &sslBytesSent);
-
-			if (ret <= 0)
+			else
 			{
-				int sslError = SSL_get_error(m_ssl, ret);
-				if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
-					return 0;
+				int ret = SSL_write_ex(m_ssl, reinterpret_cast<const char*>(out.GetReadPointer()), out.GetActiveSize(), &sslBytesSent);
 
-				LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(sslError) + "]");
-				return -1;
+				if (ret <= 0)
+				{
+					int sslError = SSL_get_error(m_ssl, ret);
+					if (sslError == SSL_ERROR_WANT_READ || sslError == SSL_ERROR_WANT_WRITE)
+						return bytesSentTotal;
+
+					LOG_ERROR(std::string("Error during TCPSocket::Send() [") + std::to_string(sslError) + "]");
+					return -1;
+				}
 			}
+
+			if (m_usesTLS)
+				bytesSent = sslBytesSent;
+
+			bytesSentTotal += bytesSent;
+
+			// Mark that 'bytesSent' were sent
+			out.ReadCompleted(bytesSent);
+
+			if (out.GetActiveSize() == 0)
+				m_outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
+
+			// else? should we call SendCallback even in the case of a short send? TODO : figure out if send callback is useful for partial sends 
+			SendCallback();
+
+			// Send Callback could close the connection (m_closeAfterSend)
+			if (!IsOpen() || IsShutDown())
+				forceArrest = true;
+
+			// End this loop if the outqueue is empty or if send returned 0
+			if (m_outQueue.empty() || bytesSent == 0)
+				forceArrest = true;
+
+			// Update pfd events
+			m_pfd.events = POLLIN | (HasPendingData() ? POLLOUT : 0);
 		}
 
-		if (m_usesTLS)
-			bytesSent = sslBytesSent;
-
-		// Mark that 'bytesSent' were sent
-		out.ReadCompleted(bytesSent);
-
-		if (out.GetActiveSize() == 0)
-			m_outQueue.pop(); // if whole packet was sent, pop it from the queue, otherwise we had a short send and will come back later
-		
-		// else? should we call SendCallback even in the case of a short send? TODO : figure out if send callback is useful for partial sends 
-		SendCallback();
-
-		// Update pfd events
-		m_pfd.events = POLLIN | (HasPendingData() ? POLLOUT : 0);
-
-		return bytesSent;
+		return bytesSentTotal;
 	}
 
 	int TCPSocket::SysSend(const char* buf, int len)
