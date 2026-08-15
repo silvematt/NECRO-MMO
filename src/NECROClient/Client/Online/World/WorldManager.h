@@ -19,6 +19,7 @@ namespace Client
         bool isAuthed = false;
         std::vector<NECRO::CharacterData> characters{};
         bool isInWorld = false;
+        bool isLeavingWorld = false;
         uint64_t myGuid;
 
         void Zero()
@@ -26,6 +27,7 @@ namespace Client
             hasConnectedToWorld = false;
             isAuthed = false;
             isInWorld = false;
+            isLeavingWorld = false;
             myGuid = 0;
             characters.clear();
         }
@@ -40,20 +42,23 @@ namespace Client
 
         OnlineData m_data;
 
+        // Behavior Related
+        float m_timerUpdatePosPacketSend = 99.0f;
+
     public:
-        int Init();
+        int     Init();
 
-        void CreateWorldSocket();
+        void    CreateWorldSocket();
 
-        int ConnectToWorldServer(const std::string& ip, uint16_t port);
+        int     ConnectToWorldServer(const std::string& ip, uint16_t port);
 
-        int CheckIfWorldConnected(pollfd& pfd);
-        int CheckForIncomingData(pollfd& pfd);
-        int NetworkUpdate();
+        int     CheckIfWorldConnected(pollfd& pfd);
+        int     CheckForIncomingData(pollfd& pfd);
+        int     NetworkUpdate();
 
-        void OnDisconnect();
+        void    OnDisconnect();
 
-        int OnConnectedToWorldServer();
+        int     OnConnectedToWorldServer();
 
         OnlineData& GetData()
         {
@@ -64,6 +69,12 @@ namespace Client
         {
             m_worldSocket->QueuePacket(std::move(m));
         }
+
+        // Runs after the world has been updated, this is where our own state is replicated to the server
+        void    GameUpdate(double deltaTime);
+
+        // Game related, implemented in World/x/x.cpp
+        void    SendPlayerMovementUpdate();
     };
 
 }

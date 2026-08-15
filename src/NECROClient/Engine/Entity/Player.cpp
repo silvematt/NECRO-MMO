@@ -7,6 +7,8 @@ namespace NECRO
 {
 namespace Client
 {
+	inline constexpr float MOVEMENT_EPSILON = 0.001f;
+
 	// Initialize static member
 	uint32_t	Player::ENT_ID = 0;
 	Player*		Player::ENT_PTR = nullptr;
@@ -168,6 +170,22 @@ namespace Client
 		}
 
 		m_coll->Update();
+
+		// Update movement dirty info to prevent useless SendPlayerMovementUpdate executions
+		if (std::abs(m_pos.x - m_previousPosX) > MOVEMENT_EPSILON ||
+			std::abs(m_pos.y - m_previousPosY) > MOVEMENT_EPSILON ||
+			std::abs(m_zPos - m_previousPosZ) > MOVEMENT_EPSILON ||
+			m_isoDirection != m_previousDirection)
+		{
+			// Update previous values
+			m_previousPosX = m_pos.x;
+			m_previousPosY = m_pos.y;
+			m_previousPosZ = m_zPos;
+			m_previousDirection = m_isoDirection;
+
+			// Allow the WorldManager::GameUpdate to send the update packet
+			m_isMovementDirty = true;
+		}
 	}
 
 

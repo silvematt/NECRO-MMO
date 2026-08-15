@@ -335,6 +335,7 @@ namespace Client
             // Apply to entity (TODO: this is just temporary, we need to properly spawn and manage entities client side)
             Player::ENT_PTR->m_pos.x = pcktData->posX;
             Player::ENT_PTR->m_pos.y = pcktData->posY;
+            Player::ENT_PTR->m_zPos = pcktData->posZ;
 
             m_status = NECRO::World::WorldSocketStatus::IN_WORLD;
         }
@@ -356,6 +357,7 @@ namespace Client
 
         // Save online data
         onlineData.isInWorld = false;
+        onlineData.isLeavingWorld = false;
         onlineData.myGuid = 0;
 
         m_status = NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS;

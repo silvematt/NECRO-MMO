@@ -138,6 +138,7 @@
     <ClCompile Include="Engine\NECROEngine.cpp">
       <Filter>NECROClient\Engine</Filter>
     </ClCompile>
+    <ClCompile Include="Client\Online\World\Player\PlayerActions.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client\Online\AuthManager.h">

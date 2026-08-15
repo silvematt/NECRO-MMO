@@ -133,6 +133,9 @@ public:
     bool    DoExitWorld(bool doCallback); // this can be run both from Handle_SPacketExitWorld or the destructor on disconnect
     bool    WorldCmdCallback_OnExitWorld(PlayerDespawnCmdResult result);
 
+    bool    Handle_SPacketPlayerMovementUpdate();
+    bool    WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(PlayerMovementUpdateCmdResult result);
+
 };
 }
 }

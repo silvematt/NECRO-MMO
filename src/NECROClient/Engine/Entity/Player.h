@@ -20,8 +20,6 @@ namespace Client
 	inline constexpr int HALF_PLAYER_WIDTH = 64;
 	inline constexpr int HALF_PLAYER_HEIGHT = 64;
 
-	inline constexpr float PLAYER_CONST_Z_POS = 0.01f; // a constant added to the player's zPos when modified
-
 	//-------------------------------------------------
 	// Player class, derived by Entity
 	//-------------------------------------------------
@@ -29,7 +27,6 @@ namespace Client
 	{
 	private:
 		float			m_curMoveSpeed = 2.5f;
-		IsoDirection	m_isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
 
 		float m_deltaX = 0.0f;
 		float m_deltaY = 0.0f;
@@ -61,6 +58,14 @@ namespace Client
 		static Player*	ENT_PTR;
 
 		bool			m_controlsEnabled = true; // TEST: 
+		IsoDirection	m_isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
+
+		// True if the movement changed since the last SendPlayerMovementUpdate
+		bool			m_isMovementDirty = false;
+		float			m_previousPosX = 0.0f;
+		float			m_previousPosY = 0.0f;
+		float			m_previousPosZ = 0.0f;
+		IsoDirection	m_previousDirection = IsoDirection::NORTH;
 
 	public:
 		void			Init();

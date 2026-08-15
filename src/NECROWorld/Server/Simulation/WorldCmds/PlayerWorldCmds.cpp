@@ -44,6 +44,7 @@ namespace World
 				// Modify data
 				charData.pos_x = mapToSpawnIn->GetWidth() / 2 * CELL_WIDTH;
 				charData.pos_y = mapToSpawnIn->GetHeight() / 2 * CELL_HEIGHT;
+				charData.pos_z = 100.01f;
 			}
 
 			// Try to spawn the entity
@@ -57,7 +58,8 @@ namespace World
 				result.mapID = mapToSpawnIn->GetMapID();
 				result.posX = res->m_posX;
 				result.posY = res->m_posY;
-				
+				result.posZ = res->m_posZ;
+
 				if (RegisterPlayer(result.guid, charData.id, res))
 				{
 					LOG_DEBUG("Spawned player '{}' in MapID: '{}' at position: ({}, {})", charData.characterName, result.mapID, result.posX, result.posY);
@@ -113,5 +115,31 @@ namespace World
 		result.success = false;
 		return result;
 	}
+
+	// TODO: instead of having to find the player, the worldsession could just pass the pointer and be good given that these are only used in the world thread, but i want to throughly test it
+	PlayerMovementUpdateCmdResult WorldSimulation::WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection)
+	{
+		PlayerMovementUpdateCmdResult result;
+		// Do all the checks on earth to validate the input
+		// if bad
+		// result.accepted = false;
+		// else
+		
+		// Accept
+		PlayerEntity* p = FindPlayer(guid);
+		if (p)
+		{
+			result.accepted = true;
+
+			// Apply
+			p->m_posX = posX;
+			p->m_posY = posY;
+			p->m_posZ = posZ;
+			p->m_isoDirection = static_cast<IsoDirection>(isoDirection);
+		}
+		
+		return result;
+	}
+
 }
 }

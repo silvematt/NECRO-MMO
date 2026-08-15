@@ -156,6 +156,7 @@
     <ClInclude Include="Utility\inerithable_shared_from_this.h" />
     <ClInclude Include="Utility\IPRequestData.h" />
     <ClInclude Include="Utility\Utility.h" />
+    <ClInclude Include="World\GameRules.h" />
     <ClInclude Include="World\WorldCodes.h" />
   </ItemGroup>
   <ItemGroup>

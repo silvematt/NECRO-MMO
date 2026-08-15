@@ -24,7 +24,8 @@ enum class PacketIDs : uint16_t
     CHAR_CREATE_NEW,
     CHAR_DELETE_CHARACTER,
     ENTER_WORLD,
-    EXIT_WORLD
+    EXIT_WORLD,
+    PLAYER_MOVEMENT_UPDATE
 };
 
 //--------------------------------------------------------------------------------------------
@@ -85,6 +86,7 @@ struct SPacketEnumCharacter
 static_assert(sizeof(SPacketEnumCharacter) == (2), "SPacketEnumCharacter size assert failed!");
 inline constexpr int S_PACKET_ENUM_CHAR_INITIAL_SIZE = 2; // this represent the fixed portion of this packet, which needs to be read to at least identify the packet
 
+// Server replies with characters list
 struct CPacketEnumCharacters
 {
     uint16_t    id;
@@ -163,8 +165,9 @@ struct CPacketEnterWorld
     uint32_t mapID;
     float_t posX;
     float_t posY;
+    float_t posZ;
 };
-static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 4 + 4 + 4), "CPacketEnterWorld size assert failed!");
+static_assert(sizeof(CPacketEnterWorld) == (2 + 1 + 8 + 4 + 4 + 4 + 4), "CPacketEnterWorld size assert failed!");
 inline constexpr int C_PACKET_ENTER_WORLD_INITIAL_SIZE = 3;
 
 // Client requests to exit the worldserver
@@ -174,13 +177,27 @@ struct SPacketExitWorld
 };
 static_assert(sizeof(SPacketExitWorld) == (2), "SPacketLeaveWorld size assert failed!");
 
-// Client requests to exit the worldserver
+// Server yields the result of the client exting the worldserver
 struct CPacketExitWorld
 {
     uint16_t id;
     uint8_t error;
 };
 static_assert(sizeof(CPacketExitWorld) == (2 + 1), "CPacketExitWorld size assert failed!");
+
+// Client updates the worldserver on where it is in the world.
+// The server can accept or refuse the packet and send a "correction packet" if his checks fails
+struct SPacketPlayerMovementUpdate
+{
+    uint16_t id;
+
+    // Position info
+    float_t pos_x;
+    float_t pos_y;
+    float_t pos_z;
+    uint8_t direction;
+};
+static_assert(sizeof(SPacketPlayerMovementUpdate) == (2 + 4 + 4 + 4 + 1), "SPacketPlayerMovementUpdate size assert failed!");
 
 #pragma pack(pop)
 }

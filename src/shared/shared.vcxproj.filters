@@ -77,6 +77,7 @@
     <ClInclude Include="NDB\NDBValue.h" />
     <ClInclude Include="NDB\NDBRow.h" />
     <ClInclude Include="NDB\NDBManager.h" />
+    <ClInclude Include="World\GameRules.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">

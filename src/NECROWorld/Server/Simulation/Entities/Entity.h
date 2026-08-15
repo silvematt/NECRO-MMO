@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include "GameRules.h"
 
 namespace NECRO
 {
@@ -36,11 +37,13 @@ namespace World
 		// Classes that inherit from this will need cleanup, entities will be destroyed from the Map::m_entities
 		virtual		~Entity() = default;
 
-		float		m_posX;
-		float		m_posY;
-		float		m_posZ;
+		float			m_posX;
+		float			m_posY;
+		float			m_posZ;
+		IsoDirection	m_isoDirection;
 
-		Entity(uint64_t guid, EntityType tpe) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr), m_isActive(true), m_posX(0), m_posY(0), m_posZ(0)
+
+		Entity(uint64_t guid, EntityType tpe) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr), m_isActive(true), m_posX(0), m_posY(0), m_posZ(0), m_isoDirection(IsoDirection::SOUTH)
 		{
 		}
 

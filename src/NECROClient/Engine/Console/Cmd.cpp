@@ -341,14 +341,13 @@ namespace Client
 	{
 		Console& c = engine.GetConsole();
 
-		if (!engine.GetWorldManager().GetData().isInWorld)
+		if (!engine.GetWorldManager().GetData().isInWorld || !engine.GetWorldManager().GetData().isLeavingWorld)
 		{
 			c.Log("You are not in world!.");
 			return 1;
 		}
 
 		Packet p;
-
 		p << static_cast<uint16_t>(NECRO::World::PacketIDs::EXIT_WORLD);
 
 		NetworkMessage encrypted(std::move(p));
@@ -360,6 +359,8 @@ namespace Client
 		}
 		NetworkMessage m(std::move(encrypted));
 		engine.GetWorldManager().QueuePacket(NetworkMessage(std::move(m)));
+
+		engine.GetWorldManager().GetData().isLeavingWorld = true;
 
 		return 0;
 	}

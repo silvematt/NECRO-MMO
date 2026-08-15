@@ -261,5 +261,24 @@ namespace Client
         return 0;
     }
 
+    // -------------------------------------------------------------------------------------------------
+    // Runs after the world has been updated, this is where our own state is replicated to the server
+    // -------------------------------------------------------------------------------------------------
+    void WorldManager::GameUpdate(double deltaTime)
+    {
+        // Update the timers
+        m_timerUpdatePosPacketSend += 1 * deltaTime;
+
+        // Update position/direction
+        if (m_data.isInWorld && !m_data.isLeavingWorld)
+        {
+            if (m_timerUpdatePosPacketSend >= PLAYER_MOVEMENT_UPDATE_INTERVAL_SECONDS)
+            {
+                SendPlayerMovementUpdate();
+                m_timerUpdatePosPacketSend = 0.0f;
+            }
+        }
+    }
+
 }
 }

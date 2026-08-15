@@ -77,6 +77,7 @@ namespace World
 		PlayerSpawnCmdResult	WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
 		PlayerDespawnCmdResult	WorldCmd_TryToDespawnPlayerCharacter(uint64_t guid);
 
+		PlayerMovementUpdateCmdResult WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection);
 	};
 }
 }

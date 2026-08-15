@@ -5,6 +5,8 @@
 #include "Camera.h"
 #include <string>
 
+#include "GameRules.h"
+
 namespace NECRO
 {
 namespace Client
@@ -21,18 +23,6 @@ namespace Client
 		PLAY_MODE
 	};
 	extern std::string g_GameModeMap[];
-
-	enum class IsoDirection
-	{
-		WEST = 0,
-		NORTH_WEST,
-		NORTH,
-		NORTH_EAST,
-		EAST,
-		SOUTH_EAST,
-		SOUTH,
-		SOUTH_WEST
-	};
 
 	//-------------------------------------------------------
 	// Defines the Game related things that run in the engine

@@ -31,8 +31,10 @@ namespace Client
 
 		m_mainCamera.Update();
 		m_currentWorld.Update();
-		m_currentWorld.Draw();
 
+		engine.GetWorldManager().GameUpdate(engine.GetDeltaTime());
+
+		m_currentWorld.Draw();
 		m_mainCamera.RenderVisibleEntities();
 
 		engine.GetConsole().Update();

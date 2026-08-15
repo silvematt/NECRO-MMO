@@ -23,7 +23,8 @@ namespace World
         handlers[static_cast<uint16_t>(World::PacketIDs::ENUM_CHARACTERS)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnumCharacter) , &Handle_SPacketEnumCharacter };
         handlers[static_cast<uint16_t>(World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::AUTHED, sizeof(SPacketEnterWorld) , &Handle_SPacketEnterWorld };
         handlers[static_cast<uint16_t>(World::PacketIDs::EXIT_WORLD)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(SPacketExitWorld) , &Handle_SPacketExitWorld};
-
+        handlers[static_cast<uint16_t>(World::PacketIDs::PLAYER_MOVEMENT_UPDATE)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(SPacketPlayerMovementUpdate) , &Handle_SPacketPlayerMovementUpdate };
+        
         return handlers;
     }
     std::unordered_map<uint16_t, WorldHandler> const Handlers = WorldSession::InitHandlers();

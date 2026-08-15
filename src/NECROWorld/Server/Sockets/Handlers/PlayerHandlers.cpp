@@ -209,7 +209,8 @@ namespace World
             p << static_cast<uint32_t>(result.mapID);
             p << static_cast<float_t>(result.posX);
             p << static_cast<float_t>(result.posY);
-           
+            p << static_cast<float_t>(result.posZ);
+
             m_status = WorldSocketStatus::IN_WORLD;
         }
         else
@@ -344,6 +345,68 @@ namespace World
         QueuePacket(std::move(m));
 
         m_status = WorldSocketStatus::AUTHED;
+        return true;
+    }
+
+    bool WorldSession::Handle_SPacketPlayerMovementUpdate()
+    {
+        if (!IsOpen())
+            return false;
+
+        LOG_DEBUG("Handling Handle_SPacketPlayerMovementUpdate for user {}", m_data.accountID);
+
+        // Fixed size packet
+        if (m_currentDecryptedPacket.GetActiveSize() != sizeof(SPacketPlayerMovementUpdate))
+            return false;
+
+        m_lastActivity = std::chrono::steady_clock::now();
+
+        // Get packet
+        SPacketPlayerMovementUpdate* pckt = reinterpret_cast<SPacketPlayerMovementUpdate*>(m_currentDecryptedPacket.GetReadPointer());
+
+        // Post on the world thread the update, it will call the callback that lets us know if the world thread accepted the position or if we need to send a correction packet
+        uint64_t guid = m_playerGUID;
+        float posX = pckt->pos_x;
+        float posY = pckt->pos_y;
+        float posZ = pckt->pos_z;
+        uint8_t isoDir = pckt->direction;
+
+        // Proceed, spawn the character in the world
+        std::weak_ptr<WorldSession> weakSelf = shared_from_this();
+        boost::asio::io_context* originatingIoContext = &m_ioContextRef;
+        Server::Instance().GetWorldSimulation().PostWorldCmd(
+            [weakSelf, guid, originatingIoContext, posX, posY, posZ, isoDir]()
+            {
+                // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
+
+                if (weakSelf.expired())
+                    return;
+
+                // Run update cmd
+                PlayerMovementUpdateCmdResult moveResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToUpdatePlayerMovement(guid, posX, posY, posZ, isoDir);
+
+                // Post result on the originating NetworkThread context
+                boost::asio::post(*originatingIoContext,
+                    [weakSelf, moveResult]()
+                    {
+                        if (auto s = weakSelf.lock())
+                            s->WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(moveResult);
+                    });
+            });
+
+        return true;
+    }
+
+    bool WorldSession::WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(PlayerMovementUpdateCmdResult result)
+    {
+        if (!IsOpen())
+            return false;
+
+        if (!result.accepted)
+        {
+            // Send correctin packet
+        }
+
         return true;
     }
 }
