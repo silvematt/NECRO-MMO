@@ -76,7 +76,7 @@ namespace Client
         while (encryptedPacket.GetActiveSize())
         {
             // Try to decrypt a whole packet
-            int plaintextLen = encryptedPacket.AESDecrypt(authManager.GetData().sessionKey.data(), nullptr, 0);
+            int plaintextLen = encryptedPacket.AESDecrypt(authManager.GetData().sessionKey.data(), nullptr, 0, m_expectedCounterForNextPacket);
             if (plaintextLen <= 0) // if plaintext is 0, it means the client sent an empty packet, shouldn't ever happen
             {
                 if (plaintextLen == -1) // Short receive

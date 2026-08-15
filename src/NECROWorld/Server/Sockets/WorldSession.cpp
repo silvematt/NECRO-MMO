@@ -141,7 +141,9 @@ namespace World
         while (encryptedPacket.GetActiveSize())
         {
             // Try to decrypt a whole packet
-            int plaintextLen = encryptedPacket.AESDecrypt(m_data.sessionKey.data(), nullptr, 0);
+            // The prefix check is done ONLY after the client's prefix is known (after the first greetpacket arrives and is processed)
+            uint32_t* expectedPrefix = m_clientPrefixKnown ? &m_data.clientsIVPrefix : nullptr;
+            int plaintextLen = encryptedPacket.AESDecrypt(m_data.sessionKey.data(), nullptr, 0, m_expectedCounterForNextPacket, expectedPrefix);
             if (plaintextLen <= 0) // if plaintext is 0, it means the client sent an empty packet, shouldn't ever happen
             {
                 if (plaintextLen == -1) // Short receive
@@ -305,6 +307,7 @@ namespace World
         
         // Get client prefix
         m_data.clientsIVPrefix = pkt->clientsPrefix;
+        m_clientPrefixKnown = true;
 
         // Pick our own IV prefix
         m_data.iv.RandomizePrefix();
@@ -437,6 +440,7 @@ namespace World
         if (encryptRes < 0)
         {
             LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+            CloseSocket();
             return false;
         }
         QueuePacket(std::move(m));

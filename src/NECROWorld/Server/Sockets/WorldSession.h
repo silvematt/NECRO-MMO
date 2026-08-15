@@ -79,7 +79,11 @@ private:
     bool                m_closeAfterSend; // when this is true, the SendCallback will close the socket. Used to close connection as soon as possible when a client is not valid
 
     std::chrono::steady_clock::time_point   m_lastActivity;
+
+    // AES security. The server validats the IV prefix and the IV counter for every packet after the greet one
+    bool m_clientPrefixKnown = false;
     uint32_t m_packetsProcessed = 0;
+    uint64_t m_expectedCounterForNextPacket = 0; // replay Protection
 
     // To Register and Unregister the WorldSession
     static inline std::atomic<uint64_t> s_nextSerial{ 1 };

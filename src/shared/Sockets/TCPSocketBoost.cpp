@@ -157,6 +157,8 @@ namespace NECRO
 			if (!self->IsOpen())
 				return;
 
+			// TODO, do the encrpytion here! DO NOT EVER ENCRYPT ON A THREAD DIFFERENT FROM THE NETWORKTHREAD THAT OWNS THIS SOCKET
+
 			self->QueuePacket(std::move(msg));   // now runs on the owning NetworkThread io context
 		});
 	}

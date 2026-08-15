@@ -79,7 +79,9 @@ TEST(NetworkMessage, RoundtripRecoversPlaintext)
     NetworkMessage receiver;
     receiver.Write(sender.GetReadPointer(), frame_size);
 
-    int pt_len = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()));
+    uint64_t expectedCounterForNextPacket = 0;
+
+    int pt_len = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket);
     ASSERT_EQ(pt_len, static_cast<int>(plaintext.size()));
     EXPECT_EQ(0, std::memcmp(receiver.GetDecryptedPacketPtr(), plaintext.data(), plaintext.size()));
 
@@ -144,7 +146,9 @@ TEST(NetworkMessage, TamperedCiphertextReturnsAuthFailure)
 
     receiver.GetBasePointer()[CIPHERTEXT_OFFSET] ^= 0x01;
 
-    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size())), -5);
+    uint64_t expectedCounterForNextPacket = 0;
+
+    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket), -8);
 }
 
 TEST(NetworkMessage, WrongAADReturnsAuthFailure)
@@ -161,7 +165,9 @@ TEST(NetworkMessage, WrongAADReturnsAuthFailure)
     NetworkMessage receiver;
     receiver.Write(sender.GetReadPointer(), frame_size);
 
-    EXPECT_EQ(receiver.AESDecrypt(key.data(), wrongAad.data(), static_cast<int>(wrongAad.size())), -5);
+    uint64_t expectedCounterForNextPacket = 0;
+
+    EXPECT_EQ(receiver.AESDecrypt(key.data(), wrongAad.data(), static_cast<int>(wrongAad.size()), expectedCounterForNextPacket), -8);
 }
 
 TEST(NetworkMessage, ShortReadReturnsMinusOneAndPreservesData)
@@ -178,7 +184,9 @@ TEST(NetworkMessage, ShortReadReturnsMinusOneAndPreservesData)
     // Deliver the frame minus its last byte to simulate a TCP short read
     receiver.Write(sender.GetReadPointer(), frame_size - 1);
 
-    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size())), -1);
+    uint64_t expectedCounterForNextPacket = 0;
+
+    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket), -1);
 
     // rpos must NOT have advanced the buffered partial frame must remain intact so the next recv() can append the missing bytes
     EXPECT_EQ(receiver.GetActiveSize(), frame_size - 1);
@@ -193,7 +201,9 @@ TEST(NetworkMessage, OversizedFrameRejected)
     uint32_t bogusSize = htonl(NECRO::MAX_PACKET_SIZE_AES_DECRYPT+1); // > MAX_PACKET_SIZE_AES_DECRYPT (512)
     receiver.Write(&bogusSize, sizeof(bogusSize));
 
-    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size())), -2);
+    uint64_t expectedCounterForNextPacket = 0;
+
+    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket), -2);
 }
 
 TEST(NetworkMessage, UndersizedFrameRejected)
@@ -209,7 +219,9 @@ TEST(NetworkMessage, UndersizedFrameRejected)
     std::vector<uint8_t> filler(GCM_IV_SIZE + GCM_TAG_SIZE - 1, 0x00);
     receiver.Write(filler.data(), filler.size());
 
-    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size())), -3);
+    uint64_t expectedCounterForNextPacket = 0;
+
+    EXPECT_EQ(receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket), -3);
 }
 
 TEST(NetworkMessage, TwoFramesInBufferDecryptSequentially)
@@ -229,14 +241,16 @@ TEST(NetworkMessage, TwoFramesInBufferDecryptSequentially)
     receiver.Write(s1.GetReadPointer(), f1);
     receiver.Write(s2.GetReadPointer(), f2);
 
-    int pt1 = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()));
+    uint64_t expectedCounterForNextPacket = 0;
+
+    int pt1 = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket);
     ASSERT_EQ(pt1, static_cast<int>(p1.size()));
     EXPECT_EQ(0, std::memcmp(receiver.GetDecryptedPacketPtr(), p1.data(), p1.size()));
 
     // After consuming frame 1, exactly frame 2 should remain
     EXPECT_EQ(receiver.GetActiveSize(), f2);
 
-    int pt2 = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()));
+    int pt2 = receiver.AESDecrypt(key.data(), aad.data(), static_cast<int>(aad.size()), expectedCounterForNextPacket);
     ASSERT_EQ(pt2, static_cast<int>(p2.size()));
     EXPECT_EQ(0, std::memcmp(receiver.GetDecryptedPacketPtr(), p2.data(), p2.size()));
 

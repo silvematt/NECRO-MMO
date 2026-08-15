@@ -103,7 +103,6 @@ namespace NECRO
             // Write the iv as bytes
             std::array<uint8_t, GCM_IV_SIZE> ivBytes;
             iv.ToByteArray(ivBytes);
-            iv.IncrementCounter(); // increment counter here! So we are sure each encrypt operation increases the counter
 
             // Transform the data in this message to the encrypted equivalend, format [PCKT_SIZE | IV | TAG | CIPHERTEXT]
             m_cipherData.resize(GetActiveSize());  // same as plaintext, since GCM shouldn't expand
@@ -121,13 +120,15 @@ namespace NECRO
                 Write(m_tag, GCM_TAG_SIZE);
                 Write(m_cipherData.data(), ciphertext_len);
 
+                iv.IncrementCounter(); // increment counter here! So we are sure each encrypt operation increases the counter
+
                 return ciphertext_len;
             }
             else
                 return -1;
         }
 
-        int AESDecrypt(unsigned char* key, unsigned char* aad, int aadLen)
+        int AESDecrypt(unsigned char* key, unsigned char* aad, int aadLen, uint64_t& expectedCounter, uint32_t* expectedPrefix = nullptr)
         {
             if (GetActiveSize() < sizeof(uint32_t)) // not enough data to even start decrypting
                 return -1;
@@ -159,13 +160,36 @@ namespace NECRO
             unsigned char* tagPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE;
             unsigned char* cipherPtr = GetReadPointer() + sizeof(packetSize) + GCM_IV_SIZE + GCM_TAG_SIZE;
 
+            uint32_t pcktIvPrefix; 
+            uint64_t pcktIvCounter;
+            std::memcpy(&pcktIvPrefix, ivPtr, sizeof(pcktIvPrefix));
+            std::memcpy(&pcktIvCounter, ivPtr + sizeof(pcktIvPrefix), sizeof(pcktIvCounter));
+
+            // Only the server needs to verify the prefix for each packet decrypted
+            if (expectedPrefix)
+            {
+                if (pcktIvPrefix != *expectedPrefix) // check if the prefix was altered
+                {
+                    //LOG_DEBUG("Iv.Prefix {} | Expected {}", pcktIvPrefix, *expectedPrefix);
+                    return -6;
+                }
+            }
+
+            if (pcktIvCounter != expectedCounter) // replayed packet?
+            {
+                //LOG_DEBUG("Iv.Counter {} | Expected {}", pcktIvCounter, expectedCounter);
+                return -7;
+            }
+
             // Decrypt
             m_cipherData.clear();
             m_cipherData.resize(cipherTextLen);
             int plainTextLen = AES::Decrypt(cipherPtr, cipherTextLen, aad, aadLen, tagPtr, key, ivPtr, GCM_IV_SIZE, m_cipherData.data());
 
             if (plainTextLen < 0)
-                return -5; // decryption failed
+                return -8; // decryption failed
+
+            expectedCounter++;
 
             // Advance ReadPos
             ReadCompleted(sizeof(uint32_t) + packetSize);

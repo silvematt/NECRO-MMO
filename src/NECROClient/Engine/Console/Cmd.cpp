@@ -341,7 +341,7 @@ namespace Client
 	{
 		Console& c = engine.GetConsole();
 
-		if (!engine.GetWorldManager().GetData().isInWorld || !engine.GetWorldManager().GetData().isLeavingWorld)
+		if (!engine.GetWorldManager().GetData().isInWorld || engine.GetWorldManager().GetData().isLeavingWorld)
 		{
 			c.Log("You are not in world!.");
 			return 1;

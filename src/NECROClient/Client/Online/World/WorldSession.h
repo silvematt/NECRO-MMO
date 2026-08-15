@@ -33,6 +33,7 @@ namespace Client
         NetworkMessage m_currentDecryptedPacket;
 
         NECRO::World::WorldSocketStatus m_status;
+        uint64_t m_expectedCounterForNextPacket = 0;
 
     public:
         WorldSession(SocketAddressesFamily fam) : TCPSocket(fam), m_status(NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS) {}
