@@ -399,5 +399,13 @@ namespace Client
 			m_zPos = zMod + PLAYER_CONST_Z_POS;
 	}
 
+	void Player::ExecuteMovementCorrection(const NECRO::World::CPacketPlayerMovementCorrection* correction)
+	{
+		m_pos.x = correction->pos_x;
+		m_pos.y = correction->pos_y;
+		m_zPos = correction->pos_z;
+		m_isoDirection = static_cast<IsoDirection>(correction->direction);
+	}
+
 }
 }

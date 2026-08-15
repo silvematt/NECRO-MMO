@@ -24,6 +24,7 @@ namespace Client
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::CHAR_DELETE_CHARACTER)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketDeleteCharacterResponse) , &Handle_DeleteCharacterResponse };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTER_WORLD)] = { NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS, sizeof(NECRO::World::CPacketEnterWorld) , &Handle_EnterWorldResponse };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::EXIT_WORLD)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketExitWorld) , &Handle_ExitWorldResponse };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::PLAYER_MOVEMENT_CORRECTION)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketPlayerMovementCorrection) , &Handle_PlayerMovementCorrection};
 
         return handlers;
     }

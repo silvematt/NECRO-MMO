@@ -27,6 +27,8 @@ namespace World
 	{
 		bool accepted = false;
 
+		uint32_t pcktSeq = 0;
+
 		float_t newPosX = 0.0f;
 		float_t newPosY = 0.0f;
 		float_t newPosZ = 0.0f;

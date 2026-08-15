@@ -117,29 +117,45 @@ namespace World
 	}
 
 	// TODO: instead of having to find the player, the worldsession could just pass the pointer and be good given that these are only used in the world thread, but i want to throughly test it
-	PlayerMovementUpdateCmdResult WorldSimulation::WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection)
+	PlayerMovementUpdateCmdResult WorldSimulation::WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection, uint32_t curPacketSeq)
 	{
 		PlayerMovementUpdateCmdResult result;
-		// Do all the checks on earth to validate the input
-		// if bad
-		// result.accepted = false;
-		// else
-		
-		// Accept
+		result.pcktSeq = curPacketSeq;
+
 		PlayerEntity* p = FindPlayer(guid);
+
 		if (p)
 		{
-			result.accepted = true;
+			// Do all the checks on earth to validate the input
+			// Let's refuse /tel from the client or just movements that are too far away from our server-side position
+			// TODO: do a speed check, maps bounds, z change validation upon map's definition of points where Z can go up/down, etc.
+			if (std::abs(posX - p->m_posX) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED ||
+				std::abs(posY - p->m_posY) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED)
+			{
+				result.accepted = false;
+				result.newPosX = p->m_posX;
+				result.newPosY = p->m_posY;
+				result.newPosZ = p->m_posZ;
+				result.newIsoDirection = static_cast<uint8_t>(p->m_isoDirection);
+			}
+			else
+			{
+				// Accept
+				result.accepted = true;
 
-			// Apply
-			p->m_posX = posX;
-			p->m_posY = posY;
-			p->m_posZ = posZ;
-			p->m_isoDirection = static_cast<IsoDirection>(isoDirection);
+				// Apply
+				p->m_posX = posX;
+				p->m_posY = posY;
+				p->m_posZ = posZ;
+				p->m_isoDirection = static_cast<IsoDirection>(isoDirection);
+			}
+		}
+		else
+		{
+			// TODO - This is a critical state we shouldn't really reach?
 		}
 		
 		return result;
 	}
-
 }
 }

@@ -25,7 +25,8 @@ enum class PacketIDs : uint16_t
     CHAR_DELETE_CHARACTER,
     ENTER_WORLD,
     EXIT_WORLD,
-    PLAYER_MOVEMENT_UPDATE
+    PLAYER_MOVEMENT_UPDATE,
+    PLAYER_MOVEMENT_CORRECTION
 };
 
 //--------------------------------------------------------------------------------------------
@@ -191,13 +192,34 @@ struct SPacketPlayerMovementUpdate
 {
     uint16_t id;
 
+    // Epoch/Ack design
+    uint32_t seq;                 // Increased at every send
+    uint32_t ackedCorrectionID;   // Last correction this client has applied, 0 = none
+
     // Position info
     float_t pos_x;
     float_t pos_y;
     float_t pos_z;
     uint8_t direction;
 };
-static_assert(sizeof(SPacketPlayerMovementUpdate) == (2 + 4 + 4 + 4 + 1), "SPacketPlayerMovementUpdate size assert failed!");
+static_assert(sizeof(SPacketPlayerMovementUpdate) == (2 + 4 + 4 + 4 + 4 + 4 + 1), "SPacketPlayerMovementUpdate size assert failed!");
+
+// If the server refuses a SPacketPlayerMovementUpdate, it sends a correction to the client
+struct CPacketPlayerMovementCorrection
+{
+    uint16_t id;
+
+    // Epoch/Ack design
+    uint32_t correctionID;      // ID of this correction
+    uint32_t rejectedSeq;       // Which packet triggered the correction
+
+    // Position info
+    float_t pos_x;
+    float_t pos_y;
+    float_t pos_z;
+    uint8_t direction;
+};
+static_assert(sizeof(CPacketPlayerMovementCorrection) == (2 + 4 + 4 + 4 + 4 + 4 + 1), "CPacketPlayerMovementCorrection size assert failed!");
 
 #pragma pack(pop)
 }

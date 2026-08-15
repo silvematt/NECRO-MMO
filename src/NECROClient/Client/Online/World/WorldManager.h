@@ -22,6 +22,10 @@ namespace Client
         bool isLeavingWorld = false;
         uint64_t myGuid;
 
+        // Epoch/Ack movement design
+        uint32_t m_currentMovSeq = 0;
+        uint32_t m_curretnAckedCorrectionID = 0;
+
         void Zero()
         {
             hasConnectedToWorld = false;
@@ -29,6 +33,8 @@ namespace Client
             isInWorld = false;
             isLeavingWorld = false;
             myGuid = 0;
+            m_currentMovSeq = 0;
+            m_curretnAckedCorrectionID = 0;
             characters.clear();
         }
     };

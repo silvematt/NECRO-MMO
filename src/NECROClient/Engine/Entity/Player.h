@@ -5,6 +5,7 @@
 #include "Game.h"
 #include "Animator.h"
 #include "Collider.h"
+#include "WorldCodes.h"
 
 namespace NECRO
 {
@@ -78,6 +79,8 @@ namespace Client
 		void			TeleportToGrid(int x, int y);
 
 		void			OnCellChanges() override;
+
+		void			ExecuteMovementCorrection(const NECRO::World::CPacketPlayerMovementCorrection* correction);
 	};
 
 	inline float Player::GetCurMoveSpeed() const

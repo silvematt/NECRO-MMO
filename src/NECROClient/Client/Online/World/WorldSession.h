@@ -50,6 +50,9 @@ namespace Client
         bool    Handle_DeleteCharacterResponse();
         bool    Handle_EnterWorldResponse();
         bool    Handle_ExitWorldResponse();
+
+        // Game handlers, implemeted in World/Handlers/x.cpp
+        bool    Handle_PlayerMovementCorrection();
     };
 }
 }

@@ -364,6 +364,17 @@ namespace World
         // Get packet
         SPacketPlayerMovementUpdate* pckt = reinterpret_cast<SPacketPlayerMovementUpdate*>(m_currentDecryptedPacket.GetReadPointer());
 
+        // Before even reading, Epoch/Ack it
+        // If the ackedCorrectedID by the client is different than the lastest we've issued, drop this packet silently, it's stale. We're only interested in the packet that is the direct response to the m_lastCorrectionID we've issued
+        if (pckt->ackedCorrectionID != m_data.m_lastCorrectionID)
+        {
+            LOG_DEBUG("Stale Movement packet! Dropping it silently. pckt->ackedCorrectionID'{}' - m_data.m_lastCorrectionID'{}'", pckt->ackedCorrectionID, m_data.m_lastCorrectionID);
+            return true;
+        }
+
+        // Let's save the currentPacketSeq so that in the event of a rejection, we have its seqID
+        uint32_t curPacketSeq = pckt->seq;
+
         // Post on the world thread the update, it will call the callback that lets us know if the world thread accepted the position or if we need to send a correction packet
         uint64_t guid = m_playerGUID;
         float posX = pckt->pos_x;
@@ -375,7 +386,7 @@ namespace World
         std::weak_ptr<WorldSession> weakSelf = shared_from_this();
         boost::asio::io_context* originatingIoContext = &m_ioContextRef;
         Server::Instance().GetWorldSimulation().PostWorldCmd(
-            [weakSelf, guid, originatingIoContext, posX, posY, posZ, isoDir]()
+            [weakSelf, guid, originatingIoContext, posX, posY, posZ, isoDir, curPacketSeq]()
             {
                 // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
 
@@ -383,7 +394,7 @@ namespace World
                     return;
 
                 // Run update cmd
-                PlayerMovementUpdateCmdResult moveResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToUpdatePlayerMovement(guid, posX, posY, posZ, isoDir);
+                PlayerMovementUpdateCmdResult moveResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToUpdatePlayerMovement(guid, posX, posY, posZ, isoDir, curPacketSeq);
 
                 // Post result on the originating NetworkThread context
                 boost::asio::post(*originatingIoContext,
@@ -405,6 +416,27 @@ namespace World
         if (!result.accepted)
         {
             // Send correctin packet
+            LOG_CRITICAL("POSITION IS NOT ACCEPTED! SENDING THE CORRECTION TO THE CLIENT!");
+            m_data.m_lastCorrectionID++;
+
+            Packet p;
+            p << static_cast<uint16_t>(NECRO::World::PacketIDs::PLAYER_MOVEMENT_CORRECTION);
+            p << static_cast<uint32_t>(m_data.m_lastCorrectionID);
+            p << static_cast<uint32_t>(result.pcktSeq);
+            p << static_cast<float_t>(result.newPosX);
+            p << static_cast<float_t>(result.newPosY);
+            p << static_cast<float_t>(result.newPosZ);
+            p << static_cast<uint8_t>(result.newIsoDirection);
+
+            NetworkMessage m(std::move(p));
+            int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+            if (encryptRes < 0)
+            {
+                LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+                CloseSocket();
+                return false;
+            }
+            QueuePacket(std::move(m));
         }
 
         return true;

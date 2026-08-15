@@ -41,6 +41,10 @@ namespace World
         AES::IV iv;
 
         uint32_t clientsIVPrefix = 0;
+
+        // Movement Epoch/Ack
+        uint32_t m_lastSeqProcessed = 0;
+        uint32_t m_lastCorrectionID = 0;
     };
 
     // For handlers that require DB callbacks, we save the context of the requests and pass them around DB callbacks
