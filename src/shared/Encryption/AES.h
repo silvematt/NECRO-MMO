@@ -69,21 +69,47 @@ namespace NECRO
 			return k;
 		}
 
-		// TODO Encrypt/Decrypt are boilerplate example with memory leaks on failed attempts and recreation of EVP_CIPHER_CTX_new every op
-		static int Encrypt(unsigned char* plaintext, int plaintext_len,
+		// --------------------------------------------------------------
+		// EVP_CIPHER_CTX per thread unique per thread
+		// --------------------------------------------------------------
+		inline EVP_CIPHER_CTX* AcquireThreadCtx()
+		{
+			struct Holder
+			{
+				EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
+
+				~Holder()
+				{
+					if (ctx)
+						EVP_CIPHER_CTX_free(ctx);
+				}
+			};
+
+			thread_local Holder h;
+
+			// Reset or recreate the context (recreation of the ctx can happen if it failed on a previous attempt)
+			if (!h.ctx)
+				h.ctx = EVP_CIPHER_CTX_new();
+			else
+				EVP_CIPHER_CTX_reset(h.ctx);
+
+			return h.ctx;
+		}
+
+		inline int Encrypt(unsigned char* plaintext, int plaintext_len,
 			unsigned char* aad, int aad_len,
 			unsigned char* key,
 			unsigned char* iv, int iv_len,
 			unsigned char* ciphertext,
 			unsigned char* tag)
 		{
-			EVP_CIPHER_CTX* ctx;
 			int len;
 			int ciphertext_len;
 
 
-			/* Create and initialise the context */
-			if (!(ctx = EVP_CIPHER_CTX_new()))
+			// Acquire the thread's context, ready for a new operation
+			EVP_CIPHER_CTX* ctx = AcquireThreadCtx();
+			if (!ctx)
 				return -1;
 
 			/* Initialise the encryption operation. */
@@ -127,9 +153,6 @@ namespace NECRO
 			if (1 != EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, 16, tag))
 				return -8;
 
-			/* Clean up */
-			EVP_CIPHER_CTX_free(ctx);
-
 			return ciphertext_len;
 		}
 
@@ -140,13 +163,13 @@ namespace NECRO
 			unsigned char* iv, int iv_len,
 			unsigned char* plaintext)
 		{
-			EVP_CIPHER_CTX* ctx;
 			int len;
 			int plaintext_len;
 			int ret;
 
-			/* Create and initialise the context */
-			if (!(ctx = EVP_CIPHER_CTX_new()))
+			// Acquire the thread's context, ready for a new operation
+			EVP_CIPHER_CTX* ctx = AcquireThreadCtx();
+			if (!ctx)
 				return -1;
 
 			/* Initialise the decryption operation. */
@@ -185,9 +208,6 @@ namespace NECRO
 			 * anything else is a failure - the plaintext is not trustworthy.
 			 */
 			ret = EVP_DecryptFinal_ex(ctx, plaintext + len, &len);
-
-			/* Clean up */
-			EVP_CIPHER_CTX_free(ctx);
 
 			if (ret > 0)
 			{
