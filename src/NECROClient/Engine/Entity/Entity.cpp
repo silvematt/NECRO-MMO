@@ -170,8 +170,16 @@ namespace Client
 		// Perform Cell trasfer if needed
 		if (oldGridPosX != m_gridPosX || oldGridPosY != m_gridPosY)
 		{
-			m_nextOwner = m_owner->GetWorld()->GetCellAt(m_gridPosX, m_gridPosY);
-			TransferToCellQueue(m_nextOwner); // will be done as soon as the world update is finished
+			if (m_owner->GetWorld()->GetCellAt(m_gridPosX, m_gridPosY))
+			{
+				m_nextOwner = m_owner->GetWorld()->GetCellAt(m_gridPosX, m_gridPosY);
+				TransferToCellQueue(m_nextOwner); // will be done as soon as the world update is finished
+			}
+			else
+			{
+				m_gridPosX = oldGridPosX;
+				m_gridPosY = oldGridPosY;
+			}
 		}
 	}
 

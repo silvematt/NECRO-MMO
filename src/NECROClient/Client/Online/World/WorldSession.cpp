@@ -332,6 +332,7 @@ namespace Client
             // Save online data
             onlineData.isInWorld = true;
             onlineData.myGuid = pcktData->guid;
+            onlineData.m_curretnAckedCorrectionID = 0; // reset this! this could actually live on the playerentiy object TODO
 
             // Apply to entity (TODO: this is just temporary, we need to properly spawn and manage entities client side)
             Player::ENT_PTR->m_pos.x = pcktData->posX;

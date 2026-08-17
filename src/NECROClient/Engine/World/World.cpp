@@ -80,10 +80,10 @@ namespace Client
 		m_visibleMaxY = (int)(midTile->GetCellY() + roundf(((HALF_SCREEN_HEIGHT / HALF_CELL_HEIGHT) / curCameraZoom))) + VISIBLE_X_PLUS_OFFSET;
 
 		// Clamp
-		m_visibleMinX = SDL_clamp(m_visibleMinX, 0, WORLD_WIDTH - 1);
-		m_visibleMaxX = SDL_clamp(m_visibleMaxX, 0, WORLD_WIDTH - 1);
-		m_visibleMinY = SDL_clamp(m_visibleMinY, 0, WORLD_HEIGHT - 1);
-		m_visibleMaxY = SDL_clamp(m_visibleMaxY, 0, WORLD_HEIGHT - 1);
+		m_visibleMinX = SDL_clamp(m_visibleMinX, 0, WORLD_WIDTH);
+		m_visibleMaxX = SDL_clamp(m_visibleMaxX, 0, WORLD_WIDTH);
+		m_visibleMinY = SDL_clamp(m_visibleMinY, 0, WORLD_HEIGHT);
+		m_visibleMaxY = SDL_clamp(m_visibleMaxY, 0, WORLD_HEIGHT);
 	}
 
 	//------------------------------------------------------------

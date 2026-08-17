@@ -36,6 +36,13 @@ namespace World
 		std::unordered_map<uint64_t, std::unique_ptr<Entity>>	m_entities;
 		std::vector<Cell> m_cellMap;
 
+		// To perform Entity Cell Transfer
+		std::vector<EntityTransferCtx> m_entitiesWaitingForTransfer;
+
+	private:
+		// Entity Transfer
+		void TransferPendingEntities();
+
 	public:
 		Map(uint32_t mapID) : m_isActive(true), m_mapID(mapID)
 		{
@@ -54,11 +61,9 @@ namespace World
 		// Entities Management
 		Entity*		AddEntityToMap(std::unique_ptr<Entity> e);
 		bool		RemoveEntityFromMap(uint64_t guid);
-		// TODO: transferentity
+		void		AddPendingEntityToTransfer(EntityTransferCtx ctx);
 
 		Entity*		FindEntity(uint64_t guid) const;
-
-		
 	};
 }
 }

@@ -29,6 +29,7 @@ namespace World
 		{
 			if (m_entitiesHere[i]->GetGUID() == guid)
 			{
+				LOG_DEBUG("Entity {} removed from cell ({},{})", m_entitiesHere[i]->GetGUID(), m_cellX, m_cellY);
 				m_entitiesHere.erase(m_entitiesHere.begin() + i);
 				return true;
 			}

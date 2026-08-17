@@ -10,6 +10,7 @@
 
 #include "Map.h"
 #include "WorldCmdTypes.h"
+#include "WorldSession.h"
 
 namespace NECRO
 {
@@ -74,10 +75,10 @@ namespace World
 		void	PostWorldCmd(std::function<void()> cmd);
 
 		// Cmds - implemented in Simulation/WorldCmds/x.cpp
-		PlayerSpawnCmdResult	WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData);
+		PlayerSpawnCmdResult	WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData, std::shared_ptr<PlayerPacketQueue> playerPQueue);
 		PlayerDespawnCmdResult	WorldCmd_TryToDespawnPlayerCharacter(uint64_t guid);
 
-		PlayerMovementUpdateCmdResult WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection, uint32_t curPacketSeq);
+		void WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection, uint32_t curPacketSeq, uint32_t ackedCorrectionID);
 	};
 }
 }

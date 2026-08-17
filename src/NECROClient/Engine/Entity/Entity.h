@@ -105,19 +105,19 @@ namespace Client
 		// Optional components functions
 		void			CreateLight();
 		bool			HasLight() const;
-		Light* GetLight() const;
+		Light*			GetLight() const;
 
 		void			CreateCollider();
 		bool			HasCollider() const;
-		Collider* GetCollider() const;
+		Collider*		GetCollider() const;
 
 		void			CreateAnimator();
 		bool			HasAnimator() const;
-		Animator* GetAnimator() const;
+		Animator*		GetAnimator() const;
 
 		void			CreateInteractable();
 		bool			HasInteractable() const;
-		Interactable* GetInteractable(int indx) const;
+		Interactable*	GetInteractable(int indx) const;
 		int				GetInteractablesSize() const;
 		void			DestroyInteractables();		// Called if InteractableType is out of bounds during prefab loading, to prevent destructive behaviors
 

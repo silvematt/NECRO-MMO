@@ -23,7 +23,7 @@ namespace Client
         uint64_t myGuid;
 
         // Epoch/Ack movement design
-        uint32_t m_currentMovSeq = 0;
+        uint32_t m_currentMovSeq = 1; // 0 means none, a correction packet can be issued by the server without the client asking - in that case, the correction packet will have rejectedSeq = 0, so we can be explicit that this is not a correction that derivd from a player movement
         uint32_t m_curretnAckedCorrectionID = 0;
 
         void Zero()
@@ -33,7 +33,7 @@ namespace Client
             isInWorld = false;
             isLeavingWorld = false;
             myGuid = 0;
-            m_currentMovSeq = 0;
+            m_currentMovSeq = 1;
             m_curretnAckedCorrectionID = 0;
             characters.clear();
         }

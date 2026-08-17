@@ -32,6 +32,7 @@
     <ClCompile Include="Server\Simulation\WorldSimulation.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Server\Sockets\PlayerPacketQueue.h" />
     <ClInclude Include="Server\Simulation\Entities\PlayerEntity.h" />
     <ClInclude Include="Server\Simulation\Entities\Entity.h" />
     <ClInclude Include="Server\NECROWorld.h" />

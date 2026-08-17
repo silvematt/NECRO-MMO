@@ -8,6 +8,8 @@
 #include "GUIDManager.h"
 #include "PlayerEntity.h"
 
+#include <memory>
+
 namespace NECRO
 {
 namespace World
@@ -24,7 +26,7 @@ namespace World
 	// The server is free to modify charData to ensure correctness, that is what is going to be used for spawning. As soon as this cmd
 	// is queued by the WorldSession, ownership of charData is transferred here.
 	// --------------------------------------------------------------------------------------------------------------------------------------
-	PlayerSpawnCmdResult WorldSimulation::WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData)
+	PlayerSpawnCmdResult WorldSimulation::WorldCmd_TryToSpawnPlayerCharacter(CharacterData charData, std::shared_ptr<PlayerPacketQueue> playerPQueue)
 	{
 		PlayerSpawnCmdResult result;
 
@@ -48,8 +50,7 @@ namespace World
 			}
 
 			// Try to spawn the entity
-			PlayerEntity* res = static_cast<PlayerEntity*>(mapToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData))));
-			result.playerPtr = res;
+			PlayerEntity* res = static_cast<PlayerEntity*>(mapToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData, playerPQueue))));
 
 			if (res)
 			{
@@ -117,32 +118,28 @@ namespace World
 	}
 
 	// TODO: instead of having to find the player, the worldsession could just pass the pointer and be good given that these are only used in the world thread, but i want to throughly test it
-	PlayerMovementUpdateCmdResult WorldSimulation::WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection, uint32_t curPacketSeq)
+	void WorldSimulation::WorldCmd_TryToUpdatePlayerMovement(uint64_t guid, float_t posX, float_t posY, float_t posZ, uint8_t isoDirection, uint32_t curPacketSeq, uint32_t ackedCorrectionID)
 	{
-		PlayerMovementUpdateCmdResult result;
-		result.pcktSeq = curPacketSeq;
-
 		PlayerEntity* p = FindPlayer(guid);
 
 		if (p)
 		{
+			if (ackedCorrectionID != p->GetLastCorrectionID())
+			{
+				LOG_DEBUG("Stale Movement packet! Dropping it silently. acked '{}' - m_lastCorrectionID '{}'", ackedCorrectionID, p->GetLastCorrectionID());
+				return;
+			}
+
 			// Do all the checks on earth to validate the input
 			// Let's refuse /tel from the client or just movements that are too far away from our server-side position
 			// TODO: do a speed check, maps bounds, z change validation upon map's definition of points where Z can go up/down, etc.
 			if (std::abs(posX - p->m_posX) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED ||
 				std::abs(posY - p->m_posY) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED)
 			{
-				result.accepted = false;
-				result.newPosX = p->m_posX;
-				result.newPosY = p->m_posY;
-				result.newPosZ = p->m_posZ;
-				result.newIsoDirection = static_cast<uint8_t>(p->m_isoDirection);
+				p->SendMovementCorrection(curPacketSeq);
 			}
 			else
 			{
-				// Accept
-				result.accepted = true;
-
 				// Apply
 				p->m_posX = posX;
 				p->m_posY = posY;
@@ -150,12 +147,8 @@ namespace World
 				p->m_isoDirection = static_cast<IsoDirection>(isoDirection);
 			}
 		}
-		else
-		{
-			// TODO - This is a critical state we shouldn't really reach?
-		}
 		
-		return result;
+		return;
 	}
 }
 }

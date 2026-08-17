@@ -40,5 +40,6 @@
     <ClInclude Include="Server\Simulation\Entities\PlayerEntity.h" />
     <ClInclude Include="Server\Managers\SessionManager.h" />
     <ClInclude Include="Server\Simulation\WorldCmds\WorldCmdTypes.h" />
+    <ClInclude Include="Server\Sockets\PlayerPacketQueue.h" />
   </ItemGroup>
 </Project>

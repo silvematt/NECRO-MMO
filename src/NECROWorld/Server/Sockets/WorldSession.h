@@ -10,6 +10,7 @@
 #include "WorldCodes.h"
 #include "AES.h"
 #include "WorldCmdTypes.h"
+#include "PlayerPacketQueue.h"
 #include "inerithable_shared_from_this.h"
 
 
@@ -41,10 +42,6 @@ namespace World
         AES::IV iv;
 
         uint32_t clientsIVPrefix = 0;
-
-        // Movement Epoch/Ack
-        uint32_t m_lastSeqProcessed = 0;
-        uint32_t m_lastCorrectionID = 0;
     };
 
     // For handlers that require DB callbacks, we save the context of the requests and pass them around DB callbacks
@@ -85,9 +82,9 @@ private:
     std::chrono::steady_clock::time_point   m_lastActivity;
 
     // AES security. The server validats the IV prefix and the IV counter for every packet after the greet one
-    bool m_clientPrefixKnown = false;
-    uint32_t m_packetsProcessed = 0;
-    uint64_t m_expectedCounterForNextPacket = 0; // replay Protection
+    bool        m_clientPrefixKnown = false;
+    uint32_t    m_packetsProcessed = 0;
+    uint64_t    m_expectedCounterForNextPacket = 0; // replay Protection
 
     // To Register and Unregister the WorldSession
     static inline std::atomic<uint64_t> s_nextSerial{ 1 };
@@ -96,8 +93,14 @@ private:
     std::atomic<bool> m_hasRegistered{ false };
 
     // Player Related
-    uint64_t        m_playerGUID = 0;
-    PlayerEntity*   m_playerPtr = nullptr;
+    uint64_t m_playerGUID = 0;
+
+    //  Mechanisms to allow the sim-thread to queue packets to send to the client
+    //  There are a lot of instances where the server wants to update the client without the client asking for anything
+    std::shared_ptr<PlayerPacketQueue> m_playerPacketQueue = std::make_shared<PlayerPacketQueue>(); // created here, the PlayerEntity will only have a shared_ptr to it
+
+private:
+    void    ProcessPlayerPacketsQueue();
     
 public:
     WorldSession(tcp::socket&& insocket) : TCPSocketBoost(std::move(insocket)), m_status(WorldSocketStatus::GATHER_SESSIONKEY), m_closeAfterSend(false), m_hasRegistered(false), m_serial(0)
@@ -142,8 +145,6 @@ public:
     bool    WorldCmdCallback_OnExitWorld(PlayerDespawnCmdResult result);
 
     bool    Handle_SPacketPlayerMovementUpdate();
-    bool    WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(PlayerMovementUpdateCmdResult result);
-
 };
 }
 }

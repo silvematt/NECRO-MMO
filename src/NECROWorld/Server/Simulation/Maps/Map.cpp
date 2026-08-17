@@ -25,9 +25,13 @@ namespace World
 		// Apply
 		m_cellMap.clear();
 		m_cellMap.reserve(m_width*m_height);
+		uint32_t cellID = 0; // cellIDs are local to the map
 		for (int y = 0; y < m_height; y++)
 			for (int x = 0; x < m_width; x++)
-				m_cellMap.emplace_back(x, y);
+			{
+				m_cellMap.emplace_back(cellID, x, y);
+				cellID++;
+			}
 
 		LOG_OK("[MAPS] Loaded: Map ID: '{}' - Name: '{}' loaded! Width:'{}' | Height:'{}'.", m_mapID, m_ingameName, m_width, m_height);
 		return 0;
@@ -42,6 +46,9 @@ namespace World
 				Cell& cell = m_cellMap[y * m_width + x];
 				cell.Update(diff);
 			}
+
+		// After the whole map has been updated (or the TODO POIs, perform the transfer the entities that requested a transfer)
+		TransferPendingEntities();
 	}
 
 	Entity* Map::AddEntityToMap(std::unique_ptr<Entity> e)
@@ -101,6 +108,63 @@ namespace World
 			LOG_WARNING("Removed Entity from GUID: '{}' from MapID: '{}'!", entityGUID, m_mapID);
 			return true;
 		}
+	}
+
+	void Map::AddPendingEntityToTransfer(EntityTransferCtx ctx)
+	{
+		m_entitiesWaitingForTransfer.push_back(ctx);
+	}
+
+	void Map::TransferPendingEntities()
+	{
+		for (int i = 0; i < m_entitiesWaitingForTransfer.size(); i++)
+		{
+			EntityTransferCtx* ctx = &m_entitiesWaitingForTransfer[i];
+			Entity* entityToTransfer = FindEntity(ctx->entityToTransferGUID);
+
+			// Check if the entity was destroyed while this was queued (if it died/despawned/teleported etc.)
+			if (!entityToTransfer)
+				continue;
+
+			if (Utility::CellBoundCheck(ctx->newGridPosX, ctx->newGridPosY, m_width, m_height))
+			{
+				Cell* wantedCell = &m_cellMap[ctx->newGridPosY * m_width + ctx->newGridPosX];
+
+				if (wantedCell)
+				{
+					LOG_DEBUG("Map '{}' Transferring Entity GUID: '{}'!", m_mapID, entityToTransfer->GetGUID());
+
+					// Perform the transfer
+					entityToTransfer->m_currentCell->RemoveEntityHere(entityToTransfer->GetGUID());
+					entityToTransfer->SetCurrentCellPtr(wantedCell);
+					wantedCell->AddEntityHere(entityToTransfer);
+					entityToTransfer->OnCellChanges();
+				}
+				else
+				{
+					// Failed transfer! If this runs, there's a severe structural issue shouldnt really happen. 
+					LOG_ERROR("Critical Error: In MapID '{}', checked and sanitized Cell ({},{}) was marked as not in bound in this map!", m_mapID, ctx->newGridPosX, ctx->newGridPosY);
+				}
+			}
+			else
+			{
+				// Failed transfer! This could happen, so we snap the player right back where he was but in the middle of the cell
+				entityToTransfer->m_posX = (entityToTransfer->m_curGridPosX * CELL_WIDTH) + HALF_CELL_WIDTH;
+				entityToTransfer->m_posY = (entityToTransfer->m_curGridPosY * CELL_HEIGHT) + HALF_CELL_HEIGHT;
+				entityToTransfer->OnCellTransferFails(); // Notify entities that they got snapped back and their transfer failed (if it's a PlayerEntity, he probably wants to let the client know)
+			}
+		}
+
+		m_entitiesWaitingForTransfer.clear();
+	}
+
+	Entity* Map::FindEntity(uint64_t guid) const
+	{
+		auto it = m_entities.find(guid);
+		if (it == m_entities.end())
+			return nullptr;
+		else
+			return it->second.get();
 	}
 }
 }

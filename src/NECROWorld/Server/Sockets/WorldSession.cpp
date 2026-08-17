@@ -83,10 +83,40 @@ namespace World
                 // Kick this client for inactivity
                 LOG_DEBUG("Kicking a client for connected-inactivity.");
                 CloseSocket();
+                return 0;
+            }
+            else
+            {
+                ProcessPlayerPacketsQueue();
             }
         }
 
         return 0;
+    }
+
+    void WorldSession::ProcessPlayerPacketsQueue()
+    {
+        std::vector<Packet> toSend;
+        m_playerPacketQueue->DrainQueue(toSend);
+
+        // Player packets only mean anything while the client is in world. If we left it in the meantime whatever the simulation queued is stale.
+        if (m_status != WorldSocketStatus::IN_WORLD)
+            return;
+
+        for (int i = 0; i < toSend.size(); i++)
+        {
+            // Encrypt and send simulation issued packets
+            NetworkMessage m(std::move(toSend[i]));
+            int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
+            if (encryptRes < 0)
+            {
+                LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
+                CloseSocket();
+                break;
+            }
+
+            QueuePacket(std::move(m));
+        }
     }
 
     int WorldSession::AsyncReadCallback()

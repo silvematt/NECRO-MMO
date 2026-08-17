@@ -17,6 +17,17 @@ namespace World
 		AI_ENTITY
 	};
 
+	class Entity;
+	// This represents a request an entity made to be transferred into another cell. The server will validate it and, if considered valid, will transfer the entity
+	struct EntityTransferCtx
+	{
+		uint64_t entityToTransferGUID;
+		int		newGridPosX;
+		int		newGridPosY;
+
+		EntityTransferCtx(uint64_t e, int x, int y) : entityToTransferGUID(e), newGridPosX(x), newGridPosY(y) {};
+	};
+
 	class Entity
 	{
 		friend Map;
@@ -28,6 +39,11 @@ namespace World
 		// Current spatial position
 		Cell*		m_currentCell;
 		Map*		m_currentMap;
+
+		// Grid Position - recalculated on every update
+		int			m_curGridPosX = 0;
+		int			m_curGridPosY = 0;
+		int			m_curZLayer = 0;
 		
 		// Sets here are only for updating the back pointers, not for transferring entities between cells/maps
 		void	SetCurrentMapPtr(Map* newMap);
@@ -37,11 +53,11 @@ namespace World
 		// Classes that inherit from this will need cleanup, entities will be destroyed from the Map::m_entities
 		virtual		~Entity() = default;
 
+		// Position
 		float			m_posX;
 		float			m_posY;
 		float			m_posZ;
 		IsoDirection	m_isoDirection;
-
 
 		Entity(uint64_t guid, EntityType tpe) : m_guid(guid), m_type(tpe), m_currentMap(nullptr), m_currentCell(nullptr), m_isActive(true), m_posX(0), m_posY(0), m_posZ(0), m_isoDirection(IsoDirection::SOUTH)
 		{
@@ -59,6 +75,12 @@ namespace World
 
 		// Called just before being removed from the map by (Map::RemoveFromMap)
 		virtual void OnBeingRemovedFromMap();
+
+		// Called when the entity changes cell via SetCurrentCellPtr
+		virtual void OnCellChanges();
+
+		// Called when the Map tried to cell-transfer this entity, but it failed in the 
+		virtual void OnCellTransferFails();
 
 		// TODO Called wehn the entity is trasferred (or being transferred?) to another map
 		// virtual void OnBeingTransferredToMap(...)

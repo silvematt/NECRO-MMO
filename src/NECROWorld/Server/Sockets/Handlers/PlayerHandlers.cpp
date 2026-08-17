@@ -134,8 +134,9 @@ namespace World
                 characterData->pos_z    = static_cast<float_t>(row[10].get<float_t>());
 
                 boost::asio::io_context* originatingIoContext = &m_ioContextRef;
+                std::shared_ptr<PlayerPacketQueue> packetQueue = m_playerPacketQueue;
                 Server::Instance().GetWorldSimulation().PostWorldCmd(
-                    [weakSelf, characterData, originatingIoContext]()
+                    [weakSelf, characterData, packetQueue, originatingIoContext]()
                     {
                         // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
                         
@@ -143,7 +144,7 @@ namespace World
                         if (weakSelf.expired())
                             return;
 
-                        PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(*characterData);
+                        PlayerSpawnCmdResult spawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToSpawnPlayerCharacter(*characterData, packetQueue);
 
                         // Post result on the originating NetworkThread context
                         boost::asio::post(*originatingIoContext,
@@ -202,7 +203,6 @@ namespace World
         {
             // Set our stuff
             m_playerGUID = result.guid;
-            m_playerPtr = result.playerPtr;
             
             p << static_cast<uint8_t>(World::WorldResults::SUCCESS);
             p << static_cast<uint64_t>(result.guid);
@@ -248,7 +248,7 @@ namespace World
         }
         else
         {
-            LOG_DEBUG("m_status is IN_WORLD but PlayerGUID/PlayerPtr is invalid for AccountID:'{}'", m_data.accountID);
+            LOG_DEBUG("m_status is IN_WORLD but PlayerGUID is invalid for AccountID:'{}'", m_data.accountID);
             CloseSocket();
             return false;
         }
@@ -270,7 +270,7 @@ namespace World
 
             if (doCallback)
             {
-                // Proceed, spawn the character in the world
+                // Proceed, despawn the character from the world
                 std::weak_ptr<WorldSession> weakSelf = shared_from_this();
                 boost::asio::io_context* originatingIoContext = &m_ioContextRef;
                 Server::Instance().GetWorldSimulation().PostWorldCmd(
@@ -283,7 +283,7 @@ namespace World
                         PlayerDespawnCmdResult despawnResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToDespawnPlayerCharacter(guid);
 
                         // Post result on the originating NetworkThread context
-                        // This will probably not run if ran from the destructor
+                        // This will probably not run if ran from the destructor (forceful exit or client crash), but it's ok because it's just a polite exchange
                         boost::asio::post(*originatingIoContext,
                             [weakSelf, despawnResult]()
                             {
@@ -323,7 +323,6 @@ namespace World
 
         // Reset owning entity references
         m_playerGUID = 0;
-        m_playerPtr = nullptr;
 
         // Send response
         Packet p;
@@ -364,13 +363,8 @@ namespace World
         // Get packet
         SPacketPlayerMovementUpdate* pckt = reinterpret_cast<SPacketPlayerMovementUpdate*>(m_currentDecryptedPacket.GetReadPointer());
 
-        // Before even reading, Epoch/Ack it
-        // If the ackedCorrectedID by the client is different than the lastest we've issued, drop this packet silently, it's stale. We're only interested in the packet that is the direct response to the m_lastCorrectionID we've issued
-        if (pckt->ackedCorrectionID != m_data.m_lastCorrectionID)
-        {
-            LOG_DEBUG("Stale Movement packet! Dropping it silently. pckt->ackedCorrectionID'{}' - m_data.m_lastCorrectionID'{}'", pckt->ackedCorrectionID, m_data.m_lastCorrectionID);
-            return true;
-        }
+        // Allow the Sim thread to Epoch/Ack it
+        uint32_t ackedCorrectionID = pckt->ackedCorrectionID;
 
         // Let's save the currentPacketSeq so that in the event of a rejection, we have its seqID
         uint32_t curPacketSeq = pckt->seq;
@@ -384,60 +378,17 @@ namespace World
 
         // Proceed, spawn the character in the world
         std::weak_ptr<WorldSession> weakSelf = shared_from_this();
-        boost::asio::io_context* originatingIoContext = &m_ioContextRef;
         Server::Instance().GetWorldSimulation().PostWorldCmd(
-            [weakSelf, guid, originatingIoContext, posX, posY, posZ, isoDir, curPacketSeq]()
+            [weakSelf, guid, posX, posY, posZ, isoDir, curPacketSeq, ackedCorrectionID]()
             {
                 // THIS RUNS ON THE MAIN (SIMULATION) THREAD!
 
                 if (weakSelf.expired())
                     return;
 
-                // Run update cmd
-                PlayerMovementUpdateCmdResult moveResult = Server::Instance().GetWorldSimulation().WorldCmd_TryToUpdatePlayerMovement(guid, posX, posY, posZ, isoDir, curPacketSeq);
-
-                // Post result on the originating NetworkThread context
-                boost::asio::post(*originatingIoContext,
-                    [weakSelf, moveResult]()
-                    {
-                        if (auto s = weakSelf.lock())
-                            s->WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(moveResult);
-                    });
+                // Run update cmd. The Simulation thread will determine if the movement is accepted/rejected and in case send a correction packet. Here we dont need a WorldCmdCallback_
+                Server::Instance().GetWorldSimulation().WorldCmd_TryToUpdatePlayerMovement(guid, posX, posY, posZ, isoDir, curPacketSeq, ackedCorrectionID);
             });
-
-        return true;
-    }
-
-    bool WorldSession::WorldCmdCallback_OnPacketPlayerMovementUpdateIsValidated(PlayerMovementUpdateCmdResult result)
-    {
-        if (!IsOpen())
-            return false;
-
-        if (!result.accepted)
-        {
-            // Send correctin packet
-            LOG_CRITICAL("POSITION IS NOT ACCEPTED! SENDING THE CORRECTION TO THE CLIENT!");
-            m_data.m_lastCorrectionID++;
-
-            Packet p;
-            p << static_cast<uint16_t>(NECRO::World::PacketIDs::PLAYER_MOVEMENT_CORRECTION);
-            p << static_cast<uint32_t>(m_data.m_lastCorrectionID);
-            p << static_cast<uint32_t>(result.pcktSeq);
-            p << static_cast<float_t>(result.newPosX);
-            p << static_cast<float_t>(result.newPosY);
-            p << static_cast<float_t>(result.newPosZ);
-            p << static_cast<uint8_t>(result.newIsoDirection);
-
-            NetworkMessage m(std::move(p));
-            int encryptRes = m.AESEncrypt(m_data.sessionKey.data(), m_data.iv, nullptr, 0);
-            if (encryptRes < 0)
-            {
-                LOG_ERROR("Failed to encrypt packet, returned {}. Dropping the connection.", encryptRes);
-                CloseSocket();
-                return false;
-            }
-            QueuePacket(std::move(m));
-        }
 
         return true;
     }
