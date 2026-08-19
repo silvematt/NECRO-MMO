@@ -133,6 +133,9 @@ namespace World
                 characterData->pos_y    = static_cast<float_t>(row[9].get<float_t>());
                 characterData->pos_z    = static_cast<float_t>(row[10].get<float_t>());
 
+                // Clear the PlayerPacketQueue, we're spawning a new player.
+                m_playerPacketQueue->Clear();
+
                 boost::asio::io_context* originatingIoContext = &m_ioContextRef;
                 std::shared_ptr<PlayerPacketQueue> packetQueue = m_playerPacketQueue;
                 Server::Instance().GetWorldSimulation().PostWorldCmd(

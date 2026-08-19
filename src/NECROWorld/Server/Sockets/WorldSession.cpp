@@ -96,12 +96,15 @@ namespace World
 
     void WorldSession::ProcessPlayerPacketsQueue()
     {
-        std::vector<Packet> toSend;
-        m_playerPacketQueue->DrainQueue(toSend);
+        if (!IsOpen())
+            return;
 
         // Player packets only mean anything while the client is in world. If we left it in the meantime whatever the simulation queued is stale.
         if (m_status != WorldSocketStatus::IN_WORLD)
             return;
+
+        std::vector<Packet> toSend;
+        m_playerPacketQueue->DrainQueue(toSend);
 
         for (int i = 0; i < toSend.size(); i++)
         {

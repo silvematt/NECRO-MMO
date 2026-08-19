@@ -17,9 +17,11 @@ namespace World
 		int oldLayerZ	= m_curZLayer;
 
 		// Update grid and layer pos
-		int newGridPosX	= (m_posX / CELL_WIDTH);
-		int newGridPosY	= (m_posY / CELL_HEIGHT);
-		int newZLayer		= std::floor((m_posZ / LAYER_Z_COEFFICIENT));
+		int newGridPosX = 0;
+		int newGridPosY = 0;
+		WorldToCell(m_posX, m_posY, newGridPosX, newGridPosY);
+
+		int newZLayer = std::floor((m_posZ / LAYER_Z_COEFFICIENT));
 
 		// For now trust the zLayer, but TODO, we should do a check against the map as well
 		m_curZLayer = newZLayer;

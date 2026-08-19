@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cmath>
+
 namespace NECRO
 {
 enum class IsoDirection
@@ -13,6 +15,7 @@ enum class IsoDirection
 	SOUTH = 0,
 	SOUTH_WEST = 7
 };
+inline constexpr int ISO_DIRECTIONS_N = 8;
 
 // Cells
 inline constexpr int CELL_WIDTH = 64;
@@ -29,6 +32,12 @@ inline constexpr float	PLAYER_CONST_Z_POS = 0.01f; // a constant added to the pl
 inline constexpr float	PLAYER_MOVEMENT_UPDATE_INTERVAL_SECONDS = 0.1f; // Max amount of update pos packet (10/s). The server needs to check if this is being respected by the client or if a comprimised client is trying to spam
 
 // Movement Rules
-inline constexpr float PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED = 31.0f; // If the difference on the x or y axis is greater than this from the server saved position and the client's playerupdatemovement packet, we refuse it.
+inline constexpr float	PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED = 31.0f; // If the difference on the x or y axis is greater than this from the server saved position and the client's playerupdatemovement packet, we refuse it.
+
+inline void WorldToCell(float x, float y, int& outCellX, int& outCellY)
+{
+	outCellX = static_cast<int>(std::floor(x / CELL_WIDTH));
+	outCellY = static_cast<int>(std::floor(y / CELL_HEIGHT));
+}
 
 }

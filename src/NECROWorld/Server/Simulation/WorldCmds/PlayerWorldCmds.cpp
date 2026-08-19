@@ -37,8 +37,9 @@ namespace World
 		if (mapToSpawnIn)
 		{
 			// Validate the charData
-			int eventualCellX = charData.pos_x / CELL_WIDTH;
-			int eventualCellY = charData.pos_y / CELL_HEIGHT;
+			int eventualCellX = 0;
+			int eventualCellY = 0;
+			WorldToCell(charData.pos_x, charData.pos_y, eventualCellX, eventualCellY);
 
 			// If the position is broken, reposition to the center of the world (this may be the graveyard)
 			if (!Utility::CellBoundCheck(eventualCellX, eventualCellY, mapToSpawnIn->GetWidth(), mapToSpawnIn->GetHeight()))
@@ -93,7 +94,6 @@ namespace World
 
 			if (UnregisterPlayer(p->GetGUID(), p->GetCharID()))
 			{
-				result.success = true;
 				LOG_WARNING("Player with GUID: '{}' CharID: '{}' has been unregistered from the WorldSimulation!", guid, charID);
 
 				// Removal from map destroys the player (the maps owns the entities), so we do this at the end
@@ -101,6 +101,7 @@ namespace World
 				if (map)
 				{
 					map->RemoveEntityFromMap(guid);
+					result.success = true;
 				}
 				else
 				{
@@ -133,7 +134,9 @@ namespace World
 			// Do all the checks on earth to validate the input
 			// Let's refuse /tel from the client or just movements that are too far away from our server-side position
 			// TODO: do a speed check, maps bounds, z change validation upon map's definition of points where Z can go up/down, etc.
-			if (std::abs(posX - p->m_posX) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED ||
+			if (!std::isfinite(posX) || !std::isfinite(posY) || !std::isfinite(posZ) || // sanitize positions
+				isoDirection < 0 || isoDirection >= ISO_DIRECTIONS_N || // check iso direction
+				std::abs(posX - p->m_posX) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED || // check for displacement
 				std::abs(posY - p->m_posY) > PLAYER_MOVEMENT_XY_MAX_DIFF_ALLOWED)
 			{
 				p->SendMovementCorrection(curPacketSeq);

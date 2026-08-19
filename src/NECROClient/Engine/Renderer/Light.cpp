@@ -98,8 +98,9 @@ namespace Client
             for (int step = 0; step < m_radius; step++)
             {
                 // Calculate the grid position of the ray
-                int curGridX = rayX / CELL_WIDTH;
-                int curGridY = rayY / CELL_HEIGHT;
+                int curGridX = 0;
+                int curGridY = 0;
+                WorldToCell(rayX, rayY, curGridX, curGridY);
 
                 // Calculate the touched position
                 int touchedX = curGridX - (lightCellX - m_radius);

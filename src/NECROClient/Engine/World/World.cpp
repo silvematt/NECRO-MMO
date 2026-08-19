@@ -278,8 +278,7 @@ namespace Client
 	void World::AddEntity(std::unique_ptr<Entity>&& e)
 	{
 		// Calculate grid position
-		e->m_gridPosX = e->m_pos.x / CELL_WIDTH;
-		e->m_gridPosY = e->m_pos.y / CELL_HEIGHT;
+		WorldToCell(e->m_pos.x, e->m_pos.y, e->m_gridPosX, e->m_gridPosY);
 
 		// Check if it is in bound
 		if (e->m_gridPosX >= 0 && e->m_gridPosX < WORLD_WIDTH && e->m_gridPosY >= 0 && e->m_gridPosY < WORLD_HEIGHT)

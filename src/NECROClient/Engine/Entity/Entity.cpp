@@ -37,8 +37,7 @@ namespace Client
 		ENT_NEXT_ID++;
 
 		m_pos = pInitialPos;
-		m_gridPosX = m_pos.x / CELL_WIDTH;
-		m_gridPosY = m_pos.y / CELL_HEIGHT;
+		WorldToCell(m_pos.x, m_pos.y, m_gridPosX, m_gridPosY);
 		m_zPos = 0;
 		m_toRender = true;
 
@@ -119,8 +118,7 @@ namespace Client
 		int oldGridPosY = m_gridPosY;
 
 		// Update grid position
-		m_gridPosX = m_pos.x / CELL_WIDTH;
-		m_gridPosY = m_pos.y / CELL_HEIGHT;
+		WorldToCell(m_pos.x, m_pos.y, m_gridPosX, m_gridPosY);
 
 		// Update ISO coordinates
 		NMath::CartToIso(m_pos.x / CELL_WIDTH, m_pos.y / CELL_HEIGHT, m_isoPos.x, m_isoPos.y);

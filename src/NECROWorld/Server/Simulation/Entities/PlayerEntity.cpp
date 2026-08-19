@@ -1,5 +1,4 @@
 #include "PlayerEntity.h"
-#include <boost/asio.hpp>
 
 namespace NECRO
 {
@@ -24,8 +23,6 @@ namespace World
     bool PlayerEntity::SendMovementCorrection(uint32_t rejectedSeq)
     {
         // Do NOT commit the new correctionID until the packet is actually queued.
-        // If we bumped it and the send failed, the client would keep acking the old ID forever and every
-        // one of its movement packets would be dropped as stale: the player would be frozen for good.
         uint32_t nextCorrectionID = m_lastCorrectionID + 1;
 
         Packet p;
@@ -39,14 +36,13 @@ namespace World
 
         if (!m_playerPacketQueue->TryEnqueue(std::move(p)))
         {
-            // The correction never left. Keep the current epoch so the client's packets are still accepted:
-            // it stays desynced, but its next movement packet gets rejected and we retry the correction.
+            // The correction never left. Keep the current epoch so the client's packets are still accepted.
             LOG_WARNING("Could not deliver a movement correction to PlayerEntity GUID: '{}'.", m_guid);
             return false;
         }
 
         m_lastCorrectionID = nextCorrectionID;
-        LOG_DEBUG("Correction sent ID:'{}' (rejectedSeq '{}') to GUID '{}'", m_lastCorrectionID, m_guid);
+        LOG_DEBUG("Correction sent ID:'{}' (rejectedSeq '{}') to GUID '{}'", m_lastCorrectionID, rejectedSeq, m_guid);
         return true;
     }
 #pragma endregion

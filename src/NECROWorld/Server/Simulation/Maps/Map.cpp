@@ -59,12 +59,13 @@ namespace World
 		if (it == m_entities.end())
 		{
 			// Calculate entity cell and place it in the cell
-			int cellX = e->m_posX / CELL_WIDTH;
-			int cellY = e->m_posY / CELL_HEIGHT;
+			int cellX = 0;
+			int cellY = 0;
+			WorldToCell(e->m_posX, e->m_posY, cellX, cellY);
 
 			if (Utility::CellBoundCheck(cellX, cellY, m_width, m_height))
 			{
-				// Add to cell
+				// Add to cell - TODO: add failure for AddEntityHere (maybe because cells have a max amount of entities in it?) and check the return value
 				Cell* currentCell = &m_cellMap[cellY * m_width + cellX];
 				currentCell->AddEntityHere(e.get()); // note on e.get(): std::move (done later in m_entities.insert) does not change the memory address, so this is safe
 

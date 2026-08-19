@@ -45,6 +45,12 @@ namespace World
 			m_queue.swap(out);
 			m_queue.clear();
 		}
+
+		void Clear()
+		{
+			std::lock_guard lock(m_mutex);
+			m_queue.clear();
+		}
 	};
 }
 }
