@@ -25,6 +25,24 @@
     <Filter Include="OpenSSL">
       <UniqueIdentifier>{b8a6d95e-5c33-41e2-8701-9b2c0ad54d25}</UniqueIdentifier>
     </Filter>
+    <Filter Include="AsioThreads">
+      <UniqueIdentifier>{dd6e66c0-4b0c-4ad3-b2b5-ab18889c786d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Characters">
+      <UniqueIdentifier>{b39d8610-9c99-4c06-813e-da0bedd8ac66}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Config">
+      <UniqueIdentifier>{d9b6651e-1de6-4550-992e-af08419f9c42}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NDB">
+      <UniqueIdentifier>{9c935530-153c-4db3-954e-3b3e54adec5b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="World">
+      <UniqueIdentifier>{53ae1d4c-1f9f-48a6-ae0b-99440efda523}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RealmList">
+      <UniqueIdentifier>{9a578f58-ee20-479f-95a4-6cd3d1db6ab8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Authentication\AuthCodes.h">
@@ -63,21 +81,51 @@
     <ClInclude Include="OpenSSL\OpenSSLManager.h">
       <Filter>OpenSSL</Filter>
     </ClInclude>
-    <ClInclude Include="Sockets\NetworkThread.h" />
-    <ClInclude Include="Sockets\TCPSocketBoost.h" />
-    <ClInclude Include="Config\Config.h" />
-    <ClInclude Include="Utility\inerithable_shared_from_this.h" />
-    <ClInclude Include="Sockets\TCPAcceptor.h" />
-    <ClInclude Include="RealmList\Realm.h" />
-    <ClInclude Include="AsioThreads\AsioThreadPool.h" />
-    <ClInclude Include="World\WorldCodes.h" />
-    <ClInclude Include="Utility\IPRequestData.h" />
-    <ClInclude Include="Characters\CharacterData.h" />
-    <ClInclude Include="NDB\NDB.h" />
-    <ClInclude Include="NDB\NDBValue.h" />
-    <ClInclude Include="NDB\NDBRow.h" />
-    <ClInclude Include="NDB\NDBManager.h" />
-    <ClInclude Include="World\GameRules.h" />
+    <ClInclude Include="AsioThreads\AsioThreadPool.h">
+      <Filter>AsioThreads</Filter>
+    </ClInclude>
+    <ClInclude Include="Characters\CharacterData.h">
+      <Filter>Characters</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\Config.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="NDB\NDB.h">
+      <Filter>NDB</Filter>
+    </ClInclude>
+    <ClInclude Include="NDB\NDBManager.h">
+      <Filter>NDB</Filter>
+    </ClInclude>
+    <ClInclude Include="NDB\NDBRow.h">
+      <Filter>NDB</Filter>
+    </ClInclude>
+    <ClInclude Include="NDB\NDBValue.h">
+      <Filter>NDB</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\TCPAcceptor.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\TCPSocketBoost.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\inerithable_shared_from_this.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\IPRequestData.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Sockets\NetworkThread.h">
+      <Filter>Sockets</Filter>
+    </ClInclude>
+    <ClInclude Include="World\GameRules.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="World\WorldCodes.h">
+      <Filter>World</Filter>
+    </ClInclude>
+    <ClInclude Include="RealmList\Realm.h">
+      <Filter>RealmList</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -98,10 +146,20 @@
     <ClCompile Include="OpenSSL\OpenSSLManager.cpp">
       <Filter>OpenSSL</Filter>
     </ClCompile>
-    <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
-    <ClCompile Include="Config\Config.cpp" />
-    <ClCompile Include="Sockets\TCPAcceptor.cpp" />
-    <ClCompile Include="NDB\NDB.cpp" />
-    <ClCompile Include="NDB\NDBManager.cpp" />
+    <ClCompile Include="Config\Config.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
+    <ClCompile Include="NDB\NDB.cpp">
+      <Filter>NDB</Filter>
+    </ClCompile>
+    <ClCompile Include="NDB\NDBManager.cpp">
+      <Filter>NDB</Filter>
+    </ClCompile>
+    <ClCompile Include="Sockets\TCPAcceptor.cpp">
+      <Filter>Sockets</Filter>
+    </ClCompile>
+    <ClCompile Include="Sockets\TCPSocketBoost.cpp">
+      <Filter>Sockets</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

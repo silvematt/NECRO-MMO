@@ -49,6 +49,12 @@
     <Filter Include="NECROClient\Engine\World">
       <UniqueIdentifier>{9567f622-c55f-4008-bbe2-12936b23c485}</UniqueIdentifier>
     </Filter>
+    <Filter Include="NECROClient\Client\Online\ClientActions">
+      <UniqueIdentifier>{6d9dfcdb-528d-4009-916f-5ef097292e9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NECROClient\Client\Online\Handlers">
+      <UniqueIdentifier>{3d8db47b-1d2c-4ea2-8ef4-27475b7176a7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -138,8 +144,12 @@
     <ClCompile Include="Engine\NECROEngine.cpp">
       <Filter>NECROClient\Engine</Filter>
     </ClCompile>
-    <ClCompile Include="Client\Online\World\ClientActions\PlayerActions.cpp" />
-    <ClCompile Include="Client\Online\World\Handlers\PlayerHandlers.cpp" />
+    <ClCompile Include="Client\Online\ClientActions\PlayerActions.cpp">
+      <Filter>NECROClient\Client\Online\ClientActions</Filter>
+    </ClCompile>
+    <ClCompile Include="Client\Online\Handlers\PlayerHandlers.cpp">
+      <Filter>NECROClient\Client\Online\Handlers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client\Online\AuthManager.h">
