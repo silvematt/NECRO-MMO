@@ -118,7 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Utility;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Sockets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Packets;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\OpenSSL;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Logger;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Encryption;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\Authentication;C:\Users\silve\Documents\Git Projects\NECRO MMO\src\shared\NDB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;$(SolutionDir)src\shared\Utility;$(SolutionDir)src\shared\Sockets;$(SolutionDir)src\shared\Packets;$(SolutionDir)src\shared\OpenSSL;$(SolutionDir)src\shared\Logger;$(SolutionDir)src\shared\Encryption;$(SolutionDir)src\shared\Authentication;$(SolutionDir)src\shared\NDB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
