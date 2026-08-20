@@ -36,13 +36,10 @@ namespace NECRO
 		}
 		else
 		{
-
 			LOG_ERROR("NDBManager: could not open '{}'", NDBS_DEFINITION_FILE_PATH);
 			return 0;
 		}
 
-		// Assign the quick access ptrs
-		m_maps = &m_dbs["maps_db"];
 		m_ndbsLoaded = true;
 
 		return loadedCount;
@@ -94,5 +91,11 @@ namespace NECRO
 			return true;
 
 		return false;
+	}
+
+	void NDBManager::Clear()
+	{
+		m_dbs.clear();
+		m_ndbsLoaded = false;
 	}
 }

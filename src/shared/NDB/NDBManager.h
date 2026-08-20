@@ -11,18 +11,17 @@ namespace NECRO
 	// -------------------------------------------------------------------------------------------------------
 	// Holds and manages NDB databases, for both the client and server, dynamically.
 	// 
-	// The "dynamic way" of loading data is suboptimal. TODO: have fixed structs and NDBStores to those 
-	// structs that give you instant access to the DB fields. It's also a contract between the game code and 
-	// the DB structure.
+	// NDB Databases will be used by NDBDataStoreManager to load Stores and give us fixed data as a contract 
+	// between the game code and the DB fields.
+	// 
+	// Usage is:
+	// NDB->NDBStoreManager->LoadStore()
 	// -------------------------------------------------------------------------------------------------------
 	class NDBManager
 	{
 	private:
 		std::unordered_map<std::string, NDB> m_dbs;
 		bool m_ndbsLoaded = false;
-
-		// Ptrs to dbs
-		const NDB* m_maps = nullptr;
 
 	public:
 		int LoadFromDefinition();
@@ -31,8 +30,6 @@ namespace NECRO
 
 		bool AddDB(const std::string& path);
 		bool RemoveDB(const std::string& id);
-
-		// Getters
-		const NDB* Maps() const { return m_maps; }
+		void Clear();
 	};
 }

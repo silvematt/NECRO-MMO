@@ -58,7 +58,7 @@ namespace World
 		void			ExecuteWorldCmds();
 		bool			RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
 		bool			UnregisterPlayer(uint64_t guid, uint32_t charID);
-		Map*			FindZone(uint32_t mapID);
+		Map*			FindZone(uint32_t zoneID);
 		PlayerEntity*	FindPlayer(uint64_t guid);
 
 	public:

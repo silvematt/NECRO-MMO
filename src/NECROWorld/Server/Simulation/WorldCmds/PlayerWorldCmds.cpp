@@ -31,10 +31,10 @@ namespace World
 		PlayerSpawnCmdResult result;
 
 		// If the zone is in range
-		Map* mapToSpawnIn = FindZone(charData.zone);
+		Map* zoneToSpawnIn = FindZone(charData.zone);
 
 		// Check the data
-		if (mapToSpawnIn)
+		if (zoneToSpawnIn)
 		{
 			// Validate the charData
 			int eventualCellX = 0;
@@ -42,36 +42,36 @@ namespace World
 			WorldToCell(charData.pos_x, charData.pos_y, eventualCellX, eventualCellY);
 
 			// If the position is broken, reposition to the center of the world (this may be the graveyard)
-			if (!Utility::CellBoundCheck(eventualCellX, eventualCellY, mapToSpawnIn->GetWidth(), mapToSpawnIn->GetHeight()))
+			if (!Utility::CellBoundCheck(eventualCellX, eventualCellY, zoneToSpawnIn->GetWidth(), zoneToSpawnIn->GetHeight()))
 			{
 				// Modify data
-				charData.pos_x = mapToSpawnIn->GetWidth() / 2 * CELL_WIDTH;
-				charData.pos_y = mapToSpawnIn->GetHeight() / 2 * CELL_HEIGHT;
+				charData.pos_x = zoneToSpawnIn->GetWidth() / 2 * CELL_WIDTH;
+				charData.pos_y = zoneToSpawnIn->GetHeight() / 2 * CELL_HEIGHT;
 				charData.pos_z = 100.01f;
 			}
 
 			// Try to spawn the entity
-			PlayerEntity* res = static_cast<PlayerEntity*>(mapToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData, playerPQueue))));
+			PlayerEntity* res = static_cast<PlayerEntity*>(zoneToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData, playerPQueue))));
 
 			if (res)
 			{
 				result.success = true;
 				result.guid = res->GetGUID();
-				result.mapID = mapToSpawnIn->GetMapID();
+				result.zoneID = zoneToSpawnIn->GetZoneID();
 				result.posX = res->m_posX;
 				result.posY = res->m_posY;
 				result.posZ = res->m_posZ;
 
 				if (RegisterPlayer(result.guid, charData.id, res))
 				{
-					LOG_DEBUG("Spawned player '{}' in MapID: '{}' at position: ({}, {})", charData.characterName, result.mapID, result.posX, result.posY);
+					LOG_DEBUG("Spawned player '{}' in ZoneID: '{}' at position: ({}, {})", charData.characterName, result.zoneID, result.posX, result.posY);
 					return result;
 				}
 				// Character spawned but registration failed, undo the spawn!
 				else
 				{
 					LOG_DEBUG("Entity GUID '{}' is getting removed! WorldCmd_TryToSpawnPlayerCharacter failed to register the player!", result.guid);
-					mapToSpawnIn->RemoveEntityFromMap(result.guid);
+					zoneToSpawnIn->RemoveEntityFromMap(result.guid);
 				}
 			}
 		}

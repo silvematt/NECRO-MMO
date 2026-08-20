@@ -123,6 +123,22 @@ namespace World
 		else
 			LOG_OK("Loaded {} NDBs!", ndbsLoadReturnVal);
 
+		// After loading the NDBs, we can load the DataStores and have the fixed, contract-based agreement between game code and DB data
+		// TODO: NDB in memory footprint (even if it's just a spike at load) can become huge for very big databases (like a full fledged MMORPG items db). A better way to load the stores would be to avoid loading the whole NDB in memory first
+		// and just do: LoadOneRow -> LoadOneStoreDef -> DiscardTheNDBRow
+		int ndbsStoresReturnVal = m_dataStores.LoadAll(m_ndbs);
+		if (ndbsStoresReturnVal == 0)
+		{
+			LOG_ERROR("m_dataStores.LoadAll returned false! NDB: 'maps_db' could not be loaded.");
+			return -9;
+		}
+		else
+			LOG_OK("Loaded {} NDBDataStores!", ndbsStoresReturnVal);
+
+		// We can unload the NDBs, we don't need them anymroe
+		m_ndbs.Clear();
+		LOG_OK("Cleared {} NDBs from memory!", ndbsLoadReturnVal);
+
 		// Start network threads
 		int threadsCount = std::thread::hardware_concurrency();
 
@@ -133,7 +149,7 @@ namespace World
 		if (threadsCount <= 0) // std::thread::hardware_concurrency can return 0 if it's not-computable, cover misconfig as well
 		{
 			LOG_WARNING("While making SocketManager, std::thread::hardware_concurrency could not be computed! Explicit NETWORK_THREADS_COUNT in the config file.");
-			return -9;
+			return -10;
 		}
 
 		m_socketManager = std::make_unique<SocketManager>(threadsCount, m_asioPool.m_ioContext, m_configSettings.MANAGER_SERVER_PORT);

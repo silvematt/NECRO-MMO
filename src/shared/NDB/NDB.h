@@ -40,7 +40,15 @@ namespace NECRO
 				return nullptr;
 		}
 
+		// "Hard" gets. These throw on errors 
+		int				GetInt(uint32_t rowID, const char* col) const;
+		float			GetFloat(uint32_t rowID, const char* col) const;
+		bool			GetBool(uint32_t rowID, const char* col) const;
+		std::string		GetString(uint32_t rowID, const char* col) const;
+
 		const NDBValue* TryFind(const NDBRow& row, const std::string& colID) const;
 		const NDBValue* TryFind(uint32_t rowID, const std::string& colID) const;
+
+		const std::unordered_map<uint32_t, NDBRow>& GetRows() const { return m_rows; }
 	};
 }

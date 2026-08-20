@@ -1,6 +1,7 @@
 #include "NDB.h"
 
 #include <fstream>
+#include <stdexcept>
 
 #include "FileLogger.h"
 #include "ConsoleLogger.h"
@@ -214,5 +215,42 @@ namespace NECRO
 		m_isOpenAndValid = true;
 		LOG_OK("'{}' successfully loaded! Loaded '{}' rows.", path, curRowCount);
 		return true;
+	}
+
+	// "Hard" gets
+	int NDB::GetInt(uint32_t rowID, const char* col) const
+	{
+		const NDBValue* v = TryFind(rowID, col);
+		if (!v || !v->AsInt())
+			throw std::runtime_error(fmt::format("NDBGetInt: Bad column '{}' on row '{}' (expected int)", col, rowID));
+
+		return *v->AsInt();
+	}
+
+	float NDB::GetFloat(uint32_t rowID, const char* col) const
+	{
+		const NDBValue* v = TryFind(rowID, col);
+		if (!v || !v->AsFloat())
+			throw std::runtime_error(fmt::format("NDBGetFloat: Bad column '{}' on row '{}' (expected float)", col, rowID));
+
+		return *v->AsFloat();
+	}
+
+	bool NDB::GetBool(uint32_t rowID, const char* col) const
+	{
+		const NDBValue* v = TryFind(rowID, col);
+		if (!v || !v->AsBool())
+			throw std::runtime_error(fmt::format("NDBGetBool: Bad column '{}' on row '{}' (expected bool)", col, rowID));
+
+		return *v->AsBool();
+	}
+
+	std::string NDB::GetString(uint32_t rowID, const char* col) const
+	{
+		const NDBValue* v = TryFind(rowID, col);
+		if (!v || !v->AsString())
+			throw std::runtime_error(fmt::format("NDBGetString: Bad column '{}' on row '{}' (expected string)", col, rowID));
+
+		return *v->AsString();
 	}
 }

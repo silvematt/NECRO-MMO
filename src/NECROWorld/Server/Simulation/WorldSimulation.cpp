@@ -16,7 +16,9 @@ namespace World
 	int WorldSimulation::Start()
 	{
 		// Load all the default maps
-		m_zones.insert({ 1, std::make_unique<Map>(1)}); // 0: Load Exterior World
+		uint32_t nextZoneID = 1; // TODO, properly manage this
+		m_zones.insert({ nextZoneID, std::make_unique<Map>(1, nextZoneID)}); // 0: Load Exterior World
+		nextZoneID++;
 
 		// Load the active instanced maps (saved on the DB)
 
@@ -106,9 +108,9 @@ namespace World
 		return true;
 	}
 
-	Map* WorldSimulation::FindZone(uint32_t mapID)
+	Map* WorldSimulation::FindZone(uint32_t zoneID)
 	{
-		auto it = m_zones.find(mapID);
+		auto it = m_zones.find(zoneID);
 		return it != m_zones.end() ? it->second.get() : nullptr;
 	}
 

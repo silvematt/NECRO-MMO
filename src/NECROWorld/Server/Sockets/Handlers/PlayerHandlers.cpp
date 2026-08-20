@@ -209,7 +209,7 @@ namespace World
             
             p << static_cast<uint8_t>(World::WorldResults::SUCCESS);
             p << static_cast<uint64_t>(result.guid);
-            p << static_cast<uint32_t>(result.mapID);
+            p << static_cast<uint32_t>(result.zoneID);
             p << static_cast<float_t>(result.posX);
             p << static_cast<float_t>(result.posY);
             p << static_cast<float_t>(result.posZ);

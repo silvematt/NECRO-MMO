@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <stdexcept>
 
 #include "MapDef.h"
 #include "Cell.h"
@@ -23,7 +24,8 @@ namespace World
 	class Map
 	{
 	private:
-		MapDef	m_mapDef;
+		const MapDef*	m_mapDef = nullptr; // Assigned in LoadMap
+		uint32_t		m_zoneID = 0;
 
 		// Map state
 		bool m_isActive; // if the map is active or not. Inactive maps will skip updating during a simulation step of
@@ -39,23 +41,26 @@ namespace World
 		void TransferPendingEntities();
 
 	public:
-		Map(uint32_t mapID) : m_isActive(true)
+		Map(uint32_t mapID, uint32_t zoneID) : m_isActive(true), m_zoneID(zoneID)
 		{
 			// Initialize the m_cellMap in base of the loaded m_mapID
 			// TODO: for now maps that fail loading prevents the server to startup
-			LoadMap(mapID);
+			if (LoadMap(mapID) != 0)
+				throw std::runtime_error("LoadMap failed!");
 		}
 
-		const MapDef& GetDef() const { return m_mapDef; }
+		const MapDef* GetDef() const { return m_mapDef; }
 
 		int		LoadMap(uint32_t mapID);
 		void	SetActive(bool v);
 		void	Update(uint32_t diff);
 
-		const uint32_t	GetMapID() const	{ return m_mapDef.m_mapID; };
-		const int		GetWidth() const	{ return m_mapDef.m_width; };
-		const int		GetHeight() const	{ return m_mapDef.m_height; };
-		const int		GetNLayers() const	{ return m_mapDef.m_nLayers; };
+		const uint32_t	GetZoneID() const	{ return m_zoneID; };
+
+		const uint32_t	GetMapID() const	{ return m_mapDef->m_mapID; };
+		const int		GetWidth() const	{ return m_mapDef->m_width; };
+		const int		GetHeight() const	{ return m_mapDef->m_height; };
+		const int		GetNLayers() const	{ return m_mapDef->m_nLayers; };
 
 		// Entities Management
 		Entity*		AddEntityToMap(std::unique_ptr<Entity> e);

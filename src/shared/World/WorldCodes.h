@@ -163,7 +163,7 @@ struct CPacketEnterWorld
     // Server tells client the information to spawn in the world
     uint64_t guid;// the guid the simulation assigned to our character, unique within this run of the server
 
-    uint32_t mapID;
+    uint32_t zone;
     float_t posX;
     float_t posY;
     float_t posZ;

@@ -624,7 +624,7 @@ namespace World
             {
                 DBRequest req(m_ioContextRef, false);
                 req.m_steps.push_back({ static_cast<uint32_t>(CharactersDatabaseStatements::CHAR_INS_CHARACTER), 
-                    {m_data.accountID, ctx->newCharacterName, ctx->newCharacterRace, ctx->newCharacterClass, ctx->newCharacterGender, 1, 0, 0, 0.0f, 0.0f, 0.0f } });
+                    {m_data.accountID, ctx->newCharacterName, ctx->newCharacterRace, ctx->newCharacterClass, ctx->newCharacterGender, 1, 0, 1, 0.0f, 0.0f, 0.0f } });
 
                 // The callback needs to ensure the object still exists, as it may be deleted by the main thread while the dbrequest is being processed
                 std::weak_ptr<WorldSession> weakSelf = shared_from_this();

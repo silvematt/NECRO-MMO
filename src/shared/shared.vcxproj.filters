@@ -127,6 +127,8 @@
       <Filter>RealmList</Filter>
     </ClInclude>
     <ClInclude Include="Maps\MapDef.h" />
+    <ClInclude Include="NDB\Stores\MapDefStore.h" />
+    <ClInclude Include="NDB\Stores\NDBDataStoreManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -163,5 +165,6 @@
       <Filter>Sockets</Filter>
     </ClCompile>
     <ClCompile Include="Maps\MapDef.cpp" />
+    <ClCompile Include="NDB\Stores\MapDefStore.cpp" />
   </ItemGroup>
 </Project>

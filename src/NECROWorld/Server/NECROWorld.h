@@ -10,6 +10,7 @@
 #include "SocketManager.h"
 #include "WorldSimulation.h"
 #include "SessionManager.h"
+#include "NDBDataStoreManager.h"
 
 #include "NDBManager.h"
 
@@ -91,8 +92,9 @@ namespace World
 		DatabaseWorkerPool<CharactersDatabase>	m_charactersDBPool;
 
 		// Simulation
-		NDBManager		m_ndbs;
-		WorldSimulation m_worldSimulation;
+		NDBManager				m_ndbs;
+		NDBDataStoreManager		m_dataStores;
+		WorldSimulation			m_worldSimulation;
 
 		// Managers
 		SessionManager	m_sessionManager;
@@ -120,9 +122,9 @@ namespace World
 			return m_configSettings;
 		}
 
-		const NDBManager& GetNDBs() const
+		const NDBDataStoreManager& GetNDBStoresManager() const
 		{
-			return m_ndbs;
+			return m_dataStores;
 		}
 
 		AsioThreadPool& GetAsioThreadPool()

@@ -21,7 +21,8 @@ namespace NECRO
 	{
 	public:
 		// m_mapID is the unique map id that identifies the map/zone (0: virrihael, 1: dungeon, 2: mines, 3: island, etc). 
-		// Instanced maps can have the same m_mapID but a different m_instanceID: ([1,123] [1,456] - are the same dungeons but different instances)
+		// Zones are instances of a Map.
+		// Instanced maps can have the same m_mapID but be a different Zone loaded in the world simulation
 		uint32_t	m_mapID = 0;
 
 		std::string m_mapName;
@@ -34,6 +35,6 @@ namespace NECRO
 		std::string m_mapFileName;
 
 	public:
-		bool	LoadMapDefinition(uint32_t mapID, const NDB* mapDb);
+		MapDef(uint32_t mapID, const NDB* mapDb);
 	};
 }

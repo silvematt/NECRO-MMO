@@ -118,7 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;$(SolutionDir)src\shared\Utility;$(SolutionDir)src\shared\Sockets;$(SolutionDir)src\shared\Packets;$(SolutionDir)src\shared\OpenSSL;$(SolutionDir)src\shared\Logger;$(SolutionDir)src\shared\Encryption;$(SolutionDir)src\shared\Authentication;$(SolutionDir)src\shared\NDB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)src\shared\Config;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.3\include;$(SolutionDir)src\shared\Utility;$(SolutionDir)src\shared\Sockets;$(SolutionDir)src\shared\Packets;$(SolutionDir)src\shared\OpenSSL;$(SolutionDir)src\shared\Logger;$(SolutionDir)src\shared\Encryption;$(SolutionDir)src\shared\Authentication;$(SolutionDir)src\shared\NDB;$(SolutionDir)src\shared\NDB\Stores;$(SolutionDir)src\shared\Maps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -136,7 +136,9 @@
     <ClInclude Include="Authentication\AuthCodes.h" />
     <ClInclude Include="Characters\CharacterData.h" />
     <ClInclude Include="Config\Config.h" />
+    <ClInclude Include="NDB\Stores\NDBDataStoreManager.h" />
     <ClInclude Include="Maps\MapDef.h" />
+    <ClInclude Include="NDB\Stores\MapDefStore.h" />
     <ClInclude Include="NDB\NDBManager.h" />
     <ClInclude Include="NDB\NDBValue.h" />
     <ClInclude Include="NDB\NDB.h" />
@@ -166,6 +168,7 @@
     <ClCompile Include="NDB\NDBManager.cpp" />
     <ClCompile Include="NDB\NDB.cpp" />
     <ClInclude Include="NDB\NDBRow.h" />
+    <ClCompile Include="NDB\Stores\MapDefStore.cpp" />
     <ClCompile Include="Sockets\TCPSocketBoost.cpp" />
     <ClCompile Include="Logger\ConsoleLogger.cpp" />
     <ClCompile Include="Logger\FileLogger.cpp" />
