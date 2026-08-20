@@ -459,7 +459,7 @@ namespace World
                 packet << static_cast<uint8_t>(charRow[5].get<int>());       // level
                 packet << charRow[6].get<uint32_t>();                        // xp
 
-                packet << charRow[7].get<uint32_t>();      // zone
+                packet << charRow[7].get<uint32_t>();                        // zone
                 packet << charRow[8].get<float>();                           // pos_x
                 packet << charRow[9].get<float>();                           // pos_y
                 packet << charRow[10].get<float>();                          // pos_z
@@ -619,7 +619,7 @@ namespace World
             LOG_DEBUG("Checks passed!");
 
             // Character can be created, run creation query
-            // TODO, here we would also have information and validation of the class/race, so that we can set custom start zones / positions / skills / whatever - for now we just hardcode them
+            // TODO, here we would also have information and validation of the class/race, so that we can set custom start zone / positions / skills / whatever - for now we just hardcode them
             auto& dbworker = Server::Instance().GetCharactersDBPool();
             {
                 DBRequest req(m_ioContextRef, false);

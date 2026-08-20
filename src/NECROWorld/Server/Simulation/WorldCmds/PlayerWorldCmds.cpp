@@ -31,7 +31,7 @@ namespace World
 		PlayerSpawnCmdResult result;
 
 		// If the zone is in range
-		Map* mapToSpawnIn = FindMap(charData.zone);
+		Map* mapToSpawnIn = FindZone(charData.zone);
 
 		// Check the data
 		if (mapToSpawnIn)
@@ -74,6 +74,11 @@ namespace World
 					mapToSpawnIn->RemoveEntityFromMap(result.guid);
 				}
 			}
+		}
+		else
+		{
+			// TODO this currentyl drops the player, but we should teleport him to a safe zone instead, otherwsie if the player leaves the game on an instance that gets deleted by the server, he won't be able to play anymore
+			LOG_DEBUG("Entity GUID '{}' is trying to spawn in a zone that no longer exists ('{}')!", result.guid, charData.zone);
 		}
 		
 		// Every other path that does not hit return result.success = true

@@ -34,9 +34,9 @@ namespace World
 		uint32_t m_prevTime;
 		uint32_t m_curTimeDiff;
 
-		// All the maps currently loaded loaded in the server
-		// Some may be inactive
-		std::unordered_map<uint32_t, std::unique_ptr<Map>>	m_maps;
+		// All the maps currently loaded loaded in the server are called "zones"
+		// Some may be inactive, some may be expired/invalid (for example, an instanced dungeon that was cleared by the server)
+		std::unordered_map<uint32_t, std::unique_ptr<Map>>	m_zones;
 
 		// All the players in any map. They belong to the map they're currently and are just indexed here for quick access
 		// CharID -> GUID
@@ -58,7 +58,7 @@ namespace World
 		void			ExecuteWorldCmds();
 		bool			RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
 		bool			UnregisterPlayer(uint64_t guid, uint32_t charID);
-		Map*			FindMap(uint32_t mapID);
+		Map*			FindZone(uint32_t mapID);
 		PlayerEntity*	FindPlayer(uint64_t guid);
 
 	public:

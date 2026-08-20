@@ -15,7 +15,8 @@ namespace NECRO
 namespace World
 {
 	// ------------------------------------------------------------------------------------------------------------------------
-	// A loaded map in the Server, can be an exterior, a dungeon or anything in between.
+	// A loaded map in the Server, also called "Zone". It can be an exterior, a dungeon or anything in between.
+	// A Zone is an entry in the std::unordered_map<uint32_t, std::unique_ptr<Map>>	m_zones and it represents a loaded Map.
 	// 
 	// Will always be child of the WorldSimulation. There can be multiple instances of the same map (instanced dungeons)
 	// ------------------------------------------------------------------------------------------------------------------------

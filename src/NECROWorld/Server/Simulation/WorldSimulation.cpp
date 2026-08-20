@@ -16,7 +16,7 @@ namespace World
 	int WorldSimulation::Start()
 	{
 		// Load all the default maps
-		m_maps.insert({ 1, std::make_unique<Map>(1)}); // 0: Load Exterior World
+		m_zones.insert({ 1, std::make_unique<Map>(1)}); // 0: Load Exterior World
 
 		// Load the active instanced maps (saved on the DB)
 
@@ -41,8 +41,8 @@ namespace World
 		ExecuteWorldCmds();
 
 		// TODO: This is highly parallelizable, we could have working sim threads working on different maps :D
-		for (auto& map : m_maps)
-			map.second->Update(m_curTimeDiff);
+		for (auto& zone : m_zones)
+			zone.second->Update(m_curTimeDiff);
 		
 		m_prevTime = m_curTime;
 	}
@@ -106,10 +106,10 @@ namespace World
 		return true;
 	}
 
-	Map* WorldSimulation::FindMap(uint32_t mapID)
+	Map* WorldSimulation::FindZone(uint32_t mapID)
 	{
-		auto it = m_maps.find(mapID);
-		return it != m_maps.end() ? it->second.get() : nullptr;
+		auto it = m_zones.find(mapID);
+		return it != m_zones.end() ? it->second.get() : nullptr;
 	}
 
 	// Note on saving, possible TODO. The current architecture contains a unlikely but possible data race that happens when the player enters the world, leaves it and very quickly reconnects.
