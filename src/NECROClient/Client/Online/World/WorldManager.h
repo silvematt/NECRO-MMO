@@ -39,6 +39,9 @@ namespace Client
         }
     };
 
+    // ------------------------------------------------------------
+    // Manager for the connection with the WorldServer
+    // ------------------------------------------------------------
     class WorldManager
     {
     private:

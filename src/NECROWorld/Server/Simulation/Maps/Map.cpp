@@ -13,37 +13,40 @@ namespace World
 		// Eventual consequences of activating/deactivating a map
 	}
 
-	int Map::LoadMap()
+	int Map::LoadMap(uint32_t mapID)
 	{
-		// Load from DB
+		// Load from NDB
 		auto mapDb = Server::Instance().GetNDBs().Maps();
 
-		m_ingameName	= *mapDb->TryFind(m_mapID, "MapName")->AsString();
-		m_width			= *mapDb->TryFind(m_mapID, "Width")->AsInt();
-		m_height		= *mapDb->TryFind(m_mapID, "Height")->AsInt();
+		// Load MapDef
+		if (!m_mapDef.LoadMapDefinition(mapID, mapDb))
+		{
+			LOG_ERROR("Could not load MapDef for mapID '{}'", mapID);
+			return -1;
+		}
 
 		// Apply
 		m_cellMap.clear();
-		m_cellMap.reserve(m_width*m_height);
+		m_cellMap.reserve(m_mapDef.m_width* m_mapDef.m_height);
 		uint32_t cellID = 0; // cellIDs are local to the map
-		for (int y = 0; y < m_height; y++)
-			for (int x = 0; x < m_width; x++)
+		for (int y = 0; y < m_mapDef.m_height; y++)
+			for (int x = 0; x < m_mapDef.m_width; x++)
 			{
 				m_cellMap.emplace_back(cellID, x, y);
 				cellID++;
 			}
 
-		LOG_OK("[MAPS] Loaded: Map ID: '{}' - Name: '{}' loaded! Width:'{}' | Height:'{}'.", m_mapID, m_ingameName, m_width, m_height);
+		LOG_INFO("[MAPS] Loaded: Map ID: '{}' - Name: '{}' loaded! Width:'{}' | Height:'{}' - FileName: {}.", m_mapDef.m_mapID, m_mapDef.m_mapName, m_mapDef.m_width, m_mapDef.m_height, m_mapDef.m_mapFileName);
 		return 0;
 	}
 
 	void Map::Update(uint32_t diff)
 	{
 		// Let's do a flat update for the whole map for now. The correct way will be to calculate where players are and only update the nearbies
-		for (int y = 0; y < m_height; y++)
-			for(int x = 0; x < m_width; x++)
+		for (int y = 0; y < m_mapDef.m_height; y++)
+			for(int x = 0; x < m_mapDef.m_width; x++)
 			{
-				Cell& cell = m_cellMap[y * m_width + x];
+				Cell& cell = m_cellMap[y * m_mapDef.m_width + x];
 				cell.Update(diff);
 			}
 
@@ -63,10 +66,10 @@ namespace World
 			int cellY = 0;
 			WorldToCell(e->m_posX, e->m_posY, cellX, cellY);
 
-			if (Utility::CellBoundCheck(cellX, cellY, m_width, m_height))
+			if (Utility::CellBoundCheck(cellX, cellY, m_mapDef.m_width, m_mapDef.m_height))
 			{
 				// Add to cell - TODO: add failure for AddEntityHere (maybe because cells have a max amount of entities in it?) and check the return value
-				Cell* currentCell = &m_cellMap[cellY * m_width + cellX];
+				Cell* currentCell = &m_cellMap[cellY * m_mapDef.m_width + cellX];
 				currentCell->AddEntityHere(e.get()); // note on e.get(): std::move (done later in m_entities.insert) does not change the memory address, so this is safe
 
 				// All worked
@@ -82,13 +85,13 @@ namespace World
 			else
 			{
 				// Invalid cell placement
-				LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But the position ({}, {}) is out of bounds! Entity is destroyed.", entityGUID, m_mapID, e->m_posX, e->m_posY);
+				LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But the position ({}, {}) is out of bounds! Entity is destroyed.", entityGUID, m_mapDef.m_mapID, e->m_posX, e->m_posY);
 				return nullptr;
 			}
 		}
 		else
 		{
-			LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But that GUID is already present in the m_entities list! Entity is destroyed.", entityGUID, m_mapID);
+			LOG_WARNING("Tried to add entity GUID: '{}' to MapID: '{}' - But that GUID is already present in the m_entities list! Entity is destroyed.", entityGUID, m_mapDef.m_mapID);
 			return nullptr;
 		}
 	}
@@ -98,7 +101,7 @@ namespace World
 		auto it = m_entities.find(entityGUID);
 		if (it == m_entities.end())
 		{
-			LOG_WARNING("Tried to remove entity GUID: '{}' from MapID: '{}' - But that GUID was not registered here!", entityGUID, m_mapID);
+			LOG_WARNING("Tried to remove entity GUID: '{}' from MapID: '{}' - But that GUID was not registered here!", entityGUID, m_mapDef.m_mapID);
 			return false;
 		}
 		else
@@ -106,7 +109,7 @@ namespace World
 			it->second->OnBeingRemovedFromMap();
 			it->second->m_currentCell->RemoveEntityHere(entityGUID);
 			m_entities.erase(it);
-			LOG_WARNING("Removed Entity from GUID: '{}' from MapID: '{}'!", entityGUID, m_mapID);
+			LOG_WARNING("Removed Entity from GUID: '{}' from MapID: '{}'!", entityGUID, m_mapDef.m_mapID);
 			return true;
 		}
 	}
@@ -127,13 +130,13 @@ namespace World
 			if (!entityToTransfer)
 				continue;
 
-			if (Utility::CellBoundCheck(ctx->newGridPosX, ctx->newGridPosY, m_width, m_height))
+			if (Utility::CellBoundCheck(ctx->newGridPosX, ctx->newGridPosY, m_mapDef.m_width, m_mapDef.m_height))
 			{
-				Cell* wantedCell = &m_cellMap[ctx->newGridPosY * m_width + ctx->newGridPosX];
+				Cell* wantedCell = &m_cellMap[ctx->newGridPosY * m_mapDef.m_width + ctx->newGridPosX];
 
 				if (wantedCell)
 				{
-					LOG_DEBUG("Map '{}' Transferring Entity GUID: '{}'!", m_mapID, entityToTransfer->GetGUID());
+					LOG_DEBUG("Map '{}' Transferring Entity GUID: '{}'!", m_mapDef.m_mapID, entityToTransfer->GetGUID());
 
 					// Perform the transfer
 					entityToTransfer->m_currentCell->RemoveEntityHere(entityToTransfer->GetGUID());
@@ -144,7 +147,7 @@ namespace World
 				else
 				{
 					// Failed transfer! If this runs, there's a severe structural issue shouldnt really happen. 
-					LOG_ERROR("Critical Error: In MapID '{}', checked and sanitized Cell ({},{}) was marked as not in bound in this map!", m_mapID, ctx->newGridPosX, ctx->newGridPosY);
+					LOG_ERROR("Critical Error: In MapID '{}', checked and sanitized Cell ({},{}) was marked as not in bound in this map!", m_mapDef.m_mapID, ctx->newGridPosX, ctx->newGridPosY);
 				}
 			}
 			else

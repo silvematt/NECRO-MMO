@@ -126,6 +126,7 @@
     <ClInclude Include="RealmList\Realm.h">
       <Filter>RealmList</Filter>
     </ClInclude>
+    <ClInclude Include="Maps\MapDef.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Logger\Logger.cpp">
@@ -161,5 +162,6 @@
     <ClCompile Include="Sockets\TCPSocketBoost.cpp">
       <Filter>Sockets</Filter>
     </ClCompile>
+    <ClCompile Include="Maps\MapDef.cpp" />
   </ItemGroup>
 </Project>

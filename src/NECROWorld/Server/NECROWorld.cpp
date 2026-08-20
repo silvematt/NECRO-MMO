@@ -168,7 +168,7 @@ namespace World
 
 		m_isRunning = true;
 
-		LOG_OK("NECROWorld is running...");
+		LOG_OK("NECROWorld has started.");
 	}
 
 	void Server::Update()
@@ -176,6 +176,7 @@ namespace World
 		LOG_INFO("Starting up world simulation...");
 		m_worldSimulation.Start();
 
+		LOG_OK("NECROWorld is running!");
 		while (m_worldSimulation.m_isRunning)
 			m_worldSimulation.Update();
 

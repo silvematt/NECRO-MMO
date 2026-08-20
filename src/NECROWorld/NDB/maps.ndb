@@ -10,12 +10,14 @@ MapName:string
 MapType:int
 Width:int
 Height:int
+NLayers:int
+MapFileName:string
 STRUCTURE_END
 
 # All the next lines are DB rows
 
 ROWS_START
-# ID, MapName, MapType (0: exterior, 1: instantiable), WIDTH, HEIGHT
-0, Virrihael, 0, 50, 50;
+# ID, MapName, MapType (0: exterior, 1: instantiable), WIDTH, HEIGHT, NLayers, MapFileName
+1, Virrihael, 0, 50, 50, 4, world.nmap;
 ROWS_END
 NDB_END

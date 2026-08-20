@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "MapDef.h"
 #include "Cell.h"
 #include "Entity.h"
 
@@ -21,14 +22,7 @@ namespace World
 	class Map
 	{
 	private:
-		// m_mapID is the unique map id that identifies the map/zone (0: virrihael, 1: dungeon, 2: mines, 3: island, etc). 
-		// Instanced maps can have the same m_mapID but a different m_instanceID: ([1,123] [1,456] - are the same dungeons but different instances)
-		uint32_t m_mapID;
-
-		// Properties filled on Load()
-		std::string m_ingameName;
-		int m_width;
-		int m_height;
+		MapDef	m_mapDef;
 
 		// Map state
 		bool m_isActive; // if the map is active or not. Inactive maps will skip updating during a simulation step of
@@ -44,19 +38,23 @@ namespace World
 		void TransferPendingEntities();
 
 	public:
-		Map(uint32_t mapID) : m_isActive(true), m_mapID(mapID)
+		Map(uint32_t mapID) : m_isActive(true)
 		{
 			// Initialize the m_cellMap in base of the loaded m_mapID
-			LoadMap();
+			// TODO: for now maps that fail loading prevents the server to startup
+			LoadMap(mapID);
 		}
 
-		int		LoadMap();
+		const MapDef& GetDef() const { return m_mapDef; }
+
+		int		LoadMap(uint32_t mapID);
 		void	SetActive(bool v);
 		void	Update(uint32_t diff);
 
-		const uint32_t	GetMapID() const { return m_mapID; };
-		const int		GetWidth() const { return m_width; };
-		const int		GetHeight() const { return m_height; };
+		const uint32_t	GetMapID() const	{ return m_mapDef.m_mapID; };
+		const int		GetWidth() const	{ return m_mapDef.m_width; };
+		const int		GetHeight() const	{ return m_mapDef.m_height; };
+		const int		GetNLayers() const	{ return m_mapDef.m_nLayers; };
 
 		// Entities Management
 		Entity*		AddEntityToMap(std::unique_ptr<Entity> e);

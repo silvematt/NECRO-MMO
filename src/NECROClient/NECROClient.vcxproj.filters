@@ -150,6 +150,9 @@
     <ClCompile Include="Client\Online\Handlers\PlayerHandlers.cpp">
       <Filter>NECROClient\Client\Online\Handlers</Filter>
     </ClCompile>
+    <ClCompile Include="Engine\World\Map.cpp">
+      <Filter>NECROClient\Engine\World</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client\Online\AuthManager.h">
@@ -247,6 +250,9 @@
     </ClInclude>
     <ClInclude Include="Engine\NECROEngine.h">
       <Filter>NECROClient\Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Engine\World\Map.h">
+      <Filter>NECROClient\Engine\World</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
