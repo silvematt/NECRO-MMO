@@ -8,7 +8,7 @@
 #include <functional>
 #include <mutex>
 
-#include "Map.h"
+#include "Zone.h"
 #include "WorldCmdTypes.h"
 #include "WorldSession.h"
 
@@ -20,7 +20,7 @@ namespace World
 	class PlayerEntity;
 
 	// ------------------------------------------------------------------------
-	// Simulation of the whole world. Contains all the maps loaded of the game
+	// Simulation of the whole world. Contains all the Zones loaded of the game
 	// ------------------------------------------------------------------------
 	class WorldSimulation
 	{
@@ -34,11 +34,11 @@ namespace World
 		uint32_t m_prevTime;
 		uint32_t m_curTimeDiff;
 
-		// All the maps currently loaded loaded in the server are called "zones"
+		// All the maps currently loaded in the server are called "zones"
 		// Some may be inactive, some may be expired/invalid (for example, an instanced dungeon that was cleared by the server)
-		std::unordered_map<uint32_t, std::unique_ptr<Map>>	m_zones;
+		std::unordered_map<uint32_t, std::unique_ptr<Zone>>	m_zones;
 
-		// All the players in any map. They belong to the map they're currently and are just indexed here for quick access
+		// All the players in any Zone. They belong to the Zone they're currently and are indexed here for quick access
 		// CharID -> GUID
 		// GUID -> PlayerEntity*
 		std::unordered_map<uint32_t, uint64_t>				m_charIdToGuid;
@@ -58,7 +58,7 @@ namespace World
 		void			ExecuteWorldCmds();
 		bool			RegisterPlayer(uint64_t guid, uint32_t charID, PlayerEntity* player);
 		bool			UnregisterPlayer(uint64_t guid, uint32_t charID);
-		Map*			FindZone(uint32_t zoneID);
+		Zone*			FindZone(uint32_t zoneID);
 		PlayerEntity*	FindPlayer(uint64_t guid);
 
 	public:

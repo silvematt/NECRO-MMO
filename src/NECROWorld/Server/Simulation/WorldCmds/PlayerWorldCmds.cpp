@@ -31,7 +31,7 @@ namespace World
 		PlayerSpawnCmdResult result;
 
 		// If the zone is in range
-		Map* zoneToSpawnIn = FindZone(charData.zone);
+		Zone* zoneToSpawnIn = FindZone(charData.zone);
 
 		// Check the data
 		if (zoneToSpawnIn)
@@ -51,7 +51,7 @@ namespace World
 			}
 
 			// Try to spawn the entity
-			PlayerEntity* res = static_cast<PlayerEntity*>(zoneToSpawnIn->AddEntityToMap(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData, playerPQueue))));
+			PlayerEntity* res = static_cast<PlayerEntity*>(zoneToSpawnIn->AddEntityToZone(std::move(std::make_unique<PlayerEntity>(GUIDManager::GetNextGUID(), charData, playerPQueue))));
 
 			if (res)
 			{
@@ -71,7 +71,7 @@ namespace World
 				else
 				{
 					LOG_DEBUG("Entity GUID '{}' is getting removed! WorldCmd_TryToSpawnPlayerCharacter failed to register the player!", result.guid);
-					zoneToSpawnIn->RemoveEntityFromMap(result.guid);
+					zoneToSpawnIn->RemoveEntityFromZone(result.guid);
 				}
 			}
 		}
@@ -101,16 +101,16 @@ namespace World
 			{
 				LOG_WARNING("Player with GUID: '{}' CharID: '{}' has been unregistered from the WorldSimulation!", guid, charID);
 
-				// Removal from map destroys the player (the maps owns the entities), so we do this at the end
-				Map* map = p->GetCurrentMap();
-				if (map)
+				// Removal from Zone destroys the player (the Zone owns the entities), so we do this at the end
+				Zone* zone = p->GetCurrentZone();
+				if (zone)
 				{
-					map->RemoveEntityFromMap(guid);
+					zone->RemoveEntityFromZone(guid);
 					result.success = true;
 				}
 				else
 				{
-					// When could this fail? Should never unless we allow p->m_currentMap to be nullptr during map transfers
+					// When could this fail? Should never unless we allow p->m_currentZone to be nullptr during Zone transfers
 					LOG_CRITICAL("Despawn Character failed critically!");
 				}
 

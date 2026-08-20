@@ -41,9 +41,9 @@ namespace World
 			return m_characterData->id;
 		}
 		
-		Map* GetCurrentMap() const
+		Zone* GetCurrentZone() const
 		{
-			return m_currentMap;
+			return m_currentZone;
 		}
 
 		// Updates m_characterData to the current in memory values, usually done before saving on the database

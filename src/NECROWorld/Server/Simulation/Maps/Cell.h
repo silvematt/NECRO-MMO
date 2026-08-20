@@ -10,12 +10,12 @@ namespace World
 	class Entity;
 
 	//---------------------------------------------------------------------------------
-	// A Cell represents a container for each tile in a Map.
+	// A Cell represents a container for each tile in a Zone.
 	//---------------------------------------------------------------------------------
 	class Cell
 	{
 	private:
-		uint32_t	m_cellID; // cellID in the map, mainly used for comparison with cells
+		uint32_t	m_cellID; // cellID in the Zone's m_cellMap, mainly used for comparison with cells
 		int			m_cellX;
 		int			m_cellY;
 

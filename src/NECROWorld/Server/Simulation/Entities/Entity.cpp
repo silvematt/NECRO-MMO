@@ -1,6 +1,6 @@
 #include "Entity.h"
 #include "Cell.h"
-#include "Map.h"
+#include "Zone.h"
 
 #include "ConsoleLogger.h"
 #include "FileLogger.h"
@@ -31,7 +31,7 @@ namespace World
 		// If somehow the map doesn't accept the transfer (illegal pos, or the Cell is already full of entities), the entity will be snapped back to the center of the Cell(m_curGridPosX,m_curGridPosY)
 		if (oldGridPosX != newGridPosX || oldGridPosY != newGridPosY)
 		{
-			m_currentMap->AddPendingEntityToTransfer(EntityTransferCtx(m_guid, newGridPosX, newGridPosY));
+			m_currentZone->AddPendingEntityToTransfer(EntityTransferCtx(m_guid, newGridPosX, newGridPosY));
 		}
 		else
 		{
@@ -41,16 +41,16 @@ namespace World
 		}
 	}
 
-	void Entity::SetCurrentMapPtr(Map* m)
+	void Entity::SetCurrentZonePtr(Zone* newZone)
 	{
-		if (m)
+		if (newZone)
 		{
-			m_currentMap = m;
+			m_currentZone = newZone;
 		}
 		else
 		{
-			m_currentMap = nullptr;
-			LOG_ERROR("Tried to set Entity's with GUID '{}' new Map, but the passed ptr was null!", m_guid);
+			m_currentZone = nullptr;
+			LOG_ERROR("Tried to set Entity's with GUID '{}' new Zone, but the passed ptr was null!", m_guid);
 
 			// Entity is an invalid state, TODO decide what to do
 		}
@@ -69,20 +69,20 @@ namespace World
 		else
 		{
 			m_currentCell = nullptr;
-			LOG_ERROR("Tried to set Entity's with GUID '{}' new cell, but the passed ptr was null!", m_guid);
+			LOG_ERROR("Tried to set Entity's with GUID '{}' new Cell, but the passed ptr was null!", m_guid);
 
 			// Entity is an invalid state, TODO decide what to do
 		}
 	}
 
-	// Called as soon as the Entity is added to the map (via Map::AddEntityToMap) and (m_currentMap, m_currentCell) are assigned
-	void Entity::OnBeingAddedToMap()
+	// Called as soon as the Entity is added to the map (via Zone::AddEntityToZone) and (m_currentZone, m_currentCell) are assigned
+	void Entity::OnBeingAddedToZone()
 	{
 
 	}
 
-	// Called just before being removed from the map by (Map::RemoveFromMap)
-	void Entity::OnBeingRemovedFromMap()
+	// Called just before being removed from the map by (Zone::RemoveEntityFromZone)
+	void Entity::OnBeingRemovedFromZone()
 	{
 
 	}
@@ -93,7 +93,7 @@ namespace World
 
 	}
 
-	// Called by the Map object if it fails to transfer this entity after he requested the transfer
+	// Called by the Zone object if it fails to transfer this entity after he requested the transfer
 	void Entity::OnCellTransferFails()
 	{
 

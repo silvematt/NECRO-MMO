@@ -166,7 +166,7 @@
     <ClCompile Include="Engine\World\Cell.cpp" />
     <ClCompile Include="Engine\World\World.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Engine\World\Map.cpp" />
+    <ClCompile Include="Engine\World\Zone.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Client\Online\AuthManager.h" />
@@ -201,7 +201,7 @@
     <ClInclude Include="Engine\Utility\Vector2.h" />
     <ClInclude Include="Engine\World\Cell.h" />
     <ClInclude Include="Engine\World\World.h" />
-    <ClInclude Include="Engine\World\Map.h" />
+    <ClInclude Include="Engine\World\Zone.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

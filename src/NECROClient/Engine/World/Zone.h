@@ -5,7 +5,7 @@ namespace NECRO
 
 namespace Client
 {
-	class Map
+	class Zone
 	{
 
 	};

@@ -24,7 +24,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Server\NECROWorld.cpp" />
     <ClCompile Include="Server\Simulation\Maps\Cell.cpp" />
-    <ClCompile Include="Server\Simulation\Maps\Map.cpp" />
+    <ClCompile Include="Server\Simulation\Maps\Zone.cpp" />
     <ClCompile Include="Server\Simulation\WorldCmds\PlayerWorldCmds.cpp" />
     <ClCompile Include="Server\Sockets\Handlers\PlayerHandlers.cpp" />
     <ClCompile Include="Server\Sockets\SocketManager.cpp" />
@@ -37,7 +37,7 @@
     <ClInclude Include="Server\Simulation\Entities\Entity.h" />
     <ClInclude Include="Server\NECROWorld.h" />
     <ClInclude Include="Server\Simulation\Maps\Cell.h" />
-    <ClInclude Include="Server\Simulation\Maps\Map.h" />
+    <ClInclude Include="Server\Simulation\Maps\Zone.h" />
     <ClInclude Include="Server\Simulation\WorldCmds\WorldCmdTypes.h" />
     <ClInclude Include="Server\Sockets\SocketManager.h" />
     <ClInclude Include="Server\Sockets\WorldSession.h" />
