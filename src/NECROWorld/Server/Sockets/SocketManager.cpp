@@ -30,7 +30,7 @@ void SocketManager::SocketManagerHandler()
 
 void SocketManager::AsyncAcceptCallback(tcp::socket&& sock, int tID)
 {
-	auto config = Server::Instance().GetSettings();
+	auto& config = Server::Instance().GetSettings();
 	boost::system::error_code closeEc;
 
 	// Check for max connected clients setting
@@ -92,7 +92,7 @@ void SocketManager::OnAcceptError(boost::system::error_code ec, int tID)
 // Returns true if the IP is flagged as spam
 bool SocketManager::DoIPSpamPrevention(uint32_t clientIP)
 {
-	auto config = Server::Instance().GetSettings();
+	auto& config = Server::Instance().GetSettings();
 
 	// Acquire mutex on m_ipRequestMap
 	{

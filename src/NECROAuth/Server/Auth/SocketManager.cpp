@@ -30,7 +30,7 @@ namespace Auth
 
 	void SocketManager::SSLAsyncAcceptCallback(tcp::socket&& sock, int tID)
 	{
-		auto config = Server::Instance().GetSettings();
+		auto& config = Server::Instance().GetSettings();
 		boost::system::error_code closeEc;
 
 		// Check for max connected clients setting
@@ -90,7 +90,7 @@ namespace Auth
 	// Returns true if the IP is flagged as spam
 	bool SocketManager::DoIPSpamPrevention(uint32_t clientIP)
 	{
-		auto config = Server::Instance().GetSettings();
+		auto& config = Server::Instance().GetSettings();
 
 		// Check if the requesting IP already made requests in the last time window (IP_BASED_REQUEST_CLEANUP_INTERVAL_MS)
 		auto it = m_ipRequestMap.find(clientIP);

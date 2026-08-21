@@ -24,7 +24,6 @@ namespace NECRO
 	using boost::asio::ssl::stream;
 	using boost::asio::ssl::context;
 
-
 	template<class SocketType>
 	class NetworkThread
 	{
@@ -39,7 +38,7 @@ namespace NECRO
 		boost::asio::steady_timer					m_updateTimer;
 
 		std::vector<std::shared_ptr<SocketType>>	m_sockets;
-		std::atomic<size_t>							m_socketsNumber; // tracks both m_sockets and m_queuedSockets size
+		std::atomic<size_t>							m_socketsNumber{0}; // tracks both m_sockets and m_queuedSockets size
 
 		std::vector<std::shared_ptr<SocketType>>	m_queuedSockets; // sockets queued up for insertion in the main m_sockets list
 		std::mutex									m_queuedSocketsMutex;
@@ -52,9 +51,9 @@ namespace NECRO
 			m_thread(nullptr), 
 			m_stopped(false), 
 			m_ioContext(1), 
-			m_updateTimer(m_ioContext), 
 			m_sslContext(server ? boost::asio::ssl::context::tlsv13_server
-								: boost::asio::ssl::context::sslv23_client),
+				: boost::asio::ssl::context::sslv23_client),
+			m_updateTimer(m_ioContext), 
 			m_acceptSocket(m_ioContext)
 		{
 			if (server)
@@ -116,7 +115,7 @@ namespace NECRO
 			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 			// Update the sockets
-			int before = m_sockets.size();
+			size_t before = m_sockets.size();
 			m_sockets.erase(std::remove_if(m_sockets.begin(), m_sockets.end(),
 							[now](auto& s) { return s->Update(now) == -1; }),
 							m_sockets.end());

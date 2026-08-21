@@ -287,7 +287,6 @@ namespace Auth
             if (RAND_bytes(randBytes.data(), AES_128_KEY_SIZE) != 1)
             {
                 throw std::runtime_error("Failed to generate Proof of Work challenge!");
-                return false;
             }
             uint8_t difficulty = 22; // this can be dynamically adjusted in base of the load
 
