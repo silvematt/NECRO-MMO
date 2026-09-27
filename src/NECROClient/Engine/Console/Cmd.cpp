@@ -318,6 +318,7 @@ namespace Client
 		}
 
 		int characterID = ClientUtility::TryParseInt(args[1]);
+		engine.GetWorldManager().GetData().enteringCharacterID = static_cast<uint32_t>(characterID);
 
 		Packet p;
 

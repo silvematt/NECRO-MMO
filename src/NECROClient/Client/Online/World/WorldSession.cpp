@@ -339,6 +339,14 @@ namespace Client
             Player::ENT_PTR->m_pos.y = pcktData->posY;
             Player::ENT_PTR->m_zPos = pcktData->posZ;
 
+            // Retrieve the name from the enumerated characters
+            for (const auto& ch : onlineData.characters)
+                if (ch.id == onlineData.enteringCharacterID)
+                {
+                    Player::ENT_PTR->SetName(ch.characterName);
+                    break;
+                }
+
             m_status = NECRO::World::WorldSocketStatus::IN_WORLD;
         }
         else
@@ -361,6 +369,9 @@ namespace Client
         onlineData.isInWorld = false;
         onlineData.isLeavingWorld = false;
         onlineData.myGuid = 0;
+
+        if (Player::ENT_PTR)
+            Player::ENT_PTR->SetName("");
 
         m_status = NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS;
 

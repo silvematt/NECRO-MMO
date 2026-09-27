@@ -17,6 +17,7 @@ namespace NECRO
 namespace Client
 {
 	inline constexpr int FONT_DEFAULT_PTSIZE = 24;
+	inline constexpr int FONT_NAMEPLATE_PTSIZE = 14;
 
 	inline constexpr const char* IMGS_FOLDER = "Data/imgs/";
 	inline constexpr const char* FONTS_FOLDER = "Data/fonts/";

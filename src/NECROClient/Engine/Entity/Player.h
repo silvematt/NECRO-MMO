@@ -21,6 +21,9 @@ namespace Client
 	inline constexpr int HALF_PLAYER_WIDTH = 64;
 	inline constexpr int HALF_PLAYER_HEIGHT = 64;
 
+	// Vertical offset where the nameplate is drawn
+	inline constexpr int PLAYER_NAMEPLATE_Y_OFFSET = 10;
+
 	//-------------------------------------------------
 	// Player class, derived by Entity
 	//-------------------------------------------------
@@ -43,6 +46,9 @@ namespace Client
 
 		// List of close (8-neighbours close) entities, filled every frame
 		std::vector<Entity*> m_closeEntities;
+
+		// Name drawn on top of the player's head, in the form <Name>. If it's empty no text will be drawn
+		std::string m_displayName;
 
 	private:
 		void			CalculateIsoDirection(float deltaX, float deltaY);
@@ -71,6 +77,9 @@ namespace Client
 	public:
 		void			Init();
 		void			Update() override;
+		void			Draw() override;
+
+		void			SetName(const std::string& name);
 
 		float			GetCurMoveSpeed() const;
 
@@ -91,6 +100,11 @@ namespace Client
 	inline void Player::SetControlsEnabled(bool e)
 	{
 		m_controlsEnabled = e;
+	}
+
+	inline void Player::SetName(const std::string& name)
+	{
+		m_displayName = name.empty() ? "" : "<" + name + ">";
 	}
 
 }

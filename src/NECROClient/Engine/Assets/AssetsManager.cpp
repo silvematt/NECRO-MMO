@@ -47,6 +47,7 @@ namespace Client
 	void AssetsManager::LoadAllFonts()
 	{
 		LoadFont("montserrat.regular.ttf", FONT_DEFAULT_PTSIZE, "defaultFont");
+		LoadFont("montserrat.regular.ttf", FONT_NAMEPLATE_PTSIZE, "nameplateFont");
 	}
 
 

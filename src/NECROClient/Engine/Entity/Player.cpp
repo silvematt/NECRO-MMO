@@ -69,6 +69,28 @@ namespace Client
 		Entity::Update();
 	}
 
+	//-------------------------------------------------
+	// Draws the Player and his nameplate
+	//-------------------------------------------------
+	void Player::Draw()
+	{
+		Entity::Draw();
+
+		if (!m_toRender || m_displayName.empty())
+			return;
+
+		TTF_Font* font = engine.GetAssetsManager().GetFont("nameplateFont");
+
+		// Center the name horizontally on the player frame
+		int textW = 0, textH = 0;
+		TTF_SizeText(font, m_displayName.c_str(), &textW, &textH);
+
+		int x = static_cast<int>(m_isoPos.x) + (m_img->GetTileset()->computedXScale / 2) - (textW / 2);
+		int y = static_cast<int>(m_isoPos.y) + PLAYER_NAMEPLATE_Y_OFFSET - textH;
+
+		engine.GetRenderer().DrawTextDirectly(font, m_displayName.c_str(), x, y, colorGreen);
+	}
+
 	void Player::HandleMovements()
 	{
 		m_wasMoving = m_isMoving;

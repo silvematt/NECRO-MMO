@@ -21,6 +21,7 @@ namespace Client
         bool isInWorld = false;
         bool isLeavingWorld = false;
         uint64_t myGuid;
+        uint32_t enteringCharacterID = 0; // the character we asked to enter the world with, used to retrieve its data once the server accepts
 
         // Epoch/Ack movement design
         uint32_t m_currentMovSeq = 1; // 0 means none, a correction packet can be issued by the server without the client asking - in that case, the correction packet will have rejectedSeq = 0, so we can be explicit that this is not a correction that derivd from a player movement
@@ -33,6 +34,7 @@ namespace Client
             isInWorld = false;
             isLeavingWorld = false;
             myGuid = 0;
+            enteringCharacterID = 0;
             m_currentMovSeq = 1;
             m_curretnAckedCorrectionID = 0;
             characters.clear();
