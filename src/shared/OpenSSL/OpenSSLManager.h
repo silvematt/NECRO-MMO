@@ -6,6 +6,8 @@
 #ifdef _WIN32
 	#include "WinSock2.h"
 	#include <WS2tcpip.h>
+#else
+	#include <arpa/inet.h>
 #endif
 
 
@@ -182,7 +184,11 @@ namespace NECRO
 
 		static void SetCertVerificationHostname(SSL* s, const char* hostname)
 		{
-			if (!SSL_set1_host(s, hostname))
+			unsigned char addrBuf[sizeof(in6_addr)];
+			bool isIPAddress = inet_pton(AF_INET, hostname, addrBuf) == 1 || inet_pton(AF_INET6, hostname, addrBuf) == 1;
+
+			int res = isIPAddress ? SSL_set1_ipaddr(s, hostname) : SSL_set1_dnsname(s, hostname);
+			if (!res)
 			{
 				LOG_ERROR("OpenSSLManager: failed to SetCertVerificationHostname.");
 			}

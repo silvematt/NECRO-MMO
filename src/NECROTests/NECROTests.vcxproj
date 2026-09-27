@@ -132,14 +132,14 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>C:\Lib\googletest-1.17.0\googletest\include;C:\Lib\libsodium\include;C:\boost_1_88_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Program Files\MySQL\MySQL Connector C++ 9.4\include;$(SolutionDir)src\shared\Config;$(SolutionDir)src\shared\Utility;$(SolutionDir)src\shared\OpenSSL;$(SolutionDir)src\shared\Sockets;$(SolutionDir)src\shared\Packets;$(SolutionDir)src\shared\Logger;$(SolutionDir)src\shared\Encryption;$(SolutionDir)src\shared\Authentication;$(SolutionDir)src\shared\RealmList;$(SolutionDir)src\shared\AsioThreads;$(SolutionDir)src\shared\World;$(SolutionDir)src\database\DB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Lib\googletest-1.17.0\googletest\include;C:\Lib\libsodium\include;C:\boost_1_92_0;C:\Lib\fmt-11.2.0\include;C:\Program Files\OpenSSL-Win64\include;C:\Lib\mysql-connector-c++-26.7.0-winx64\include;$(SolutionDir)src\shared\Config;$(SolutionDir)src\shared\Utility;$(SolutionDir)src\shared\OpenSSL;$(SolutionDir)src\shared\Sockets;$(SolutionDir)src\shared\Packets;$(SolutionDir)src\shared\Logger;$(SolutionDir)src\shared\Encryption;$(SolutionDir)src\shared\Authentication;$(SolutionDir)src\shared\RealmList;$(SolutionDir)src\shared\AsioThreads;$(SolutionDir)src\shared\World;$(SolutionDir)src\database\DB;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Lib\googletest-1.17.0\build\lib\Release;C:\Program Files\MySQL\MySQL Connector C++ 9.4\lib64\vs14;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;C:\Lib\libsodium\x64\Release\v143\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Lib\googletest-1.17.0\build\lib\Release;C:\Lib\mysql-connector-c++-26.7.0-winx64\lib64\vs14;C:\Program Files\OpenSSL-Win64\lib\VC\x64\MT;C:\Lib\libsodium\x64\Release\v143\static;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>..\..\x64\Release\database.lib;..\..\x64\Release\shared.lib;gtest.lib;gtest_main.lib;Ws2_32.lib;libssl.lib;libcrypto.lib;mysqlcppconn.lib;mysqlcppconnx.lib;libsodium.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
