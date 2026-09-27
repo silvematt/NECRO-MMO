@@ -28,6 +28,7 @@ namespace Client
 
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTITY_SPAWN)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketEntitySpawn) - 1 , &Handle_EntitySpawn };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTITY_DESPAWN)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketEntityDespawn) , &Handle_EntityDespawn };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTITY_MOVEMENT_UPDATE)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketEntityMovementUpdate) , &Handle_EntityMovementUpdate };
 
         return handlers;
     }

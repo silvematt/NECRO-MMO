@@ -28,14 +28,11 @@ namespace Client
 
 		World* world = engine.GetGame().GetCurrentWorld();
 
-		// If the entity was already known, the spawn just refreshes its position
+		// If the entity was already known, the spawn just refreshes its position (only players are network entities for now)
 		Entity* existing = world->GetNetworkEntity(pckt->guid);
 		if (existing)
 		{
-			existing->m_pos.x = pckt->pos_x;
-			existing->m_pos.y = pckt->pos_y;
-			existing->m_zPos = pckt->pos_z;
-			existing->m_isoDirection = static_cast<IsoDirection>(pckt->direction);
+			static_cast<Player*>(existing)->SetNetworkTarget(pckt->pos_x, pckt->pos_y, pckt->pos_z, static_cast<IsoDirection>(pckt->direction));
 			return true;
 		}
 
@@ -51,7 +48,7 @@ namespace Client
 		p->SetImg(engine.GetAssetsManager().GetImage("player_war_idle.png"));
 		p->m_pos = Vector2(pckt->pos_x, pckt->pos_y);
 		p->m_zPos = pckt->pos_z;
-		p->m_isoDirection = static_cast<IsoDirection>(pckt->direction);
+		p->SetNetworkTarget(pckt->pos_x, pckt->pos_y, pckt->pos_z, static_cast<IsoDirection>(pckt->direction));
 		p->SetLayer(0);
 		p->Init();
 		p->SetFlag(Entity::Flags::FDynamic);
@@ -77,6 +74,28 @@ namespace Client
 		NECRO::World::CPacketEntityDespawn* pckt = reinterpret_cast<NECRO::World::CPacketEntityDespawn*>(m_currentDecryptedPacket.GetReadPointer());
 
 		engine.GetGame().GetCurrentWorld()->RemoveNetworkEntity(pckt->guid);
+		return true;
+	}
+
+	bool WorldSession::Handle_EntityMovementUpdate()
+	{
+		if (!IsOpen())
+			return false;
+
+		// Fixed size packet
+		if (m_currentDecryptedPacket.GetActiveSize() != sizeof(NECRO::World::CPacketEntityMovementUpdate))
+			return false;
+
+		NECRO::World::CPacketEntityMovementUpdate* pckt = reinterpret_cast<NECRO::World::CPacketEntityMovementUpdate*>(m_currentDecryptedPacket.GetReadPointer());
+
+		if (pckt->direction >= ISO_DIRECTIONS_N)
+			return false;
+
+		// Unknown GUIDs are ignored. TODO: should think about this, maybe we should request a spawn for the entity if it's unknown and it keeps receiving updates from the server.
+		Entity* e = engine.GetGame().GetCurrentWorld()->GetNetworkEntity(pckt->guid);
+		if (e)
+			static_cast<Player*>(e)->SetNetworkTarget(pckt->pos_x, pckt->pos_y, pckt->pos_z, static_cast<IsoDirection>(pckt->direction)); // only players are network entities for now
+
 		return true;
 	}
 }

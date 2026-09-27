@@ -68,7 +68,7 @@ namespace Client
 		// Remote players are driven by the server, not by input
 		if (m_isRemote)
 		{
-			m_tilesetYOff = static_cast<int>(m_isoDirection);
+			HandleRemoteMovement();
 		}
 		else
 		{
@@ -223,6 +223,37 @@ namespace Client
 		}
 	}
 
+
+	//---------------------------------------------------------------------------------------
+	// Moves a remote player toward the last position the server sent
+	//---------------------------------------------------------------------------------------
+	void Player::HandleRemoteMovement()
+	{
+		float deltaX = m_netTargetPos.x - m_pos.x;
+		float deltaY = m_netTargetPos.y - m_pos.y;
+		float dist = sqrt((deltaX * deltaX) + (deltaY * deltaY));
+
+		// Too far (teleports, snap backs), just jump there
+		if (dist > REMOTE_PLAYER_SNAP_DISTANCE)
+		{
+			m_pos = m_netTargetPos;
+		}
+		else
+		{
+			float step = SDL_clamp(static_cast<float>(engine.GetDeltaTime()) * REMOTE_PLAYER_LERP_SPEED, 0.0f, 1.0f);
+			m_pos.x += deltaX * step;
+			m_pos.y += deltaY * step;
+		}
+
+		m_zPos = m_netTargetZ;
+
+		// Used by HandleAnim to pick run/idle
+		m_isMoving = dist > REMOTE_PLAYER_MOVING_EPSILON;
+		m_isAiming = false; // TODO : remote players don't have aim mode yet
+
+		// Select tile from tileset for rendering
+		m_tilesetYOff = static_cast<int>(m_isoDirection);
+	}
 
 	//---------------------------------------------------------------------------------------
 	// Updates the closeEntities vector
@@ -428,10 +459,14 @@ namespace Client
 
 	void Player::OnCellChanges()
 	{
-		// Sets the Z pos of the player equal to the current cell if there's a ZModifier, used to go up stairs and come down from them
-		float zMod = m_owner->GetZModifier();
-		if (zMod > 0.0)
-			m_zPos = zMod + PLAYER_CONST_Z_POS;
+		// Remote players Z comes from the server, so do not set it here 
+		if (!m_isRemote) 
+		{
+			// Sets the Z pos of the player equal to the current cell if there's a ZModifier, used to go up stairs and come down from them
+			float zMod = m_owner->GetZModifier();
+			if (zMod > 0.0)
+				m_zPos = zMod + PLAYER_CONST_Z_POS;
+		}
 	}
 
 	void Player::ExecuteMovementCorrection(const NECRO::World::CPacketPlayerMovementCorrection* correction)
@@ -440,6 +475,16 @@ namespace Client
 		m_pos.y = correction->pos_y;
 		m_zPos = correction->pos_z;
 		m_isoDirection = static_cast<IsoDirection>(correction->direction);
+	}
+
+	//-------------------------------------------------------------------------------------------
+	// Sets where the remote player has to go, the direction is applied right away
+	//-------------------------------------------------------------------------------------------
+	void Player::SetNetworkTarget(float x, float y, float z, IsoDirection dir)
+	{
+		m_netTargetPos = Vector2(x, y);
+		m_netTargetZ = z;
+		m_isoDirection = dir;
 	}
 
 }

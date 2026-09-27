@@ -56,6 +56,7 @@ namespace Client
 
         bool    Handle_EntitySpawn();
         bool    Handle_EntityDespawn();
+        bool    Handle_EntityMovementUpdate();
     };
 }
 }

@@ -14,6 +14,11 @@ namespace Client
 	inline constexpr float PLAYER_MOVE_SPEED_FREE = 180.0f;
 	inline constexpr float PLAYER_MOVE_SPEED_AIM = 100.0f;
 
+	// Remote players smoothing toward the position the server sent instead of teleporting it.
+	inline constexpr float REMOTE_PLAYER_LERP_SPEED = 10.0f;
+	inline constexpr float REMOTE_PLAYER_SNAP_DISTANCE = CELL_WIDTH * 2;	// If farther than this from the target (teleports, snap backs), jump straight there
+	inline constexpr float REMOTE_PLAYER_MOVING_EPSILON = 0.5f;				// Below this distance from the target the remote player is considered idle
+
 	// Dimensions of each player frame
 	inline constexpr int PLAYER_WIDTH = 128;
 	inline constexpr int PLAYER_HEIGHT = 128;
@@ -53,11 +58,17 @@ namespace Client
 		// Remote players are the other players spawned by the server, they don't read input and don't have a collider
 		bool m_isRemote = false;
 
+		// Last position the server sent for this remote player, we smooth towards it
+		Vector2	m_netTargetPos;
+		float	m_netTargetZ = 0.0f;
+
 	private:
 		void			CalculateIsoDirection(float deltaX, float deltaY);
 		void			CalculateIsoDirectionWhileAiming();
 		void			HandleMovements();
 		void			HandleAnim();
+
+		void			HandleRemoteMovement();
 
 		void			UpdateCloseEntities();
 
@@ -93,6 +104,7 @@ namespace Client
 		void			OnCellChanges() override;
 
 		void			ExecuteMovementCorrection(const NECRO::World::CPacketPlayerMovementCorrection* correction);
+		void			SetNetworkTarget(float x, float y, float z, IsoDirection dir);
 	};
 
 	inline float Player::GetCurMoveSpeed() const

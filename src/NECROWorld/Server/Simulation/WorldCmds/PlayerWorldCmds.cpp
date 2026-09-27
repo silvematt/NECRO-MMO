@@ -153,6 +153,9 @@ namespace World
 				p->m_posY = posY;
 				p->m_posZ = posZ;
 				p->m_isoDirection = static_cast<IsoDirection>(isoDirection);
+
+				// Let the other players know about this movement
+				p->BroadcastMovement();
 			}
 		}
 		

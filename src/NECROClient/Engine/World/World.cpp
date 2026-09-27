@@ -109,6 +109,19 @@ namespace Client
 				currentCell.Update();
 			}
 
+		// Network entities must keep updating even offscreen, otherwise they'd stay stuck in the (non visible) cell they were last seen in.
+		// TODO: this is a bit hacky, we should have a list of entities that need to be updated even offscreen, like roaming bosses, and add network entities to that list instead of updating ALL network entities every frame
+		// best way could be despawning network entities that are get too far away from the player and respawn them when the player gets closer again
+		for (auto& [guid, id] : m_networkEntities)
+		{
+			Entity* e = m_allEntities.at(id).get();
+			Cell* owner = e->GetOwner();
+
+			if (owner->GetCellX() < m_visibleMinX || owner->GetCellX() >= m_visibleMaxX ||
+				owner->GetCellY() < m_visibleMinY || owner->GetCellY() >= m_visibleMaxY)
+				e->Update();
+		}
+
 		TransferPendingEntities();
 	}
 
@@ -258,7 +271,6 @@ namespace Client
 			std::string playerZLayer = "Player Z Layer: " + std::to_string(p->GetLayerFromZPos());
 			renderer.DrawTextDirectly(engine.GetAssetsManager().GetFont("defaultFont"), playerZLayer.c_str(), SCREEN_WIDTH - 300, 50, colorRed);
 		}
-
 	}
 
 	//------------------------------------------------------------------------

@@ -68,6 +68,7 @@ namespace World
 #pragma region Msgs
 		bool SendPacket(Packet&& p);
 		bool SendMovementCorrection(uint32_t rejectedSeq);
+		void BroadcastMovement();
 
 		Packet BuildSpawnPacket() const;
 #pragma endregion

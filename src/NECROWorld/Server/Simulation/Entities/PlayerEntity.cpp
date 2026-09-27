@@ -51,6 +51,9 @@ namespace World
 
 		// Warn the client that this player was snapped back in a failed transfer-cell operation
         SendMovementCorrection(0);
+
+		// The other players need to see the snap back as well
+		BroadcastMovement();
 	}
 
 #pragma region Msgs
@@ -104,6 +107,24 @@ namespace World
         m_lastCorrectionID = nextCorrectionID;
         LOG_DEBUG("Correction sent ID:'{}' (rejectedSeq '{}') to GUID '{}'", m_lastCorrectionID, rejectedSeq, m_guid);
         return true;
+    }
+
+    // Relays our current position to the other players in the zone
+    void PlayerEntity::BroadcastMovement()
+    {
+        Packet p;
+        p << static_cast<uint16_t>(PacketIDs::ENTITY_MOVEMENT_UPDATE);
+        p << static_cast<uint64_t>(m_guid);
+        p << static_cast<float_t>(m_posX);
+        p << static_cast<float_t>(m_posY);
+        p << static_cast<float_t>(m_posZ);
+        p << static_cast<uint8_t>(m_isoDirection);
+
+        m_currentZone->ForEachPlayer([this, &p](PlayerEntity* other)
+            {
+                if (other != this)
+                    other->SendPacket(Packet(p));
+            });
     }
 #pragma endregion
 }

@@ -35,7 +35,8 @@ enum class PacketIDs : uint16_t
     PLAYER_MOVEMENT_UPDATE,
     PLAYER_MOVEMENT_CORRECTION,
     ENTITY_SPAWN,
-    ENTITY_DESPAWN
+    ENTITY_DESPAWN,
+    ENTITY_MOVEMENT_UPDATE
 };
 
 //--------------------------------------------------------------------------------------------
@@ -255,6 +256,20 @@ struct CPacketEntityDespawn
     uint64_t guid;
 };
 static_assert(sizeof(CPacketEntityDespawn) == (2 + 8), "CPacketEntityDespawn size assert failed!");
+
+// Server relays the position of another entity in the client's view
+struct CPacketEntityMovementUpdate
+{
+    uint16_t id;
+    uint64_t guid;
+
+    // Position info
+    float_t pos_x;
+    float_t pos_y;
+    float_t pos_z;
+    uint8_t direction;
+};
+static_assert(sizeof(CPacketEntityMovementUpdate) == (2 + 8 + 4 + 4 + 4 + 1), "CPacketEntityMovementUpdate size assert failed!");
 
 #pragma pack(pop)
 }
