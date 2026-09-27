@@ -15,8 +15,9 @@ namespace Client
 
 	Player::~Player()
 	{
-		// Set cur player to nullptr in Game when destroyed
-		engine.GetGame().SetCurPlayer(nullptr);
+		// Set cur player to nullptr in Game when destroyed (BUT only if it's us, remote players get destroyed as well)
+		if (engine.GetGame().GetCurPlayer() == this)
+			engine.GetGame().SetCurPlayer(nullptr);
 	}
 
 	//-------------------------------------------------
@@ -32,10 +33,13 @@ namespace Client
 			*(m_anim.get()) = *engine.GetAssetsManager().GetAnimator("player_war.nanim");
 		m_anim->Play("idle"); // Set default
 
-		// Construct Collider
-		CreateCollider();
-		m_coll->Init(true, this, 0, 0, 32, 16);
-		m_coll->SetOffset(0, -16);
+		// Construct Collider, remote players don't have one (the server doesn't collide players)
+		if (!m_isRemote)
+		{
+			CreateCollider();
+			m_coll->Init(true, this, 0, 0, 32, 16);
+			m_coll->SetOffset(0, -16);
+		}
 
 		// Add player light
 		/*
@@ -61,8 +65,17 @@ namespace Client
 	//-------------------------------------------------
 	void Player::Update()
 	{
-		UpdateCloseEntities();
-		HandleMovements();
+		// Remote players are driven by the server, not by input
+		if (m_isRemote)
+		{
+			m_tilesetYOff = static_cast<int>(m_isoDirection);
+		}
+		else
+		{
+			UpdateCloseEntities();
+			HandleMovements();
+		}
+
 		HandleAnim();
 
 		// Update the entity base, pos, gridPos, isoPos etc.

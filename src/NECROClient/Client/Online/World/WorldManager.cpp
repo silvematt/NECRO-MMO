@@ -121,6 +121,9 @@ namespace Client
 
         m_data.Zero();
 
+        // Whatever the server spawned is gone with the connection
+        engine.GetGame().GetCurrentWorld()->ClearNetworkEntities();
+
         CreateWorldSocket();
 
         m_worldSocketConnected = false;

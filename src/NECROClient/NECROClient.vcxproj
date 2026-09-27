@@ -138,6 +138,7 @@
     <ClCompile Include="Client\Online\AuthManager.cpp" />
     <ClCompile Include="Client\Online\AuthSession.cpp" />
     <ClCompile Include="Client\Online\ClientActions\PlayerActions.cpp" />
+    <ClCompile Include="Client\Online\Handlers\EntityHandlers.cpp" />
     <ClCompile Include="Client\Online\Handlers\PlayerHandlers.cpp" />
     <ClCompile Include="Client\Online\World\WorldManager.cpp" />
     <ClCompile Include="Client\Online\World\WorldSession.cpp" />

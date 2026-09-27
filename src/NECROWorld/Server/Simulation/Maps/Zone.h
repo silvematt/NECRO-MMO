@@ -6,6 +6,7 @@
 #include <memory>
 #include <unordered_map>
 #include <stdexcept>
+#include <functional>
 
 #include "MapDef.h"
 #include "Cell.h"
@@ -15,6 +16,8 @@ namespace NECRO
 {
 namespace World
 {
+	class PlayerEntity;
+
 	// ---------------------------------------------------------------------------------------------------------------------------
 	// A loaded map in the Server is called a "Zone". It can be an exterior, a dungeon or anything in between.
 	// A Zone is an entry in the std::unordered_map<uint32_t, std::unique_ptr<Zone>>	m_zones and it represents a loaded Map.
@@ -69,6 +72,10 @@ namespace World
 		void		AddPendingEntityToTransfer(EntityTransferCtx ctx);
 
 		Entity*		FindEntity(uint64_t guid) const;
+
+		// Calls fn on every player in this Zone. This is the one place that decides who sees whom.
+		// TODO: make it Area Of Interest based (cells in range) instead of zone-wide
+		void		ForEachPlayer(const std::function<void(PlayerEntity*)>& fn) const;
 	};
 }
 }

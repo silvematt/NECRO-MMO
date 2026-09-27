@@ -61,10 +61,15 @@ namespace World
 			return m_characterData.get();
 		}
 
-		virtual void OnCellTransferFails() override;
+		virtual void OnBeingAddedToZone()		override;
+		virtual void OnBeingRemovedFromZone()	override;
+		virtual void OnCellTransferFails()		override;
 
 #pragma region Msgs
+		bool SendPacket(Packet&& p);
 		bool SendMovementCorrection(uint32_t rejectedSeq);
+
+		Packet BuildSpawnPacket() const;
 #pragma endregion
 	};
 }

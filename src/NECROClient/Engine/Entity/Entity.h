@@ -83,6 +83,8 @@ namespace Client
 
 		Vector2 m_pos;			// orthographic pos
 		float	m_zPos;			// Z is up
+		IsoDirection m_isoDirection = IsoDirection::SOUTH;
+
 		float	m_depth;		// For isometric sorting
 
 		int		m_gridPosX;

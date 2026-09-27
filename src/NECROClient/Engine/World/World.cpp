@@ -275,7 +275,7 @@ namespace Client
 	//-----------------------------------------------------------------------
 	// Adds the Entity to the entities map, transferring ownership
 	//-----------------------------------------------------------------------
-	void World::AddEntity(std::unique_ptr<Entity>&& e)
+	bool World::AddEntity(std::unique_ptr<Entity>&& e)
 	{
 		// Calculate grid position
 		WorldToCell(e->m_pos.x, e->m_pos.y, e->m_gridPosX, e->m_gridPosY);
@@ -288,10 +288,12 @@ namespace Client
 
 			// Add entity in the world map
 			m_allEntities.insert({ e->GetID(), std::move(e) });
+			return true;
 		}
 		else
 		{
 			SDL_LogError(SDL_LOG_CATEGORY_ERROR, "World::AddEntity(): gridPos is out of bounds. Entity will not be added to map.\n");
+			return false;
 		}
 	}
 
@@ -299,6 +301,52 @@ namespace Client
 	{
 		m_allEntities.at(atID)->GetOwner()->RemoveEntityPtr(atID);
 		m_allEntities.erase(atID);
+	}
+
+	//-----------------------------------------------------------------------
+	// Adds an Entity spawned by the server, indexing it by its GUID
+	//-----------------------------------------------------------------------
+	Entity* World::AddNetworkEntity(uint64_t guid, std::unique_ptr<Entity>&& e)
+	{
+		Entity* ePtr = e.get(); // std::move does not change the memory address, so this is safe
+
+		if (!AddEntity(std::move(e)))
+			return nullptr;
+
+		m_networkEntities[guid] = ePtr->GetID();
+		return ePtr;
+	}
+
+	// !!! Networked entities must be removed from here and never from RemoveEntity() directly !!!
+	// Currently the level editor mode could remove networked entities directly. TODO
+	void World::RemoveNetworkEntity(uint64_t guid)
+	{
+		auto it = m_networkEntities.find(guid);
+		if (it == m_networkEntities.end())
+			return;
+
+		RemoveEntity(it->second);
+		m_networkEntities.erase(it);
+	}
+
+	Entity* World::GetNetworkEntity(uint64_t guid)
+	{
+		auto it = m_networkEntities.find(guid);
+		if (it == m_networkEntities.end())
+			return nullptr;
+
+		return m_allEntities.at(it->second).get();
+	}
+
+	//-----------------------------------------------------------------------
+	// Removes all the entities spawned by the server (leaving the world, disconnecting)
+	//-----------------------------------------------------------------------
+	void World::ClearNetworkEntities()
+	{
+		for (auto& [guid, id] : m_networkEntities)
+			RemoveEntity(id);
+
+		m_networkEntities.clear();
 	}
 
 	void World::TransferPendingEntities()

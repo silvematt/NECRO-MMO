@@ -56,6 +56,9 @@ namespace Client
 		//--------------------------------------------------------------------------------------
 		std::unordered_map<uint32_t, std::unique_ptr<Entity>> m_allEntities;
 
+		// Entities spawned by the server (other players, AI, etc), maps GUID -> EntityID in m_allEntities
+		std::unordered_map<uint64_t, uint32_t> m_networkEntities;
+
 		// See Entity::TransferToCellImmediately
 		std::vector<Entity*> m_entitiesWaitingForTransfer;
 
@@ -82,8 +85,14 @@ namespace Client
 		void			ResetLighting(); // Sets the current lColor and lIntensity of the cell to the base color, so light can be applied again the current frame
 
 
-		void			AddEntity(std::unique_ptr<Entity>&& e);
+		bool			AddEntity(std::unique_ptr<Entity>&& e); // returns false if the entity could not be added
 		void			RemoveEntity(uint32_t atID);
+
+		// Network entities management
+		Entity*			AddNetworkEntity(uint64_t guid, std::unique_ptr<Entity>&& e);	// returns nullptr if the entity could not be added
+		void			RemoveNetworkEntity(uint64_t guid);								// does nothing if the guid is unknown
+		Entity*			GetNetworkEntity(uint64_t guid);
+		void			ClearNetworkEntities();
 
 		void			InitializeWorld();
 		void			Update();

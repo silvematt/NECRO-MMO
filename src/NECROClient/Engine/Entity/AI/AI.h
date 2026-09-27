@@ -35,7 +35,6 @@ namespace Client
 		std::vector<void (*)(AI* owner)>	m_behaviorsPtrs;			// Behavior routines of the AI for each state
 
 		float			m_baseSpeed = 2.5f;
-		IsoDirection	m_isoDirection = IsoDirection::SOUTH;
 
 	public:
 		int			Init();

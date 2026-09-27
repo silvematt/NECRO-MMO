@@ -17,6 +17,13 @@ enum class WorldSocketStatus
     CLOSED
 };
 
+enum class EntityType : uint8_t
+{
+    NULLTYPE = 0,
+    PLAYER_ENTITY,
+    AI_ENTITY
+};
+
 enum class PacketIDs : uint16_t
 {
     AUTH_SESSION = 0,
@@ -26,7 +33,9 @@ enum class PacketIDs : uint16_t
     ENTER_WORLD,
     EXIT_WORLD,
     PLAYER_MOVEMENT_UPDATE,
-    PLAYER_MOVEMENT_CORRECTION
+    PLAYER_MOVEMENT_CORRECTION,
+    ENTITY_SPAWN,
+    ENTITY_DESPAWN
 };
 
 //--------------------------------------------------------------------------------------------
@@ -220,6 +229,32 @@ struct CPacketPlayerMovementCorrection
     uint8_t direction;
 };
 static_assert(sizeof(CPacketPlayerMovementCorrection) == (2 + 4 + 4 + 4 + 4 + 4 + 1), "CPacketPlayerMovementCorrection size assert failed!");
+
+// Server tells the client that an entity entered its view (another player/AI joined the zone)
+struct CPacketEntitySpawn
+{
+    uint16_t id;
+    uint64_t guid;
+    uint8_t  entityType; // EntityType enum
+
+    // Position info
+    float_t pos_x;
+    float_t pos_y;
+    float_t pos_z;
+    uint8_t direction;
+
+    uint8_t nameLength;
+    uint8_t name[1];
+};
+static_assert(sizeof(CPacketEntitySpawn) == (2 + 8 + 1 + 4 + 4 + 4 + 1 + 1 + 1), "CPacketEntitySpawn size assert failed!");
+
+// Server tells the client that an entity left its view (despawned, logged out, etc.)
+struct CPacketEntityDespawn
+{
+    uint16_t id;
+    uint64_t guid;
+};
+static_assert(sizeof(CPacketEntityDespawn) == (2 + 8), "CPacketEntityDespawn size assert failed!");
 
 #pragma pack(pop)
 }

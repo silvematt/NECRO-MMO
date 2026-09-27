@@ -53,6 +53,9 @@ namespace Client
 
         // Game handlers, implemeted in World/Handlers/x.cpp
         bool    Handle_PlayerMovementCorrection();
+
+        bool    Handle_EntitySpawn();
+        bool    Handle_EntityDespawn();
     };
 }
 }

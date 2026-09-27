@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "GameRules.h"
+#include "WorldCodes.h"
 
 namespace NECRO
 {
@@ -9,13 +10,6 @@ namespace World
 {
 	class Cell;
 	class Zone;
-
-	enum class EntityType
-	{
-		NULLTYPE = 0,
-		PLAYER_ENTITY,
-		AI_ENTITY
-	};
 
 	class Entity;
 	// This represents a request an entity made to be transferred into another cell. The server will validate it and, if considered valid, will transfer the entity
@@ -66,6 +60,11 @@ namespace World
 		const uint64_t GetGUID() const
 		{
 			return m_guid;
+		}
+
+		const EntityType GetType() const
+		{
+			return m_type;
 		}
 
 		virtual void Update(uint32_t diff);

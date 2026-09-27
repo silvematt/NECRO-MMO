@@ -1,6 +1,7 @@
 #include "Zone.h"
 
 #include "NECROWorld.h"
+#include "PlayerEntity.h"
 
 namespace NECRO
 {
@@ -169,6 +170,14 @@ namespace World
 			return nullptr;
 		else
 			return it->second.get();
+	}
+
+	void Zone::ForEachPlayer(const std::function<void(PlayerEntity*)>& fn) const
+	{
+		// TODO, just keep a player list in the Zone and iterate over that instead of checking every entity
+		for (auto& [guid, e] : m_entities)
+			if (e->GetType() == EntityType::PLAYER_ENTITY)
+				fn(static_cast<PlayerEntity*>(e.get()));
 	}
 }
 }

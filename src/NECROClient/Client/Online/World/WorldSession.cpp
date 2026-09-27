@@ -26,6 +26,9 @@ namespace Client
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::EXIT_WORLD)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketExitWorld) , &Handle_ExitWorldResponse };
         handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::PLAYER_MOVEMENT_CORRECTION)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketPlayerMovementCorrection) , &Handle_PlayerMovementCorrection};
 
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTITY_SPAWN)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketEntitySpawn) - 1 , &Handle_EntitySpawn };
+        handlers[static_cast<uint16_t>(NECRO::World::PacketIDs::ENTITY_DESPAWN)] = { NECRO::World::WorldSocketStatus::IN_WORLD, sizeof(NECRO::World::CPacketEntityDespawn) , &Handle_EntityDespawn };
+
         return handlers;
     }
     std::unordered_map<uint16_t, WorldHandler> const Handlers = WorldSession::InitHandlers();
@@ -334,6 +337,9 @@ namespace Client
             onlineData.myGuid = pcktData->guid;
             onlineData.m_curretnAckedCorrectionID = 0; // reset this! this could actually live on the playerentiy object TODO
 
+            // Make sure to start from a clean state, the server will spawn everything we need to know about
+            engine.GetGame().GetCurrentWorld()->ClearNetworkEntities();
+
             // Apply to entity (TODO: this is just temporary, we need to properly spawn and manage entities client side)
             Player::ENT_PTR->m_pos.x = pcktData->posX;
             Player::ENT_PTR->m_pos.y = pcktData->posY;
@@ -372,6 +378,8 @@ namespace Client
 
         if (Player::ENT_PTR)
             Player::ENT_PTR->SetName("");
+
+        engine.GetGame().GetCurrentWorld()->ClearNetworkEntities();
 
         m_status = NECRO::World::WorldSocketStatus::SELECTING_CHARACTERS;
 

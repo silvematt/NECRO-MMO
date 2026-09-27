@@ -50,6 +50,9 @@ namespace Client
 		// Name drawn on top of the player's head, in the form <Name>. If it's empty no text will be drawn
 		std::string m_displayName;
 
+		// Remote players are the other players spawned by the server, they don't read input and don't have a collider
+		bool m_isRemote = false;
+
 	private:
 		void			CalculateIsoDirection(float deltaX, float deltaY);
 		void			CalculateIsoDirectionWhileAiming();
@@ -59,13 +62,13 @@ namespace Client
 		void			UpdateCloseEntities();
 
 	public:
+		explicit Player(bool isRemote = false) : m_isRemote(isRemote) {}
 		~Player();
 
 		static uint32_t	ENT_ID;
 		static Player*	ENT_PTR;
 
 		bool			m_controlsEnabled = true; // TEST: 
-		IsoDirection	m_isoDirection = IsoDirection::SOUTH;		// The isometric direction the player is facing
 
 		// True if the movement changed since the last SendPlayerMovementUpdate
 		bool			m_isMovementDirty = false;
