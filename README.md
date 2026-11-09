@@ -3,7 +3,8 @@
 > A C++ powered suite for building a **MMORPG**, inspired by the technical challenges of *World of Warcraft*.
 
 <p align="center">
-  <img width="100%" alt="NECRO MMO screenshot" src="https://github.com/silvematt/NECROEngine/assets/20478938/fa632904-6105-4b7a-8d44-ad700113e6fb">
+  <img width="1922" height="1112" alt="Untitled" src="https://github.com/user-attachments/assets/c5511664-c3d0-4623-b410-39dce45f1ba4" />
+
 </p>
 
 ---
@@ -23,7 +24,7 @@
 |-----------------|---------------------------|--------------------|------------------------------------------------------------------------|-------------|
 | [**NECROAuth**](/src/NECROAuth)    | Authentication Server     | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/functional-brightgreen) | Account management with a MySQL database, login handshake, session tokens, and gateway to game realms. |
 | [**NECROClient**](/src/NECROClient) | Game Engine & Client      | C++                | ![functional](https://img.shields.io/badge/functional-brightgreen) | Data-driven game engine, renders the world, handles player input, networking, entity sync, and client-side prediction. |
-| [**NECROWorld**](/src/NECROWorld) | World Game Server               | C++ / `Boost.Asio` | ![in progress](https://img.shields.io/badge/in%20progress-yellow) | Authoritative world state, zone/instance management, AI, scripts, combat, persistence with a MySQL database. |
+| [**NECROWorld**](/src/NECROWorld) | World Game Server               | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/functional-brightgreen) | Authoritative world state, zone/instance management, AI, scripts, combat, persistence with a MySQL database. |
 | [**NECROHammer**](/src/NECROHammer) | Load & Stress Tester      | C++ / `Boost.Asio` | ![functional](https://img.shields.io/badge/functional-brightgreen) | Hammers servers with synthetic clients and scripted traffic to validate throughput and latency under high load. |
 
 ---
